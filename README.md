@@ -9,19 +9,19 @@ Keeps chroot packages minimal via makepkg -r. <br>
 Does not perform "clean" chroot builds. <br>
 The emphasis of this script is using a chroot for 'build isolation' rather than 'clean building'. <br>
 
-Usage: aurch [operation] [package]<br>
+Usage: aurch [operation] [package]
 
-    Operations: <br>
-    		    --setup	Sets up a chroot <br>
-    		-B, --build	Builds an AUR package in chroot <br>
-    		    --pgp	Manually import pgp key <br>
-    		-h, --help	Prints help <br>
+    Operations:
+    		    --setup	Sets up a chroot
+    		-B, --build	Builds an AUR package in chroot
+    		    --pgp	Manually import pgp key
+    		-h, --help	Prints help
 
 Examples: <br>
 
-    Set up chroot:				aurch --setup <br>
-    Build an AUR package in the chroot:	aurch -B <aurpackage> <br>
-    Manually import a pgp key in chroot:	aurch --pgp <short or long key id> <br>
+    Set up chroot:				aurch --setup
+    Build an AUR package in the chroot:	aurch -B <aurpackage>
+    Manually import a pgp key in chroot:	aurch --pgp <short or long key id>
 
 <br>
 <br>
