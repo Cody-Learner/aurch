@@ -22,6 +22,11 @@ Examples: <br>
     Set up chroot:				aurch --setup
     Build an AUR package in the chroot:	aurch -B <aurpackage>
     Manually import a pgp key in chroot:	aurch --pgp <short or long key id>
+<br>
+<br>
+
+Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
+Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
 
 <br>
 <br>
