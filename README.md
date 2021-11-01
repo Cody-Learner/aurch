@@ -20,13 +20,13 @@ Usage: aurch [operation] [package]<br>
 Examples: <br>
 
     Set up chroot:				aurch --setup <br>
-    Build an AUR package in the chroot:		aurch -B <aurpackage> <br>
+    Build an AUR package in the chroot:	aurch -B <aurpackage> <br>
     Manually import a pgp key in chroot:	aurch --pgp <short or long key id> <br>
 
 <br>
 <br>
 NEWS/UPDATE INFO:<br>
-
+<br>
 NEWS FOR Oct 31, 2021: <br>
 Initial release of the aurch script. <br>
 The script is in the testing phase. <br>
