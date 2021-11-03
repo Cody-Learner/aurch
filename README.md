@@ -25,7 +25,7 @@ Examples: <br>
 <br>
 <br>
 
-https://user-images.githubusercontent.com/36802396/139984950-daad1fe9-bf10-416a-83ac-17175c889b8c.png
+![Screenshot_2021-11-02_18-13-26](https://user-images.githubusercontent.com/36802396/140189725-9f30c9dc-b071-447c-9cd9-a2c177ac3371.png)
 
 Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
