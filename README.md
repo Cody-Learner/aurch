@@ -24,7 +24,7 @@ Examples: <br>
     Create a directory to setup chroot in:	mkdir ~/aurch
     Move into directory:			cd ~/aurch
     Set up chroot:				aurch --setup		 
-    Build an AUR package in the chroot:		aurch -B <aurpackage>
+    Build an AUR package in the chroot:	aurch -B <aurpackage>
     Manually import a pgp key in chroot:	aurch --pgp <short or long key id>
     Run pacman commands in chroot:		aurch --chrootpacman <pacman operations options> <package>
 
