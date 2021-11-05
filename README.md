@@ -11,7 +11,7 @@ The emphasis of this script is using a chroot for 'build isolation' rather than 
 
 Usage: aurch [operation] [package]
 
-    Operations: 
+Operations: <br>
     		    --setup		Sets up a chroot
     		-B, --build		Builds an AUR package in chroot
     		    --chrootpacman	Manually run pacman in chroot
@@ -19,13 +19,12 @@ Usage: aurch [operation] [package]
     		-h, --help		Prints help
 
 Examples: <br>
-
-    		Create a directory to setup chroot in:	mkdir ~/aurch
-    		Move into directory:			cd ~/aurch
-    		Set up chroot:				aurch --setup		 
-    		Build an AUR package in the chroot:	aurch -B <aurpackage>
-    		Manually import a pgp key in chroot:	aurch --pgp <short or long key id>
-    		Run pacman commands in chroot:		aurch --chrootpacman <pacman operations options> <package>
+    	Create a directory to setup chroot in:	mkdir ~/aurch
+    	Move into directory:			cd ~/aurch
+    	Set up chroot:				aurch --setup		 
+    	Build an AUR package in the chroot:	aurch -B <aurpackage>
+    	Manually import a pgp key in chroot:	aurch --pgp <short or long key id>
+    	Run pacman commands in chroot:		aurch --chrootpacman <pacman operations options> <package>
 
 <br>
 <br>
