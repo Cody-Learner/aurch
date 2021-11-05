@@ -12,6 +12,7 @@ The emphasis of this script is using a chroot for 'build isolation' rather than 
 Usage: aurch [operation] [package]
 
 Operations: <br>
+
     		    --setup		Sets up a chroot
     		-B, --build		Builds an AUR package in chroot
     		    --chrootpacman	Manually run pacman in chroot
@@ -19,6 +20,7 @@ Operations: <br>
     		-h, --help		Prints help
 
 Examples: <br>
+
     	Create a directory to setup chroot in:	mkdir ~/aurch
     	Move into directory:			cd ~/aurch
     	Set up chroot:				aurch --setup		 
