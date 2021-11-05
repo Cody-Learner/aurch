@@ -13,10 +13,10 @@ Usage: aurch [operation] [package]
 
 Operations: <br>
 
-    --setup		Sets up a chroot
+        --setup		Sets up a chroot
     -B, --build		Builds an AUR package in chroot
-    --chrootpacman	Manually run pacman in chroot
-    --pgp		Manually import pgp key in chroot
+        --chrootpacman	Manually run pacman in chroot
+        --pgp		Manually import pgp key in chroot
     -h, --help		Prints help
 
 Examples: <br>
