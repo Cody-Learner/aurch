@@ -16,6 +16,7 @@ Note: <br>
 This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
 Scripts such as devtools and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
 <br>
+
     Usage:
     		aurch --setup, [-B,-G,-C] [package], --pgp [pgp key], --clean
     
