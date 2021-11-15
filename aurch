@@ -13,8 +13,7 @@ chroot="${basedir}/chroot-$(< .#ID)"				# HOST path to ${basedir}	  : /home/aurc
 chrbuilduser="/home/builduser"					# CHROOT builduser home directory.: /home/builduser
 homebuilduser="${basedir}/chroot-$(< .#ID)/home/builduser"	# HOST   builduser home directory.: /home/<user>/Testing/2/chroot-<xxx>/home/builduser/
 package="${2,,}"						# Converts <package> to lower case.
-# [[ ! -v AURREPO ]] && AURREPO="/var/cache/pacman/aur/"	# HOST  local pacman aur repo.
-[[ ! -v AURREPO ]] && AURREPO="/tmp/new-aurch/"
+[[ ! -v AURREPO ]] && AURREPO="/tmp/aurch/"			# HOST  local pacman aur repo.
 [[ ! -d ${AURREPO} ]] && mkdir "${AURREPO}"			# Creates host AUR repo.
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')		# Aurch color pointer
 error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')		# Red 'ERROR' text
