@@ -226,7 +226,7 @@ EOF
 
 	inject_build_order
 
-	echo "${czm} [sudo] needed to run 'systemd-nspawn' [line ${LINENO}]."
+	echo "[sudo] needed to run 'systemd-nspawn' [line ${LINENO}]."
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
 	./buildorder.sh
 
