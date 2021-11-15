@@ -1,20 +1,20 @@
 # aurch
 
-Aurch creates a chroot, sets up aurutils with a local AUR repo*, and sets up 'builduser'* in the directory it's ran in. <br>
+Aurch sets up aurutils, sets up a local AUR repo, sets up a builduser, all within a chroot. <br>
 Can be used for various AUR package related tasks including -B, for easy one command builds. <br>
-Upon completing AUR build/s, aurch will place copy/s of the package/s in the host AURREPO file. <br>
+Upon completing AUR build/s, aurch places copy/s of the package/s in the host AURREPO file. <br>
 Keeps a copy of AUR packages and dependencies built in the chroot for future use. <br>
-Automatically builds and installs required AUR dependencies in the chroot.<br>
-Automatically installs all required pgp keys in the chroot. <br>
+Automatically builds and installs required AUR dependencies in the chroot. <br>
+Automatically installs required pgp keys in the chroot. <br>
 Automatically maintains a 144 package count in the chroot via automated cleanup. <br>
 The chroot is intended to be reused. <br>
 The emphasis of this script is using a chroot for 'build isolation' rather than 'clean building'. <br>
 Isolates the build environment from the host. <br>
 <br>
-*(within the chroot)<br>
 <br>
-Note: This script isolates the build process from the host, not to be confused with building in a clean chroot. <br>
-      Scripts such as devtools and aurutils which uses devtools, do not isolate the build process from the host. <br>
+Note: <br>
+This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
+Scripts such as devtools and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
 <br>
     Usage:
     		aurch [operation] [package | pgp key] [--chrootpacman <pacman commands> <packages>]
