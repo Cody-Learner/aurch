@@ -17,7 +17,7 @@ This script isolates the build process from the host, not to be confused with bu
 Scripts such as devtools and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
 <br>
     Usage:
-    		aurch [operation] [package | pgp key] [--chrootpacman <pacman commands> <packages>]
+    		aurch --setup, [-B,-G,-C] [package], --pgp [pgp key], --clean
     
     
     Operations: 
