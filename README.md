@@ -1,6 +1,9 @@
 # aurch
 
-Aurch sets up aurutils, sets up a local AUR repo, sets up a builduser, all within a chroot. <br>
+The emphasis of aurch is using a chroot for 'build isolation' rather than 'clean chroot building'. <br>
+Isolates the build environment to mitigate build script related issues potentially creating issues on the host. <br>
+<br>
+Aurch sets up aurutils, sets up a local AUR repo, sets up a builduser, within a chroot. <br>
 Can be used for various AUR package related tasks including -B, for easy one command builds. <br>
 Upon completing AUR build/s, aurch places copy/s of the package/s in the host AURREPO file. <br>
 Keeps a copy of AUR packages and dependencies built in the chroot for future use. <br>
@@ -8,13 +11,12 @@ Automatically builds and installs required AUR dependencies in the chroot. <br>
 Automatically installs required pgp keys in the chroot. <br>
 Automatically maintains a 144 package count in the chroot via automated cleanup. <br>
 The chroot is intended to be reused. <br>
-The emphasis of this script is using a chroot for 'build isolation' rather than 'clean building'. <br>
-Isolates the build environment from the host. <br>
 <br>
 <br>
 Note: <br>
 This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
 Scripts such as devtools and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
+https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
 <br>
 
     Usage:
@@ -58,10 +60,12 @@ Scripts such as devtools and aurutils, which uses devtools, were not written to 
 
 Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
-
 <br>
 <br>
 NEWS/UPDATE INFO:<br>
+<br>
+UPDATE For  Nov 20, 2021 <br>
+Fixed for proper split package handling.
 <br>
 UPDATE For  Nov 14, 2021 <br>
 Rewrote aurch to no longer require AUR dependencies. No AUR helper required on host. <br>

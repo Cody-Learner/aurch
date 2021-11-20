@@ -1,38 +1,23 @@
 #!/bin/bash
-# aurch 2021-11-14
-# dependencies: arch-install-scripts base-devel git (AUR helper not required)*
-# Aurch sets up a chroot and builds AUR packages from within it with aurutils. 
-# Aurch focus is on package 'build isolation' rather than 'clean chroot builds'.
+# aurch 2021-11-20
+# dependencies: arch-install-scripts base-devel git *
+# * Aurutils is installed and setup in the chroot. Not as a dependency on host.
 
-# * Aurutils is installed and setup in the chroot. Not required as a dependency on host.
 #========================================================================================================================#
 
-basedir="$(pwd)"						# HOST  base directory.		  : /home/aurch-chroot/
-[[ ! -s ${basedir}/.#ID ]] && mktemp -u XXX > .#ID		# Creates unique chroot suffix.
+basedir="$(pwd)"						# HOST  base directory		  : /home/aurch-chroot/
+[[ ! -s ${basedir}/.#ID ]] && mktemp -u XXX > .#ID		# Create unique chroot suffix.
 chroot="${basedir}/chroot-$(< .#ID)"				# HOST path to ${basedir}	  : /home/aurch-chroot/chroot-xxx
-chrbuilduser="/home/builduser"					# CHROOT builduser home directory.: /home/builduser
-homebuilduser="${basedir}/chroot-$(< .#ID)/home/builduser"	# HOST   builduser home directory.: /home/<user>/Testing/2/chroot-<xxx>/home/builduser/
-package="${2,,}"						# Converts <package> to lower case.
-[[ ! -v AURREPO ]] && AURREPO="/tmp/aurch/"			# HOST  local pacman aur repo.
-[[ ! -d ${AURREPO} ]] && mkdir "${AURREPO}"			# Creates host AUR repo.
-czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')		# Aurch color pointer
-error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')		# Red 'ERROR' text
-line2=$(printf %"$(tput cols)"s |tr " " "-")			# Sets line '---' to terminal width
+chrbuilduser="/home/builduser"					# CHROOT builduser home directory : /home/builduser
+homebuilduser="${basedir}/chroot-$(< .#ID)/home/builduser"	# HOST   builduser home directory : /home/<user>/Testing/2/chroot-<xxx>/home/builduser/
+package="${2,,}"						# Convert <package> to lower case.
+[[ ! -v AURREPO ]] && AURREPO="/tmp/aurch"			# HOST  local pacman aur repo.
+[[ ! -d ${AURREPO} ]] && mkdir "${AURREPO}"			# Create host AUR repo.
+czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')		# Aurch color pointer.
+error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')		# Red 'ERROR' text.
+line2=$(printf %"$(tput cols)"s |tr " " "-")			# Set line '---' to terminal width.
 ccq="sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'"			# Remove color code from czm.
 
-# Colors:	Black '\033[1;90m'   Red    '\033[1;91m'   Green '\033[1;92m'   Yellow '\033[1;93m'
-#		Blue  '\033[1;94m'   Purple '\033[1;95m'   Cyan  '\033[1;96m'   White  '\033[1;97m'
-# cancel '\033[00m'
-
-# For troubleshooting:
-# set -o xtrace
-# export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-# echo -e '\033[00m'
-
-# Options to eliminate gpg "using insecure memory warning" bug:
-# 1) make gpg binary setuid root
-# 2) add 'no-secmem-warning' to ~/.gnupg/gpg-conf
-# 3) add this to end of gpg command in fetch_pgp_key function:   2>&1 | grep -v 'insecure memory'
 #========================================================================================================================#
 
 help(){
@@ -57,7 +42,7 @@ DESCRIPTION
 ${line2}
 
 Usage:
-		aurch [operation] [package | pgp key] [--chrootpacman <pacman commands> <packages>]
+		aurch [operation] [package | pgp key]
 
 
 Operations: 
@@ -85,10 +70,10 @@ Examples:
 
 Variables:
 		AURREPO </path/to/host/directory>
-		Default: /tmp/aurch
+		AURREPO Default: /tmp/aurch
 
-		To have packages copied to local pacman repo or directory run or edit:
-		AURREPO="/path/to/host-repo"
+		To copy built AUR packages to host, set:
+		AURREPO="/path/to/host/local-pacman-repo"
 Misc:
 		${czm} Aurch runtime messages will be proceeded with this.
 		${czm}${error}Aurch runtime errors will be proceeded with this.
@@ -96,18 +81,12 @@ Misc:
 ${line2}
 EOF
 }
-
 #========================================================================================================================#
 
 setup_up(){
 
-	Database="${chroot}/var/lib/pacman/"
-	Pacconf="${chroot}/etc/pacman.conf"
-
-
 	mkdir "${chroot}"
 
-	echo "[sudo] needed to run 'sudo chown root:root' on ${chroot} [line ${LINENO}]."
 	sudo chown root:root "${chroot}"
 
 if	sudo pacstrap "${chroot}" base base-devel git ; then
@@ -115,10 +94,10 @@ if	sudo pacstrap "${chroot}" base base-devel git ; then
 	echo "${czm} Pacstrap finished chroot install."
 	sleep 2
 
-	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${chroot}"										|| { echo "[line ${LINENO}]" ; exit ; }
 
 	sudo rm -rd "${chroot}"/var/lib/pacman/sync/*.db
-	sudo systemd-nspawn -q 	pacman -Syy						|| { echo "[line ${LINENO}]" ; exit ; }
+	sudo systemd-nspawn -q 	pacman -Syy							|| { echo "[line ${LINENO}]" ; exit ; }
 
 	sudo systemd-nspawn -q    useradd -m -G wheel -s /bin/bash builduser
 	sudo systemd-nspawn -q    mkdir /build
@@ -133,7 +112,7 @@ if	sudo pacstrap "${chroot}" base base-devel git ; then
 
 	echo "${czm} Following is the contents of new file: /etc/aurt.conf"
 
-cat	<<-EOF   | sudo tee "${chroot}"/etc/aurt.conf
+cat	<<-EOF	  | sudo tee "${chroot}"/etc/aurt.conf
 
 	[options]
 	CacheDir    = /build
@@ -170,7 +149,15 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 	sudo systemd-nspawn -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
 	makepkg -si --noconfirm
 
-	sudo pacman -r "${chroot}" -b "${Database}" --config "${Pacconf}" --noconfirm -Qq | nl > .#orig-pkgs.log
+	sudo pacman	-r "${chroot}" \
+			-b "${chroot}/var/lib/pacman/" \
+			--config "${chroot}/etc/pacman.conf" \
+			--noconfirm -Qq \
+			| nl > .#orig-pkgs.log
+
+	if	[[ -e  aurch.README ]]; then
+		rm aurch.README
+	fi
 
 	touch aurch.README
 	echo; echo "${czm} Setup completed."					| tee >(eval "${ccq}" >>aurch.README) ; wait $!
@@ -184,109 +171,123 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 fi
 
 }
+#========================================================================================================================#
 
+is_it_available(){
+
+	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${package}" \
+		| jshon -e results -a -e  Name \
+		| awk -F\" '{print $2}')
+
+if	[[ ${package} != "${check}" ]] ; then
+	echo "${czm}${error}\"${package}\" not available. See: https://aur.archlinux.org/packages/"
+	exit
+fi
+
+}
 #========================================================================================================================#
 
 fetch_pkg(){
 
-	cd										|| { echo "[line ${LINENO}]" ; exit ; }
-
-	echo "[sudo] needed for 'systemd-nspawn' [line ${LINENO}]."
+	is_it_available
 
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" \
 	aur fetch -Sr "${package}" | tee >(awk -F\' '/Cloning/ {print $2}' >"${homebuilduser}"/cloned-pkgs)
-	#[SAVE] -r Download packages and their dependencies
 	#[SAVE] -S Alias for --sync=auto
+	#[SAVE] -r Download packages and their dependencies
 
 if	[[ -s ${homebuilduser}/cloned-pkgs ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
-	nl "${homebuilduser}"/cloned-pkgs							# SC2002: Printing file to screen with .
+	nl "${homebuilduser}"/cloned-pkgs
     else
-	echo "${czm} The package ${package} and/or it's AUR depends are already available." 
+	echo "${czm} ${package} and/or it's AUR depends already available in chroot."
 fi
 
 }
-
 #========================================================================================================================#
 
 build_pkg(){
 
-	find "${chroot}"/build/*pkg.tar* 2>/dev/null >/tmp/before
+	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${homebuilduser}"/before
 
-	inject_build_order(){
+	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit ; }
 
-		cat <<-EOF > "${homebuilduser}/buildorder.sh"
-		#!/bin/bash
-		aur depends -n "${package}" >buildorder-file
+	cat <<-EOF	> "${homebuilduser}/buildorder.sh"
+	#!/bin/bash
+	aur depends -b "${package}" >buildorder-file
+	aur depends -n "${package}" | grep -v "${package}" >dependencies-file
 EOF
-		chmod +x "${homebuilduser}/buildorder.sh"
-	}
+	chmod +x "${homebuilduser}/buildorder.sh"
 
-	cd "${homebuilduser}"								|| { echo "[line ${LINENO}]" ; exit ; }
-
-	inject_build_order
-
-	echo "[sudo] needed to run 'systemd-nspawn' [line ${LINENO}]."
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
 	./buildorder.sh
 
 	echo "${czm} Buildorder list for ${package}:"
 	nl buildorder-file
 
-	readarray -t -O1 buildorder <"${homebuilduser}"/buildorder-file
-	num=$(( $(printf '%s\n' "${#buildorder[*]}") - 1 ))
+	echo "${czm} AUR dependencies list for ${package}:"
+	nl dependencies-file
 
-for	dependency in "${buildorder[@]:0:${num}}"
+	readarray -t -O1 buildorder <"${homebuilduser}"/buildorder-file
+
+	depi=$(( ${#buildorder[*]} - 1 ))
+	pkgi="${#buildorder[*]}"
+
+for	dependency in "${buildorder[@]:0:${depi}}"
     do
-	cd "${homebuilduser}/${dependency}"						|| { echo "[line ${LINENO}]" ; exit ; }
+
+	cd "${homebuilduser}/${dependency}"							|| { echo "[line ${LINENO}]" ; exit ; }
 	package="${dependency}"
 
 	fetch_pgp_key
 
-	echo "${czm} Building and installing ${buildorder[${#buildorder[*]}]} dependency: ${dependency}"
+	echo "${czm} Building and installing ${buildorder[${pkgi}]} dependency: ${dependency}"
 
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${dependency}" --pipe \
 	aur build -ns --margs -i
     done
-        echo  "${czm} Building: ${buildorder[${#buildorder[*]}]}"
+        echo  "${czm} Building: ${buildorder[${pkgi}]}"
 
-	cd "${homebuilduser}/${buildorder[${#buildorder[*]}]}"				|| { echo "[line ${LINENO}]" ; exit ; }
-	package="${buildorder[${#buildorder[*]}]}"
+	cd "${homebuilduser}/${buildorder[${pkgi}]}"						|| { echo "[line ${LINENO}]" ; exit ; }
+	package="${buildorder[${pkgi}]}"
 
 	fetch_pgp_key
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[${#buildorder[*]}]}" --pipe \
+	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe \
 	aur build -fnsr
 
-	find "${chroot}"/build/*pkg.tar* 2>/dev/null >/tmp/after
+	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${homebuilduser}"/after
 
-	comm -23 <(sort /tmp/after) <(sort /tmp/before) >"${homebuilduser}"/move
+	comm -23 <(sort "${homebuilduser}"/after) <(sort "${homebuilduser}"/before) >"${homebuilduser}"/move
 
-	rm -f /tmp/move
+	rm -f "${homebuilduser}"/moved
 
-	for pkg in $(< "${homebuilduser}"/move); do
-	basename "${pkg}" >> /tmp/move
+	for pkg in $(< "${homebuilduser}"/move)
+    do
 	cp "${pkg}" "${AURREPO}" || echo "${czm}${error} moving package."
-
-	done
+	basename "${pkg}" >> "${homebuilduser}"/moved
+    done
 
 	cleanup_chroot
 
+if	[[ -s  ${homebuilduser}/moved ]] ; then
 	echo "${czm} Copied AUR package/s to host AURREPO:"
-	nl /tmp/move
+	nl "${homebuilduser}"/moved
+    else
+	echo "${czm} Rebuilt ${package} available in chroot/build"
+fi
 
 }
-
 #========================================================================================================================#
 
 fetch_pgp_key(){
 
 	inject_receivekeys_script(){
 
-	cat <<-'EOF' > "${homebuilduser}/${package}/receivekeys"
+	cat <<-'EOF'	> "${homebuilduser}/${package}/receivekeys"
 	#!/bin/bash
 	for key in $(< pgp-keys) ; do
-	gpg --keyserver keyserver.ubuntu.com --recv-key "${key}" 
+	gpg --keyserver keyserver.ubuntu.com --recv-key "${key}"
 	done
 EOF
 	sudo chmod +x "${homebuilduser}/${package}/receivekeys"
@@ -309,10 +310,7 @@ if	[[ -s pgp-keys ]] ; then
 	rm pgp-keys
 fi
 
-set +x
-
 }
-
 #========================================================================================================================#
 
 cleanup_chroot(){
@@ -326,30 +324,17 @@ if	[[ ! -e ${chroot}/root/clean ]]; then
 	cat <<-'EOF'	>"${homebuilduser}"/clean
 	#!/bin/bash
 	comm -23 <(pacman -Qq) <(awk '{print $2}' base) | xargs  pacman -Rns --noconfirm 2>/dev/null || \
-
 	echo "     Package count: $(pacman -Qq | wc -l). Nothing to do."
 EOF
 	sudo mv "${homebuilduser}"/clean	"${chroot}"/root/clean
 	sudo chown root:root "${chroot}"/root/clean
 	sudo chmod +x "${chroot}"/root/clean
 fi
-	echo "${czm} Removing unneeded dependencies in chroot."
+	echo "${czm} Checking/Cleaning chroot."
 
-	echo "[sudo] needed for systemd-nspawn [line ${LINENO}]"
 	sudo systemd-nspawn -q -D "${chroot}"  --chdir=/root --pipe \
 	./clean
 }
-
-#========================================================================================================================#
-
-chroot_pacman(){
-
-	Database="${chroot}/var/lib/pacman/"
-	Pacconf="${chroot}/etc/pacman.conf"
-
-	sudo pacman -r "${chroot}" -b "${Database}" --config "${Pacconf}" --noconfirm "${@}"
-}
-
 #========================================================================================================================#
 												
 manual_pgp_key(){
@@ -358,9 +343,8 @@ manual_pgp_key(){
 exit
 
 }
-
 #========================================================================================================================#
-						### If no args ###
+												# Aurch called with no args message.
 if      [[ -z ${*} ]]; then
 	echo "Aurch sets up and builds AUR packages in a chroot."
 	echo "Chroot ID: $(basename "${chroot}")"
@@ -375,7 +359,6 @@ while :; do
 	-C|--compile)		build_pkg							;;
 	--clean)		cleanup_chroot							;;
 	--setup)		setup_up							;;
-	--chrootpacman)		shift; chroot_pacman "${@}"	  				;;
 	--testrun)		test_run							;;
 	--pgp)			key="${2}" manual_pgp_key					;;
 	-h|--help)		help								;;
