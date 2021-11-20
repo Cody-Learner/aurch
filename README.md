@@ -15,8 +15,8 @@ The chroot is intended to be reused. <br>
 <br>
 Note: <br>
 This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
-Scripts such as devtools and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
-https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
+Scripts such as devtools* and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
+* https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
 <br>
 
     Usage:
@@ -65,7 +65,8 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 NEWS/UPDATE INFO:<br>
 <br>
 UPDATE For  Nov 20, 2021 <br>
-Fixed for proper split package handling.
+Fixed for proper split package handling.<br>
+<br>
 <br>
 UPDATE For  Nov 14, 2021 <br>
 Rewrote aurch to no longer require AUR dependencies. No AUR helper required on host. <br>
