@@ -16,7 +16,7 @@ The chroot is intended to be reused. <br>
 Note: <br>
 This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
 Scripts such as devtools* and aurutils, which uses devtools, were not written to and do not isolate the build process from the host. <br>
-* https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
+\* https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
 <br>
 
     Usage:
