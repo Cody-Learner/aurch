@@ -1,7 +1,7 @@
 # aurch
 
-The emphasis of aurch is using a chroot for 'build isolation' rather than 'clean chroot building'. <br>
-Isolates the build environment to mitigate build script related issues potentially creating issues on the host. <br>
+The emphasis of aurch is using a chroot for AUR 'build isolation' rather than 'clean chroot building'. <br>
+Aurch isolates the build environment to mitigate build script errors or malicious intent causing issues on the host. <br>
 <br>
 Aurch sets up aurutils, sets up a local AUR repo, sets up a builduser, within a chroot. <br>
 Can be used for various AUR package related tasks including -B, for easy one command builds. <br>
