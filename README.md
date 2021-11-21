@@ -66,6 +66,10 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 NEWS/UPDATE INFO:<br>
 <br>
+UPDATE For  Nov 21, 2021 <br>
+Added function to add packages to hosts AUR repo database.<br>
+<br>
+<br>
 UPDATE For  Nov 20, 2021 <br>
 Fixed for proper split package handling.<br>
 <br>

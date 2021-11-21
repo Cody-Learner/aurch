@@ -208,6 +208,8 @@ fi
 
 build_pkg(){
 
+	cacheB=$(find "${AURREPO}"/*pkg.tar* 2>/dev/null |sort)
+
 	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${homebuilduser}"/before
 
 	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit ; }
@@ -268,6 +270,10 @@ for	dependency in "${buildorder[@]:0:${depi}}"
 	basename "${pkg}" >> "${homebuilduser}"/moved
     done
 
+	cacheA=$(find "${AURREPO}"/*pkg.tar*|sort)
+
+	comm -23 <(printf '%s\n' "${cacheA}") <(printf '%s\n' "${cacheB}") | tee > "${AURREPO}"/added-pkgs
+
 	cleanup_chroot
 
 if	[[ -s  ${homebuilduser}/moved ]] ; then
@@ -276,8 +282,27 @@ if	[[ -s  ${homebuilduser}/moved ]] ; then
     else
 	echo "${czm} Rebuilt ${package} available in chroot/build"
 fi
-
+	upd_aur_db
 }
+#========================================================================================================================#
+
+upd_aur_db(){
+
+if	find ${AURREPO}/*.db.tar.gz &>/dev/null && [[ -s ${AURREPO}/added-pkgs ]]; then
+
+	echo "${czm} Adding package/s to host 'AURREPO'"
+
+	for pkg in $(< ${AURREPO}/added-pkgs)
+   do
+	repo-add --new  /var/cache/pacman/aur/aur.db.tar "${pkg}"
+#	sudo pacsync aur
+   done
+	rm ${AURREPO}/added-pkgs
+fi
+}
+
+
+
 #========================================================================================================================#
 
 fetch_pgp_key(){
