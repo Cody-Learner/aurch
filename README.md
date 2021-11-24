@@ -21,20 +21,20 @@ References: <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
 <br>
 
-Usage:
-		aurch [operation] [package | pgp key]
+    Usage:
+    		aurch [operation] [package | pgp key]
 
 
-Operations: 
-		    --setup		Sets up a chroot
-		-B  --build		Builds an AUR package in one step
-		-G  --git		Git clones an AUR package
-		-C  --compile		Builds an AUR package on existing PKGBUILD
-		-L  --listup		List updates. (pkgs in chroot AUR repo, compare local vs remote git HEAD, list mismatches)
-		    --clean		Manually remove unneeded packages from chroot
-		    --pgp		Manually import pgp key in chroot
-		-h, --help		Prints help
-    
+    Operations: 
+    		    --setup		Sets up a chroot
+    		-B  --build		Builds an AUR package in one step
+    		-G  --git		Git clones an AUR package
+    		-C  --compile		Builds an AUR package on existing PKGBUILD
+    		-L  --listup		List updates. (pkgs in chroot AUR repo, compare local vs remote git HEAD, list mismatches)
+    		    --clean		Manually remove unneeded packages from chroot
+    		    --pgp		Manually import pgp key in chroot
+    		-h, --help		Prints help
+        
     Overview:
     		Run 'aurch --setup' before attempting to build packages.
     		Run aurch from directory containing chroot created during 'aurch --setup'.
