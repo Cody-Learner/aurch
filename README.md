@@ -46,7 +46,7 @@ References: <br>
     		Build an AUR package in the chroot:		aurch -B <aur-package>
     		Git clone an AUR package:			aurch -G <aur-package>
     		Build (Compile) AUR pkg on existing PKGBUILD:	aurch -C <aur-package>
-		List chroot AUR repo package updates:		aurch -L
+    		List chroot AUR repo package updates:		aurch -L
     		Manually import a pgp key in chroot:		aurch --pgp <short or long key id>
     		Manually remove unneeded packages in chroot:	aurch --clean
     
