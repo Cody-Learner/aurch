@@ -6,7 +6,7 @@ Aurch isolates the build environment to mitigate build script errors or maliciou
 Aurch sets up aurutils, sets up a local AUR repo, sets up a builduser, within a chroot. <br>
 Can be used for various AUR package related tasks including -B, for easy one command builds. <br>
 Upon completing AUR build/s, aurch places copy/s of the package/s in the host AURREPO file. <br>
-Keeps a copy of AUR packages and dependencies built in the chroot for future use. <br>
+Keeps a copy of all AUR packages and dependencies built in the chroot AUR repo for future use. <br>
 Automatically builds and installs required AUR dependencies in the chroot. <br>
 Automatically installs required pgp keys in the chroot. <br>
 Automatically maintains a 144 package count in the chroot via automated cleanup. <br>
@@ -21,18 +21,19 @@ References: <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
 <br>
 
-    Usage:
-    		aurch --setup, [-B,-G,-C] [package], --pgp [pgp key], --clean
-    
-    
-    Operations: 
-    		    --setup		Sets up a chroot
-    		-B  --build		Builds an AUR package in one step
-    		-G  --git		Git clones an AUR package (allowing modification before building)
-    		-C  --compile		Builds an AUR package on existing PKGBUILD
-    		    --clean		Manually remove unneeded packages from chroot
-    		    --pgp		Manually import pgp key in chroot
-    		-h, --help		Prints help
+Usage:
+		aurch [operation] [package | pgp key]
+
+
+Operations: 
+		    --setup		Sets up a chroot
+		-B  --build		Builds an AUR package in one step
+		-G  --git		Git clones an AUR package
+		-C  --compile		Builds an AUR package on existing PKGBUILD
+		-L  --listup		List updates. (pkgs in chroot AUR repo, compare local vs remote git HEAD, list mismatches)
+		    --clean		Manually remove unneeded packages from chroot
+		    --pgp		Manually import pgp key in chroot
+		-h, --help		Prints help
     
     Overview:
     		Run 'aurch --setup' before attempting to build packages.
@@ -43,8 +44,9 @@ References: <br>
     		Move into directory:				cd ~/aurbuilds
     		Set up chroot:					aurch --setup		 
     		Build an AUR package in the chroot:		aurch -B <aur-package>
-    		Git clone an AUR package			aurch -G <aur-package>
-    		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C <aur-package>
+    		Git clone an AUR package:			aurch -G <aur-package>
+    		Build (Compile) AUR pkg on existing PKGBUILD:	aurch -C <aur-package>
+		List chroot AUR repo package updates:		aurch -L
     		Manually import a pgp key in chroot:		aurch --pgp <short or long key id>
     		Manually remove unneeded packages in chroot:	aurch --clean
     
@@ -66,20 +68,23 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 NEWS/UPDATE INFO:<br>
 <br>
+<br>
+UPDATE For  Nov 24, 2021 <br>
+Added '-L  --listup' operation, to lists updates. <br>
+The new function runs on the packages in the chroot AUR repo. <br>
+It compares local vs remote git HEAD and lists mismatching packages. <br>
+<br>
 UPDATE For  Nov 21, 2021 <br>
 Added function to add packages to hosts AUR repo database.<br>
 <br>
-<br>
 UPDATE For  Nov 20, 2021 <br>
 Fixed for proper split package handling.<br>
-<br>
 <br>
 UPDATE For  Nov 14, 2021 <br>
 Rewrote aurch to no longer require AUR dependencies. No AUR helper required on host. <br>
 Creates a chroot with aurutils set up, including a local pacman AUR repo, inside the chroot. <br>
 Added ability to git clone and build package independently to ease customization. <br>
 AUR packages are retained in the chroot for dependency usage. <br>
-<br>
 <br>
 NEWS FOR Oct 31, 2021: <br>
 Initial release of the aurch script. <br>
