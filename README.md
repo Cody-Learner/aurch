@@ -69,6 +69,12 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 NEWS/UPDATE INFO:<br>
 <br>
 <br>
+UPDATE For  Nov 27, 2021 <br>
+Rewrote 'here document' usage to extend systemd-nspawn functionality, rather than inserting multiple small scripts into chroot. <br>
+Added code and printed comments relating to rebuilding and reinstalling same version of packages. <br>
+Reworked 'setup_chroot' function to eliminated the evil 'eval' command. <br>
+Integrated /var/tmp directory usage in chroot and added file extensions to ease it's cleanup. <br>
+<br>
 UPDATE For  Nov 24, 2021 <br>
 Added '-L  --listup' operation, to lists updates. <br>
 The new function runs on the packages in the chroot AUR repo. <br>

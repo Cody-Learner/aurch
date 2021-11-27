@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2021-11-24
+# aurch 2021-11-27
 # dependencies: arch-install-scripts base-devel git *
 # * Aurutils is installed and setup in the chroot. Not as a dependency on host.
 
@@ -13,10 +13,12 @@ homebuilduser="${basedir}/chroot-$(< .#ID)/home/builduser"	# HOST   builduser ho
 package="${2,,}"						# Convert <package> to lower case.
 [[ ! -v AURREPO ]] && AURREPO="/tmp/aurch"			# HOST  local pacman aur repo.
 [[ ! -d ${AURREPO} ]] && mkdir "${AURREPO}"			# Create host AUR repo.
+tmpc="/var/tmp/aurch"						# CHROOT tmp dir (used within chroot)
+tmph="${chroot}${tmpc}"						# HOST tmp dir   (used on host)
+[[ -d ${chroot} && ! -d ${tmph} ]] && mkdir "${tmph}"		# Create aurch tmp directory.
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')		# Aurch color pointer.
 error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')		# Red 'ERROR' text.
 line2=$(printf %"$(tput cols)"s |tr " " "-")			# Set line '---' to terminal width.
-ccq="sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'"			# End color code.
 
 #========================================================================================================================#
 
@@ -77,15 +79,14 @@ Variables:
 		To copy built AUR packages to host, set:
 		AURREPO="/path/to/host/local-pacman-repo"
 Misc:
-		${czm} Aurch runtime messages will be proceeded with this.
-		${czm}${error}Aurch runtime errors will be proceeded with this.
+		Aurch runtime messages will be proceeded with this: ${czm}
+		Aurch runtime errors will be proceeded with this: ${czm}${error}
 
 ${line2}
 EOF
 }
 #========================================================================================================================#
-
-setup_up(){
+setup_chroot(){
 
 	mkdir "${chroot}"
 
@@ -96,10 +97,10 @@ if	sudo pacstrap "${chroot}" base base-devel git ; then
 	echo "${czm} Pacstrap finished chroot install."
 	sleep 2
 
-	cd "${chroot}"										|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${chroot}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	sudo rm -rd "${chroot}"/var/lib/pacman/sync/*.db
-	sudo systemd-nspawn -q 	pacman -Syy							|| { echo "[line ${LINENO}]" ; exit ; }
+	sudo systemd-nspawn -q 	pacman -Syy							|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	sudo systemd-nspawn -q    useradd -m -G wheel -s /bin/bash builduser
 	sudo systemd-nspawn -q    mkdir /build
@@ -128,7 +129,7 @@ EOF
     else
 	echo "${czm} Pacstrap failed."
 fi
-	cd "${basedir}"										|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${basedir}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 
@@ -160,14 +161,13 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 	if	[[ -e  aurch.README ]]; then
 		rm aurch.README
 	fi
-
-	touch aurch.README
-	echo; echo "${czm} Setup completed."					| tee >(eval "${ccq}" >>aurch.README) ; wait $!
-	echo "${czm} Chroot has base, base-devel, git, and aurutils installed."	| tee >(eval "${ccq}" >>aurch.README) ; wait $!
-	echo "${czm} User builduser is set up, no password required for sudo."	| tee >(eval "${ccq}" >>aurch.README) ; wait $!
-	echo "${czm} Local chroot AUR repo is setup as /build."			| tee >(eval "${ccq}" >>aurch.README) ; wait $!
-	echo "${czm} Do not alter #.ID file in base directory."			| tee >(eval "${ccq}" >>aurch.README) ; wait $!
-	echo
+	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >aurch.README)
+	${czm} Setup completed.
+	${czm} Chroot has base, base-devel, git, and aurutils installed.
+	${czm} User builduser is set up, no password required for sudo.
+	${czm} Local chroot AUR repo is setup as /build.
+	${czm} Do not alter files proceeded with '#.' in base directory.
+EOF
     else
 	echo; echo "${czm} User setup failed."
 fi
@@ -194,15 +194,13 @@ fetch_pkg(){
 	is_it_available
 
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" \
-	aur fetch -Sr "${package}" | tee >(awk -F\' '/Cloning/ {print $2}' >"${homebuilduser}"/cloned-pkgs.file)
+	aur fetch -Sr "${package}" | tee >(awk -F\' '/Cloning/ {print $2}' >"${tmph}"/cloned-pkgs.file)
 	#[SAVE] -S Alias for --sync=auto
 	#[SAVE] -r Download packages and their dependencies
 
-if	[[ -s ${homebuilduser}/cloned-pkgs.file ]]; then
+if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
-	nl "${homebuilduser}"/cloned-pkgs.file
-    else
-	echo "${czm} ${package} and/or it's AUR depends already available in chroot."
+	nl "${tmph}"/cloned-pkgs.file
 fi
 
 }
@@ -210,29 +208,25 @@ fi
 
 build_pkg(){
 
+	rm -f "${tmph}"/*.file
+
 	cacheB=$(find "${AURREPO}"/*pkg.tar* 2>/dev/null |sort)
 
-	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${homebuilduser}"/before.file
+	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${tmph}"/before.file
 
-	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
-	cat <<-EOF	> "${homebuilduser}/buildorder.sh"
-	#!/bin/bash
-	aur depends -b "${package}" >buildorder.file
-	aur depends -n "${package}" | grep -v "${package}" >dependencies.file
+	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
+	aur depends -b "${package}" >"${tmpc}"/buildorder.file
+	aur depends -n "${package}" | grep -v "${package}" >"${tmpc}"/dependencies.file
 EOF
-	chmod +x "${homebuilduser}/buildorder.sh"
-
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
-	./buildorder.sh
-
 	echo "${czm} Buildorder list for ${package}:"
-	nl buildorder.file
+	nl "${tmph}"/buildorder.file
 
 	echo "${czm} AUR dependencies list for ${package}:"
-	nl dependencies.file
+	nl "${tmph}"/dependencies.file
 
-	readarray -t -O1 buildorder <"${homebuilduser}"/buildorder.file
+	readarray -t -O1 buildorder <"${tmph}"/buildorder.file
 
 	depi=$(( ${#buildorder[*]} - 1 ))
 	pkgi="${#buildorder[*]}"
@@ -240,7 +234,7 @@ EOF
 for	dependency in "${buildorder[@]:0:${depi}}"
     do
 
-	cd "${homebuilduser}/${dependency}"							|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${homebuilduser}/${dependency}"							|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	package="${dependency}"
 
 	fetch_pgp_key
@@ -252,53 +246,55 @@ for	dependency in "${buildorder[@]:0:${depi}}"
     done
         echo  "${czm} Building: ${buildorder[${pkgi}]}"
 
-	cd "${homebuilduser}/${buildorder[${pkgi}]}"						|| { echo "[line ${LINENO}]" ; exit ; }
+	cd "${homebuilduser}/${buildorder[${pkgi}]}"						|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	package="${buildorder[${pkgi}]}"
 
 	fetch_pgp_key
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe \
-	aur build -fnsr
+	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe bash << EOF
+	aur build -fnsr |& tee >(grep 'WARNING:' >"${tmpc}"/warning.file) | tee >(grep 'Adding package' >"${tmpc}"/pkg-nv.file)
+EOF
+	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${tmph}"/after.file
 
-	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${homebuilduser}"/after.file
+	comm -23 <(sort "${tmph}"/after.file) <(sort "${tmph}"/before.file) >"${tmph}"/move.file
 
-	comm -23 <(sort "${homebuilduser}"/after.file) <(sort "${homebuilduser}"/before.file) >"${homebuilduser}"/move.file
-
-	rm -f "${homebuilduser}"/moved.file
-
-	for pkg in $(< "${homebuilduser}"/move.file)
+	for pkg in $(< "${tmph}"/move.file)
     do
-	cp "${pkg}" "${AURREPO}" || echo "${czm}${error} moving package."
-	basename "${pkg}" >> "${homebuilduser}"/moved.file
+	cp "${pkg}" "${AURREPO}" 						|| { echo "${czm}${error} copying package to AURREPO." ; exit 1 ; }
+	basename "${pkg}" >> "${tmph}"/moved.file
     done
-
-	cacheA=$(find "${AURREPO}"/*pkg.tar*|sort)
-
-	comm -23 <(printf '%s\n' "${cacheA}") <(printf '%s\n' "${cacheB}") | tee > "${AURREPO}"/added-pkgs
-
 	cleanup_chroot
 
-if	[[ -s  ${homebuilduser}/moved.file ]] ; then
+if	[[ -s  ${tmph}/moved.file ]] ; then
 	echo "${czm} Copied AUR package/s to host AURREPO:"
-	nl "${homebuilduser}"/moved.file
-    else
-	echo "${czm} Rebuilt ${package} available in chroot/build"
-fi
+	nl "${tmph}"/moved.file
+    else						# If a [r]e[b]uilt [p]ackage
+	if	[[ -s "${tmph}"/warning.file ]]; then
+		rbp=$(awk -F\' '{print $2}' "${tmph}"/pkg-nv.file)
+		cp "${chroot}/build/${rbp}" "${AURREPO}"		|| { echo "${czm}${error} copying rebuilt package to AURREPO." ; exit 1 ; }
+		echo "${czm} Copied rebuilt AUR package to host AURREPO:"
+		echo " ${rbp}"
+	fi							# If AURREPO is different after transaction, print diff to added-pkgs.file.
+fi								# "added-pkgs.file" used for test in "upd_aur_db" function.
+								# Note: Rebuilding a 'same version' package is not a notable difference.
+	cacheA=$(find "${AURREPO}"/*pkg.tar*|sort)
+	comm -23 <(printf '%s\n' "${cacheA}") <(printf '%s\n' "${cacheB}") | tee > "${tmph}"/added-pkgs.file
 	upd_aur_db
 }
 #========================================================================================================================#
 
 upd_aur_db(){
 
-if	find ${AURREPO}/*.db.tar.gz &>/dev/null && [[ -s ${AURREPO}/added-pkgs ]]; then
+if	find ${AURREPO}/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/added-pkgs.file ]]; then
+	echo "${czm} Adding package/s to host 'AURREPO' database"
 
-	echo "${czm} Adding package/s to host 'AURREPO'"
-
-	for pkg in $(< ${AURREPO}/added-pkgs)
+	for pkg in $(< "${tmph}"/added-pkgs.file)
    do
-	repo-add --new  /var/cache/pacman/aur/aur.db.tar "${pkg}"
+	repo-add "${AURREPO}"/aur.db.tar.gz "${pkg}"
    done
-	rm ${AURREPO}/added-pkgs
+    else
+	echo "${czm} No changes detected in AURREPO."
+	echo " To install rebuilt same version as installed package, use 'pacman -S'."
 fi
 }
 #========================================================================================================================#
@@ -307,9 +303,9 @@ check_updates(){
 
 	sudo -v
 
-	echo "${czm} Comparing local vs remote git HEAD."
+	echo "${czm} Comparing local vs remote git HEAD on:"
 
-	rm -f "${homebuilduser}"/updates
+	rm -f "${homebuilduser}"/updates.file
 
 	readarray -t list < <(pacman	-r "${chroot}"                       \
 					-b "${chroot}"/var/lib/pacman/       \
@@ -317,41 +313,34 @@ check_updates(){
 					-Slq aur)
 	for pkgs in "${list[@]}"
     do
-	cd "${homebuilduser}" || exit
+	cd "${homebuilduser}" 									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	if	! cd "${pkgs}" 2>/dev/null ; then
+		echo "${pkgs}" > "${tmph}"/pkgs.file
 
-		echo "${pkgs}" > "${homebuilduser}"/pkgs.file
-
-		cat <<-EOF > "${homebuilduser}"/basename.sh
-		#!/bin/bash
-		aur depends -b $(< pkgs.file) | head -1 > pkgs-basename.file
+		sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
+		aur depends -b "${pkgs}" | head -1 >"${tmpc}"/pkgs-basename.file
 EOF
-		chmod +x "${homebuilduser}"/basename.sh
-
-		sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
-		./basename.sh
-		
-		pkgs=$(< "${homebuilduser}"/pkgs-basename.file)
-		echo "Checking: $(< "${homebuilduser}"/pkgs.file) [Basename next line]:"
-		cd "${pkgs}"									|| { echo "[line ${LINENO}]" ; exit ; }
+												# ${vars} are expanded before it's here docked.
+		pkgs=$(< "${tmph}"/pkgs-basename.file)
+		echo "Checking: $(< "${tmph}"/pkgs.file) [Basename next line]:"
+		cd "${pkgs}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	fi
-
 	if	[[ -s PKGBUILD ]] ; then
 		C3=$(git ls-remote https://aur.archlinux.org/"${pkgs}".git HEAD| head -1 | awk '{print $1}')
 		C4=$(git rev-parse HEAD)
 
 			if	[[ ${C3} != "${C4}" ]]; then
-				echo "${pkgs}"	>> "${homebuilduser}"/updates
+				echo "${pkgs}"	>> "${tmph}"/updates.file
 			    else
 				echo "Checking: ${pkgs}"
 			fi
 	fi 
     done
 
-if	[[ -s  ${homebuilduser}/updates ]]; then
+if	[[ -s  ${tmph}/updates.file ]]; then
 	echo "${czm} Updates available."
-	awk '!x[$0]++' "${homebuilduser}"/updates
+	awk '!x[$0]++' "${tmph}"/updates.file
     else
 	echo "${czm} No updates available."
 fi
@@ -361,16 +350,6 @@ fi
 
 fetch_pgp_key(){
 
-	inject_receivekeys_script(){
-
-	cat <<-'EOF'	> "${homebuilduser}/${package}/receivekeys.sh"
-	#!/bin/bash
-	for key in $(< pgp-keys.file) ; do
-	gpg --keyserver keyserver.ubuntu.com --recv-key "${key}"
-	done
-EOF
-	sudo chmod +x "${homebuilduser}/${package}/receivekeys.sh"
-}
 	echo "${czm} Checking pgp key for ${package}."
 
 if	[[ -e .SRCINFO ]]; then
@@ -380,11 +359,12 @@ if	[[ -e .SRCINFO ]]; then
 	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
 	makepkg --printsrcinfo | awk '/validpgpkeys/ {print $3}' >pgp-keys.file
 fi
-
 if	[[ -s pgp-keys.file ]] ; then
-	inject_receivekeys_script
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
-	./receivekeys.sh
+	for key in $(< pgp-keys.file); do
+	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe bash << EOF
+	gpg --keyserver keyserver.ubuntu.com --recv-key "${key}" 2>&1 | grep -v 'insecure memory'
+EOF
+	done
     else
 	rm pgp-keys.file
 fi
@@ -394,25 +374,18 @@ fi
 
 cleanup_chroot(){
 
-if	[[ ! -e ${chroot}/root/base ]]; then
-	sudo cp  "${basedir}"/.#orig-pkgs.log	"${chroot}"/root/base
-fi
-
-if	[[ ! -e ${chroot}/root/clean ]]; then
-
-	cat <<-'EOF'	>"${homebuilduser}"/clean
-	#!/bin/bash
-	comm -23 <(pacman -Qq) <(awk '{print $2}' base) | xargs  pacman -Rns --noconfirm 2>/dev/null || \
-	echo "     Package count: $(pacman -Qq | wc -l). Nothing to do."
-EOF
-	sudo mv "${homebuilduser}"/clean	"${chroot}"/root/clean
-	sudo chown root:root "${chroot}"/root/clean
-	sudo chmod +x "${chroot}"/root/clean
+if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
+	awk '{print $2}'  "${basedir}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
 fi
 	echo "${czm} Checking/Cleaning chroot."
-
-	sudo systemd-nspawn -q -D "${chroot}"  --chdir=/root --pipe \
-	./clean
+	sudo systemd-nspawn -q -D "${chroot}" --pipe bash << EOF
+	comm -23 <(pacman -Qq) <(cat "${tmpc}"/orig-pkgs.log) \
+	| xargs  pacman -Rns --noconfirm 2>/dev/null \
+	|| echo " Package count: $(pacman -b "${chroot}/var/lib/pacman/" \
+					  --config "${chroot}/etc/pacman.conf" \
+					  --noconfirm \
+					  -Qq | wc -l). Nothing to do."
+EOF
 }
 #========================================================================================================================#
 												
@@ -438,8 +411,7 @@ while :; do
 	-C|--compile)		build_pkg							;;
 	-L|--listup)		check_updates							;;
 	--clean)		cleanup_chroot							;;
-	--setup)		setup_up							;;
-	--testrun)		test_run							;;
+	--setup)		setup_chroot							;;
 	--pgp)			key="${2}" manual_pgp_key					;;
 	-h|--help)		help								;;
 	-?*)                    echo "${czm}${error} Input error. Running --help" ; help	;;
