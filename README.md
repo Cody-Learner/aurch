@@ -88,7 +88,7 @@ NEWS/UPDATE INFO:<br>
 <br>
 UPDATE For  Nov 29, 2021 <br>
 Added pacutils as a dependency.<br>
-Added ability when overwriting existing packages in host to handle multiple entries (split package) copying to host.<br>
+Added ability when overwriting existing packages in host to handle multiple entries from split packages.<br>
 Rewrote check_updates function to reduce and simplify code.<br>
 Added/changed the following operations/options:<br>
 <br>
