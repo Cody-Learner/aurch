@@ -89,27 +89,28 @@ NEWS/UPDATE INFO:<br>
 UPDATE For  Nov 29, 2021 <br>
 Added pacutils as a dependency.<br>
 Added/changed the following operations/options:<br>
-Remove package operation:<br>
+<br>
+Remove package operation:
 
-    aurch -Rc  performs the following on chroot: <br>
-    * Removes package from local AUR repo, /build.<br>
-    * Removes build dir /home/builduser/<package>.<br>
-    * Removes <package> entry in AUR database.<br>
+    aurch -Rc  performs the following on chroot:
+    	Removes package from local AUR repo, /build.
+    	Removes build dir /home/builduser/<package>.
+    	Removes <package> entry in AUR database.
     
-    aurch -Rh performs the following on host.<br>
-    * Removes package from local AUR repo, AURREPO.<br>
-    * Removes <package> (pacman -Rns) if installed.<br>
-    * Removes <package> entry in AUR database.<br>
+    aurch -Rh performs the following on host.
+    	Removes package from local AUR repo, AURREPO.
+    	Removes <package> (pacman -Rns) if installed.
+    	Removes <package> entry in AUR database.
 
 Build packages option:<br>
 
-    * aurch -Bi	[i][installs] package in host after build.<br>
+    aurch -Bi	[i][installs] package in host after build.<br>
 
 List operation option:<br>
 
-    * aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].<br>
-    * aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].<br>
-    * aurch -Lhq	[q][quiet] lists host aur sync database [packages only].<br>
+    aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].<br>
+    aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].<br>
+    aurch -Lhq	[q][quiet] lists host aur sync database [packages only].<br>
 
 Added ability when overwriting existing packages in host to handle multiple entries (split package) copying to host.<br>
 Rewrote check_updates function to reduce and simplify code.<br>
