@@ -106,13 +106,13 @@ Remove package operation:<br>
 
 Build packages option:<br>
 
-    aurch -Bi	[i][install] package in host after build.<br>
+    aurch -Bi	[i][install] package in host after build.
 
 List operation option:<br>
 
-    aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].<br>
-    aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].<br>
-    aurch -Lhq	[q][quiet] lists host aur sync database [packages only].<br>
+    aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].
+    aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].
+    aurch -Lhq	[q][quiet] lists host aur sync database [packages only].
 
 <br>
 UPDATE For  Nov 27, 2021 <br>
