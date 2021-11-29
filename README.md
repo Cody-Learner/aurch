@@ -94,7 +94,7 @@ Added/changed the following operations/options:<br>
 <br>
 Remove package operation:<br>
 
-    aurch -Rc  Performs the following on chroot:
+    aurch -Rc	Performs the following on chroot:
     			Removes package from local AUR repo, /build.
     			Removes build dir /home/builduser/<package>.
     			Removes <package> entry in AUR database.
