@@ -89,8 +89,9 @@ NEWS/UPDATE INFO:<br>
 UPDATE For  Nov 29, 2021 <br>
 Added pacutils as a dependency.<br>
 Added/changed the following operations/options:<br>
-<br>
-Remove package operation:
+Added ability when overwriting existing packages in host to handle multiple entries (split package) copying to host.<br>
+Rewrote check_updates function to reduce and simplify code.<br>
+Remove package operation:<br>
 
     aurch -Rc  performs the following on chroot:
     	Removes package from local AUR repo, /build.
@@ -112,8 +113,6 @@ List operation option:<br>
     aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].<br>
     aurch -Lhq	[q][quiet] lists host aur sync database [packages only].<br>
 
-Added ability when overwriting existing packages in host to handle multiple entries (split package) copying to host.<br>
-Rewrote check_updates function to reduce and simplify code.<br>
 <br>
 UPDATE For  Nov 27, 2021 <br>
 Rewrote 'here document' usage to extend systemd-nspawn functionality, rather than inserting multiple small scripts into chroot. <br>
