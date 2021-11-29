@@ -29,7 +29,7 @@ References: <br>
     		    --setup		Sets up a chroot.
     		-B*  --build		Builds an AUR package in one step.
     		-G  --git		Git clones an AUR package.
-    		-C  --compile		Builds an AUR package on existing PKGBUILD.
+    		-C  --compile		Builds an AUR package on git clone after modifications.
     		-Rc  [--long NA]	Remove AUR pkg from chroot /build/<package>, $HOME/<build dir>, and database entry.
     		-Rh  [--long NA]	Remove AUR pkg from host /AURREPO/<package>, <package> if installed, and database entry.
     		-Lu*  --listupdates	List updates available for AUR packages in chroot AUR repo.
