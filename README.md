@@ -92,7 +92,7 @@ Added ability when overwriting existing packages in host to handle multiple entr
 Rewrote check_updates function to reduce and simplify code.<br>
 Added/changed the following operations/options:<br>
 <br>
-Remove package operation:<br>
+Remove operation:<br>
 
     aurch -Rc	Performs the following on chroot:
     			Removes package from local AUR repo, /build.
@@ -104,11 +104,11 @@ Remove package operation:<br>
     			Removes <package> (pacman -Rns) if installed.
     			Removes <package> entry in AUR database.
 
-Build packages option:<br>
+Build operation option:<br>
 
     aurch -Bi	[i][install] package in host after build.
 
-List operation option:<br>
+List operation options:<br>
 
     aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].
     aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].
