@@ -88,11 +88,8 @@ NEWS/UPDATE INFO:<br>
 <br>
 UPDATE For  Nov 29, 2021 <br>
 Added pacutils as a dependency.<br>
-<br>
 Added/changed the following operations/options:<br>
-<br>
 Remove package operation:<br>
-<br>
 	aurch -Rc  performs the following on chroot: <br>
 	* Removes package from local AUR repo, /build.<br>
 	* Removes build dir /home/builduser/<package>.<br>
@@ -102,21 +99,13 @@ Remove package operation:<br>
 	* Removes package from local AUR repo, AURREPO.<br>
 	* Removes <package> (pacman -Rns) if installed.<br>
 	* Removes <package> entry in AUR database.<br>
-<br>
-<br>
 Build packages option:<br>
-<br>
 	* aurch -Bi	[i][installs] package in host after build.<br>
-<br>
-<br>
 List operation option:<br>
-<br>
 	* aurch -Luq	[q][quiet] lists available aur updates for chroot [packages only].<br>
 	* aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].<br>
 	* aurch -Lhq	[q][quiet] lists host aur sync database [packages only].<br>
-<br>
 Added ability when overwriting existing packages in host to handle multiple entries (split package) copying to host.
-<br>
 Rewrote check_updates function to reduce and simplify code.
 <br>
 UPDATE For  Nov 27, 2021 <br>
