@@ -86,6 +86,14 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 NEWS/UPDATE INFO:<br>
 <br>
 <br>
+UPDATE For  Dec 10, 2021 <br>
+The predominant focus this time around was implementing some additional flexibility to allow aurch to be usable for more 
+than my personal setup and preferences. Implemented virtual hardware testing as a start towards this objective. <br>
+Split the system setup and building packages into separate scripts. To many additional smaller changes to go over here. 
+Future road map includes implementing a built in inspection step of downloaded AUR data and running a check for existing 
+PGP keys to eliminate needless re-downloading.<br>
+<br>
+<br>
 UPDATE For  Nov 29, 2021 <br>
 Added pacutils as a dependency.<br>
 Added ability when overwriting existing packages in host to handle multiple entries from split packages.<br>

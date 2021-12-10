@@ -1,0 +1,238 @@
+#!/bin/bash
+# aurch-setup 2021-12-10
+# dependencies: base-devel arch-install-scripts git pacutils jshon *
+# * Aurutils is installed and setup in the chroot. Not as a dependency on host.
+#======================================================================================================================#
+#-----------------------------# 3 User Set variables below. Uncomment and set paths. #------------------------------#
+# BASEDIR=/home/jeff/.aurch-AUR
+# AURREPO=/var/cache/pacman/aur
+# REPONAME=aurrepo
+#-------------------------------------------# Default variables list #----------------------------------------------#
+# BASEDIR="${HOME}"/.cache/aurch/base						# HOST chroot base path
+# AURREPO="${HOME}"/.cache/aurch/repo						# HOST aur repo path
+# REPONAME=aur									# HOST aur repo name
+#========================================================================================================================#
+[[ ! -v   BASEDIR  ]] && BASEDIR="${HOME}"/.cache/aurch/base			# Set    BASEDIR to default if unset
+[[ ! -d ${BASEDIR} ]] && mkdir -p "${BASEDIR}"					# Create BASEDIR directory if not present
+[[ ! -v   AURREPO  ]] && AURREPO="${HOME}"/.cache/aurch/repo			# Set    AURREPO to default in unset
+[[ ! -d ${AURREPO} ]] && mkdir -p "${AURREPO}"  2>/dev/null			# Create host AUR repo if not present
+[[ ! -v REPONAME   ]] && REPONAME=aur						# Set    REPONAME to default if unset
+[[ ! -s ${BASEDIR}/.#ID ]] && mktemp -u XXX > "${BASEDIR}"/.#ID			# If not present, create unique suffix file
+chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST   path to chroot
+chrbuilduser=/home/builduser							# CHROOT builduser home directory (same destination)
+homebuilduser="${chroot}"/home/builduser					# HOST   builduser home directory (same destination)
+#-------------------------------------------------------------------------------------------------------------------#
+czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')				# Aurch color pointer
+error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')				# Red 'ERROR' text.
+line2=$(printf %"$(tput cols)"s |tr " " "-")					# Set line '---' to terminal width
+#========================================================================================================================#
+# Print variables to .#aurch-setup-vars
+
+	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+	echo "
+	BASEDIR=${BASEDIR}
+	AURREPO=${AURREPO}
+	chroot=${chroot}
+	chrbuilduser=${chrbuilduser}
+	homebuilduser=${homebuilduser}" \
+	| awk ' {print;} NR % 1 == 0 { print ""; }' > "${BASEDIR}"/.#aurch-setup-vars
+
+#========================================================================================================================#
+check_depends(){
+
+	echo "${czm} Checking dependencies for aurch and arch-install."
+	sudo pacman --needed -S base-devel arch-install-scripts git pacutils jshon
+	echo
+}
+#========================================================================================================================#
+help(){
+cat << EOF
+${line2}
+
+NAME
+		aurch-setup - sets up a system for aurch
+
+DESCRIPTION
+		Aurch-setup sets up a system for the aurch script to build AUR packages.
+		It sets up a custom chroot specifically for building AUR packages. 
+		It will also set up a local pacman repo for AUR package on the host.
+		Aurutils is setup and installed within the chroot for building AUR packages.
+		It is not necessary to have an AUR helper installed on the host system.
+
+USAGE
+		aurch-setup [operation]
+
+OPERATIONS 
+                -Sc  --setupchroot	Sets up a chroot.
+                -Sh  --setuphost	Sets up the host aur repo.
+                -h   --help		Prints help.
+
+VARIABLES
+		User variables:
+				BASEDIR   Path to host aurch chroot setup.
+				AURREPO   Path to host pacman local AUR repo.
+		Defaults:
+				BASEDIR   "${HOME}"/.cache/aurch/build
+				AURREPO   "${HOME}"/.cache/aurch/repo
+
+EXAMPLES
+		Setup a chroot for aurch on the host:        aurch-setup -Sc		 
+		Setup a pacman local AUR repo on the host:   aurch-setup -Sh
+
+MISC
+		Aurch-setup runtime messages will be proceeded with this:   ${czm}
+		Aurch-setup runtime errors will be proceeded with this:     ${czm}${error}
+
+${line2}
+EOF
+}
+#========================================================================================================================#
+setup_chroot(){
+
+	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+	existing=$(find  "${BASEDIR}" -maxdepth 1 -type d -name "chroot-*" 2>/dev/null)
+
+if      [[ -n ${existing} ]]; then
+	echo "${czm}${error}An aurch chroot, '${chroot}' detected in '${BASEDIR}'."
+	echo " If you want to setup a new aurch chroot, the following need removed."
+	echo " ${chroot}"
+	echo " ${BASEDIR}/.#ID"
+	exit
+fi
+	echo "${czm} Building chroot."
+	sleep 5
+
+	mkdir "${chroot}"
+
+	sudo chown root:root "${chroot}"
+
+if      sudo pacstrap -c "${chroot}" base base-devel git ; then
+
+	echo "${czm} Pacstrap finished chroot install."
+	sleep 2
+
+	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+
+	mkdir -p "${chroot}"/var/tmp/aurch						|| { echo "[line ${LINENO}]" ; exit 1 ; }
+	sudo rm -rd "${chroot}"/var/lib/pacman/sync/*.db
+	sudo systemd-nspawn -q    useradd -m -G wheel -s /bin/bash builduser
+	sudo systemd-nspawn -q    mkdir /build
+	sudo systemd-nspawn -q    chown builduser:builduser /build
+	sudo systemd-nspawn -q sed -i '$a\#'				/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\[options]'			/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\CacheDir    = /build'		/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\[aur]'			/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\SigLevel = Optional TrustAll'	/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '$a\Server = file:///build'	/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '/CacheDir/s/^#//g'		/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '/ParallelDownloads/s/^#//g'	/etc/pacman.conf
+	sudo systemd-nspawn -q sed -i '/VerbosePkgLists/s/^#//g'	/etc/pacman.conf
+    else
+	echo "${czm} Pacstrap failed."
+fi
+#----------------------------------------------------------------------------------------------
+# set up chroot for aurch
+
+	echo "${czm} Setting up chroot for building AUR packages."
+	sleep 5
+	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+
+if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
+
+	printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL"  > 01-sudoers-addendum
+	sudo chown root:root 01-sudoers-addendum
+	sudo mv ./01-sudoers-addendum "${chroot}/etc/sudoers.d/01-sudoers-addendum"
+
+	sudo systemd-nspawn -q   -D "${chroot}"   -u builduser \
+	install -d /build -o builduser
+
+	sudo systemd-nspawn -q   -D "${chroot}"   -u builduser \
+	repo-add /build/aur.db.tar.gz |& grep -v WARNING
+
+	sudo systemd-nspawn -q   -D "${chroot}"  \
+	pacman -Syy
+
+	sudo systemd-nspawn -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}" --pipe \
+	git clone https://aur.archlinux.org/aurutils.git
+
+	sudo systemd-nspawn -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
+	makepkg -sri --noconfirm
+
+	sudo pacman     -r "${chroot}" \
+			-b "${chroot}/var/lib/pacman/" \
+			--config "${chroot}/etc/pacman.conf" \
+			--noconfirm -Qq \
+			| nl > .#orig-pkgs.log
+
+	if	[[ -e  aurch.README ]]; then
+		rm aurch.README
+	fi
+	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >aurch.README)
+	${czm} Setup completed.
+	${czm} Chroot has base, base-devel, git, and aurutils installed.
+	${czm} User builduser is set up, no password required for sudo.
+	${czm} Local chroot AUR repo is set up as /build.
+	${czm} Do not alter files proceeded with '#.' in base directory.
+EOF
+    else
+	echo; echo "${czm} User setup failed."
+fi
+}
+#========================================================================================================================#
+setup_local_aur_repo(){
+
+	echo "${czm} Local AUR repo: ${AURREPO}"
+
+	sudo sed -i '$a\#'                         /etc/pacman.conf
+	sudo sed -i '$a\# Path to aurch.conf'      /etc/pacman.conf
+	sudo sed -i '$a\Include = /etc/aurch.conf' /etc/pacman.conf
+	sudo sed -i '/CacheDir/s/^#//g'            /etc/pacman.conf
+
+	echo "${czm} Following is aurch.conf file: /etc/aurch.conf"
+
+cat	<<-EOF	  | sudo tee /etc/aurch.conf
+
+	[options]
+	CacheDir    = ${AURREPO}
+	CleanMethod = KeepInstalled
+
+	[${REPONAME}]
+	SigLevel = Optional TrustAll
+	Server = file://${AURREPO}
+
+EOF
+	sudo mkdir -p "${AURREPO}"
+	sudo chown "${USER}":"${USER}" "${AURREPO}"
+
+	install -d "${AURREPO}" -o "${USER}"
+	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz |& grep -v WARNING
+	sudo pacsync aur
+	sudo pacman -Syy
+
+	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."
+	echo " In order to avoid an unplanned system update within the script, your system has been left in a"
+	echo " 'partial update' condition. It's imperative to run a 'pacman -Syu' update upon completion."; echo
+}
+#========================================================================================================================#
+if      [[ -z ${*} ]]; then
+cat << EOF
+
+ aurch-setup	Sets up host for aurch usage.
+
+            	Run 'aurch-setup -h' for help.
+  Chroot ID 	$(basename "${chroot}")
+
+EOF
+fi
+#========================================================================================================================#
+while :; do
+	case "${1}" in
+	-Sc|--setupchroot)     check_depends; setup_chroot                                 ;;
+	-Sh|--setuphost)       check_depends; setup_local_aur_repo                         ;;
+	-h|--help)             help                                                        ;;
+	-?*)                   echo "${czm}${error} Input error. Running --help" ; help    ;;
+	*)                     break
+        esac
+    shift
+done
