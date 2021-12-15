@@ -1,0 +1,12 @@
+added operations 
+
+-Syu
+-Luh 
+
+added check to avoid redownloading pgp keys
+
+replaced some for loops with while loops when working with files
+
+Added code to remove op for chroot to assure all possible conditions are handled
+
+Added downloaded file inspection before building using PAGER with interactive y/n option
