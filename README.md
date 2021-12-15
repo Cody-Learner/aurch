@@ -89,8 +89,9 @@ NEWS/UPDATE INFO:<br>
 UPDATE For  Dec 14, 2021 <br>
 Added operations:<br>
     
-    aurch -Syu    System update in chroot
-    aurch -Luh    Available installed AUR updates in host
+    aurch -Syu     System update in chroot
+    aurch -Luh     Available installed AUR updates in host
+    aurch --login  Perform maintenance in chroot system
     
 Added check to avoid multiple re-downloading pgp keys.<br>
 Added AUR file inspection before building using PAGER with interactive y/n option in script.<br>
