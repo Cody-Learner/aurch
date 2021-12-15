@@ -91,7 +91,7 @@ Added operations:<br>
     
     aurch -Syu     System update in chroot
     aurch -Luh     List updates available in host for installed AUR packages
-    aurch --login  Login to chroot system to perform maintenance in chroot system
+    aurch --login  Login to chroot system to perform maintenance
     
 Added check to avoid multiple re-downloading pgp keys.<br>
 Added AUR file inspection before building using PAGER with interactive y/n option in script.<br>
