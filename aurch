@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2021-12-14
+# aurch 2021-12-23
 # dependencies: base-devel arch-install-scripts git pacutils jshon *
 # * Aurutils is installed and setup in the chroot. Not as a dependency on host.
 
@@ -7,9 +7,6 @@
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
 # REPONAME=aur									# HOST  aur repo name
-BASEDIR=/home/jeff/z-aurch-AUR/base
-AURREPO=/home/jeff/z-aurch-AUR/repo
-REPONAME=aur-repo
 #========================================================================================================================#
 [[ ! -v BASEDIR ]] && BASEDIR="${HOME}"/.cache/aurch/base			# HOST    Set BASEDIR to default if unset
 cd "${BASEDIR}" || { echo "[line ${LINENO}]"; exit 1 ; }			#         cd to BASEDIR
@@ -292,12 +289,13 @@ if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/added-pkgs.file 
 	done < "${tmph}"/added-pkgs.file
 fi
 if	[[ ${udb} == alldone ]]; then return
-fi
-if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/warning.file ]]; then
-	echo "${czm} Adding package/s to host 'AURREPO' database"
-	while IFS= read -r pkg; do
-	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${AURREPO}"/"${pkg}"
-	done	< <(awk -F'/' '{print $5}' "${homebuilduser}/${buildorder[${pkgi}]}"/aur-build.log)
+
+	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/warning.file ]]; then
+		echo "${czm} Adding package/s to host 'AURREPO' database"
+		while IFS= read -r pkg; do
+		repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${AURREPO}"/"${pkg}"
+		done	< <(awk -F'/' '{print $5}' "${homebuilduser}/${buildorder[${pkgi}]}"/aur-build.log)
+	fi
 fi
 }
 #========================================================================================================================#
@@ -470,7 +468,7 @@ yes_no(){
 
 	echo            "${czm} Inspect git cloned files?"
 	while true; do
-    		read -p '             Enter  [y/n] for yes/no. ' yn				# SC2162 Command fails using -r.
+    		read -p '             Enter  [y/n] for yes/no ' yn				# SC2162 Command fails using -r.
     		case $yn in
         	[Yy]* ) inspect_files "${1}" ; break		;;
         	[Nn]* ) opt="${1}" build_pkg ; break		;;
@@ -502,8 +500,9 @@ if      [[ -z ${*} ]]; then cat << EOF
  |     -Rc    remove AUR pkg from chroot        -Lah*   list AUR sync db host     |
  |     -Rh    remove AUR pkg from host         --pgp    import pgp key            |
  |    -Syu    update chroot                  --clean    remove unneeded packages  |
- | --login    log into chroot                                                     |
- |                             ChrootID:   $(basename "${chroot}")                             |
+ | --login    log into chroot     sudo timeout, run :   sudo pacsync aur-repo     |
+ |                                                                                |
+ |                          Chroot ID:   $(basename "${chroot}")                               |
  |================================================================================|
 EOF
 fi
