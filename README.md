@@ -84,10 +84,16 @@ Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
 <br>
 <br>
-NEWS/UPDATE INFO:<br>
+**NEWS/UPDATE INFO:**<br>
 <br>
 <br>
-UPDATE For  Dec 14, 2021 <br>
+**UPDATE For  Jan 06, 2022** <br>
+Implemented 'set -e' in script. <br>
+Added code line 162 to enable proper 'set -e'. <br>
+Added '-a' opt to systemd-nspawn commands. <br>
+Replaced cat with sort in subshell for comm command. <br>
+<br>
+**UPDATE For  Dec 14, 2021** <br>
 Added operations:<br>
     
     aurch -Syu     System update in chroot
@@ -102,16 +108,14 @@ Began implementation of 'aur build --results' file to replace grepped output for
 Added missing aur database entry for rebuilt, overwritten, same version packages.<br>
 Removed install workaround in host for missing database entry using pacman -u.<br>
 <br>
-UPDATE For  Dec 10, 2021 <br>
+**UPDATE For  Dec 10, 2021** <br>
 The predominant focus this time around was implementing some additional flexibility to allow aurch to be usable for more 
 than my personal setup and preferences. Implemented virtual hardware testing as a start towards this objective. <br>
 Split the system setup and building packages into separate scripts. To many additional smaller changes to go over here. 
 Future road map includes implementing a built in inspection step of downloaded AUR data and running a check for existing 
 PGP keys to eliminate needless re-downloading.<br>
 <br>
-<br>
-<br>
-UPDATE For  Nov 29, 2021 <br>
+**UPDATE For  Nov 29, 2021** <br>
 Added pacutils as a dependency.<br>
 Added ability when overwriting existing packages in host to handle multiple entries from split packages.<br>
 Rewrote check_updates function to reduce and simplify code.<br>
@@ -140,29 +144,29 @@ List operation options:<br>
     aurch -Lhq	[q][quiet] lists host aur sync database [packages only].
 
 <br>
-UPDATE For  Nov 27, 2021 <br>
+**UPDATE For  Nov 27, 2021** <br>
 Rewrote 'here document' usage to extend systemd-nspawn functionality, rather than inserting multiple small scripts into chroot. <br>
 Added code and printed comments relating to rebuilding and reinstalling same version of packages. <br>
 Reworked 'setup_chroot' function to eliminated the evil 'eval' command. <br>
 Integrated /var/tmp directory usage in chroot and added file extensions to ease it's cleanup. <br>
 <br>
-UPDATE For  Nov 24, 2021 <br>
+**UPDATE For  Nov 24, 2021** <br>
 Added '-L  --listup' operation, to lists updates. <br>
 The new function runs on the packages in the chroot AUR repo. <br>
 It compares local vs remote git HEAD and lists mismatching packages. <br>
 <br>
-UPDATE For  Nov 21, 2021 <br>
+**UPDATE For  Nov 21, 2021** <br>
 Added function to add packages to hosts AUR repo database.<br>
 <br>
-UPDATE For  Nov 20, 2021 <br>
+**UPDATE For  Nov 20, 2021** <br>
 Fixed for proper split package handling.<br>
 <br>
-UPDATE For  Nov 14, 2021 <br>
+**UPDATE For  Nov 14, 2021** <br>
 Rewrote aurch to no longer require AUR dependencies. No AUR helper required on host. <br>
 Creates a chroot with aurutils set up, including a local pacman AUR repo, inside the chroot. <br>
 Added ability to git clone and build package independently to ease customization. <br>
 AUR packages are retained in the chroot for dependency usage. <br>
 <br>
-NEWS FOR Oct 31, 2021: <br>
+**NEWS FOR Oct 31, 2021** <br>
 Initial release of the aurch script. <br>
 The script is in the testing phase. <br>

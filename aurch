@@ -1,8 +1,8 @@
 #!/bin/bash
-# aurch 2021-12-23
+# aurch 2021-01-06
 # dependencies: base-devel arch-install-scripts git pacutils jshon *
 # * Aurutils is installed and setup in the chroot. Not as a dependency on host.
-
+set -e
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
@@ -91,7 +91,7 @@ OVERVIEW
 
 EXAMPLES
 		Create a directory to setup chroot in:		mkdir ~/aurbuilds
-		Move into directory:				cd ~/aurbuilds		 
+		Move into directory:				cd ~/aurbuilds
 		Build an AUR package in the chroot:		aurch -B  <aur-package>
 		Git clone package:				aurch -G  <aur-package>
 		Build (Compile) AUR pkg on existing PKGBUILD:	aurch -C  <aur-package>
@@ -123,7 +123,7 @@ EOF
 fetch_pkg(){											# SC2120 Not args, its awk code.
 
 	is_it_available
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
 	aur depends -b "${package}" | aur fetch -S - | tee >(awk -F\' '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
 EOF
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
@@ -154,9 +154,9 @@ build_pkg(){
 
 	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
 	aur depends -b "${package}" >"${tmpc}"/buildorder.file
-	aur depends -n "${package}" | grep -v "${package}" >"${tmpc}"/dependencies.file
+	aur depends -n "${package}" | grep -v "${package}" >"${tmpc}"/dependencies.file || { echo "0 deps" ; }
 EOF
 	echo "${czm} Buildorder list for ${package}:"
 	nl "${tmph}"/buildorder.file
@@ -179,7 +179,7 @@ EOF
 
 	echo "${czm} Building and installing ${buildorder[${pkgi}]} dependency: ${dependency}"
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${dependency}" --pipe \
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${dependency}" --pipe \
 	aur build -ns --margs -i
     done
         echo  "${czm} Building: ${buildorder[${pkgi}]}"
@@ -189,7 +189,7 @@ EOF
 
 	fetch_pgp_key
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe bash << EOF
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe bash << EOF
 	aur build -fnsr --margs -C --results=aur-build.log |& tee >(grep 'WARNING:'       >"${tmpc}"/warning.file) \
 							   |  tee >(grep 'Adding package' >"${tmpc}"/pkg-nv.file)
 EOF
@@ -231,7 +231,7 @@ fi
 	sudo pacsync "${REPONAME}" >/dev/null
 
 #------------------------------### Optionally install package ###------------------------------#
-			
+
 if	[[ "${opt}" == -Bi ]]; then								# SC2154 opt is assigned in option parsing.
 	echo "${czm} Installing ${buildorder[${pkgi}]} in host."
 	sudo pacsync "${REPONAME}" ; wait
@@ -244,15 +244,15 @@ fetch_pgp_key(){
 
 if	[[ -e .SRCINFO ]]; then
 	echo "[sudo] to run systemd-nspawn on chroot."
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
 	awk '/validpgpkeys/ {print $3}' .SRCINFO >pgp-keys.file					# SC2024: Is not ran as sudo within chroot.
     else
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
 	makepkg --printsrcinfo | awk '/validpgpkeys/ {print $3}' >pgp-keys.file
 fi
 if	[[ -s pgp-keys.file ]] ; then
 	for key in $(< pgp-keys.file); do
-		sudo systemd-nspawn -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe bash << EOF
+		sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe bash << EOF
 		if	! gpg -k "${key}" &>/dev/null ; then
 			gpg --keyserver keyserver.ubuntu.com --recv-key "${key}" 2>&1 |& grep -v 'insecure memory'
 		   else
@@ -261,7 +261,6 @@ if	[[ -s pgp-keys.file ]] ; then
 		fi
 EOF
 		done
-	
     else
 	rm pgp-keys.file
 fi
@@ -273,8 +272,8 @@ if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
 	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
 fi
 	echo "${czm} Checking/Cleaning chroot."
-	sudo systemd-nspawn -q -D "${chroot}" --pipe bash << EOF
-	comm -23 <(pacman -Qq) <(cat "${tmpc}"/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null \
+	sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+	comm -23 <(pacman -Qq) <(sort "${tmpc}"/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null \
 	|| echo " Package count: $(pacman -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Qq | wc -l)"
 EOF
 }
@@ -315,7 +314,7 @@ if	[[ -n ${pkg} ]]; then
 			rm  "${remove}" && echo "${czm} Removed ${remove} from /build."
 			cd "${homebuilduser}"							|| { echo "[line ${LINENO}]" ; exit 1 ; }
 			sudo rm -rd "${pkg}"
-			sudo systemd-nspawn -q -D "${chroot}" --pipe pacsync aur
+			sudo systemd-nspawn -a -q -D "${chroot}" --pipe pacsync aur
 		    else
 			echo "${czm} ${pkg} not present in chroot AUR repo."
 			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
@@ -398,7 +397,7 @@ fi
 
 for pkg in "${aurpkgs[@]}"; do {
 
-    	pckg="${pkg%' '*}"	
+    	pckg="${pkg%' '*}"
 	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${pckg}" \
 		| jshon -e results -a -e  Version \
 		| awk -F\" '{print $2}')
@@ -439,7 +438,7 @@ fi
 #========================================================================================================================#
 list_pkgs_chroot(){
 
-	sudo systemd-nspawn -q -D "${chroot}" << EOF pacsync aur >/dev/null ; echo
+	sudo systemd-nspawn -a -q -D "${chroot}" << EOF pacsync aur >/dev/null ; echo
 EOF
 if	[[ ${1} == -Lacq ]]; then
 	pacman --color=always -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Slq aur
@@ -450,16 +449,16 @@ fi
 }
 #========================================================================================================================#
 update_chroot(){
-	sudo systemd-nspawn -q -D "${chroot}" --pipe pacman -Syu
+	sudo systemd-nspawn -a -q -D "${chroot}" --pipe pacman -Syu
 }
 #========================================================================================================================#
 login_chroot(){
-	sudo systemd-nspawn -q -D "${chroot}"  su root
+	sudo systemd-nspawn -a -q -D "${chroot}"  su root
 }
 #========================================================================================================================#
 manual_pgp_key(){
 
-	sudo systemd-nspawn -q -D "${chroot}" -u builduser  --pipe \
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser  --pipe \
 	gpg --keyserver keyserver.ubuntu.com --recv-key "${key}"				# SC2154: key is assigned in option parsing.
 exit
 }
@@ -473,8 +472,8 @@ yes_no(){
         	[Yy]* ) inspect_files "${1}" ; break		;;
         	[Nn]* ) opt="${1}" build_pkg ; break		;;
         	    * ) echo "${czm}${error}[y/n] Only!"	;;
-    esac
-done
+		esac
+	done
 }
 #========================================================================================================================#
 inspect_files(){
@@ -511,7 +510,7 @@ while :; do
 	case "${1}" in										# SC is incorrectly reading awk as bash.
 	-B*|--build)	fetch_pkg ; yes_no	"${1}" 			 	;;		# SC2119 see: SC2120 above, referencing awk code.
 	-G|--git)	fetch_pkg ; 						;;		# SC2119 see: SC2120 above, referencing awk code.
-	-C|--compile)	opt="${1}" build_pkg					;;		
+	-C|--compile)	opt="${1}" build_pkg					;;
 	-R*)		pkg="${2}" remove	"${1}"				;;
 	-Syu|--update)  update_chroot						;;
 	-Luh*|--lsudh)	check_host_updates	"${1}"				;;
