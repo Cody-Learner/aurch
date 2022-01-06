@@ -144,6 +144,7 @@ List operation options:<br>
     aurch -Lhq	[q][quiet] lists host aur sync database [packages only].
 
 <br>
+
 **UPDATE For  Nov 27, 2021** <br>
 Rewrote 'here document' usage to extend systemd-nspawn functionality, rather than inserting multiple small scripts into chroot. <br>
 Added code and printed comments relating to rebuilding and reinstalling same version of packages. <br>
