@@ -92,6 +92,7 @@ Implemented 'set -e' in script. <br>
 Added code line 162 to enable proper 'set -e'. <br>
 Added '-a' opt to systemd-nspawn commands. <br>
 Replaced cat with sort in subshell for comm command. <br>
+Added 'else' to if statement in upd_aur_db function. <br>
 <br>
 **UPDATE For  Dec 14, 2021** <br>
 Added operations:<br>

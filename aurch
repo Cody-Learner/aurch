@@ -287,8 +287,9 @@ if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/added-pkgs.file 
 	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 	done < "${tmph}"/added-pkgs.file
 fi
-if	[[ ${udb} == alldone ]]; then return
-
+if	[[ ${udb} == alldone ]]; then
+	return
+    else
 	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/warning.file ]]; then
 		echo "${czm} Adding package/s to host 'AURREPO' database"
 		while IFS= read -r pkg; do
