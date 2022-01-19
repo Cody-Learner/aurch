@@ -16,7 +16,7 @@ The chroot is intended to be reused. <br>
 Note: <br>
 This script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
 Scripts such as devtools were not written to and do not isolate the build process from the host. <br>
-[Additional aurch info](https://cody-learner.github.io/aurch.html)  <br>
+[devtools info](https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot)  <br>
 References: <br>
  https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
