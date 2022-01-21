@@ -1,8 +1,8 @@
 #!/bin/bash
-# aurch 2021-01-06
+# aurch 2021-01-21
 # dependencies: base-devel arch-install-scripts git pacutils jshon *
 # * Aurutils is installed and setup in the chroot. Not as a dependency on host.
-set -e
+# set -e
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
