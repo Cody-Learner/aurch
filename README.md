@@ -88,8 +88,8 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  Jan 21, 2022** <br>
-Disable 'set -e'.
-Testing in virtual hw system revealed failure to build pkg that was not present on test system.
+Disable 'set -e'. <br>
+Testing in virtual hw system revealed failure to build pkg that was not present on test system. <br>
 <br>
 **UPDATE For  Jan 06, 2022** <br>
 Implemented 'set -e' in script. <br>
