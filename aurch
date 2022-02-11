@@ -1,8 +1,8 @@
 #!/bin/bash
-# aurch 2021-01-21
+# aurch 2022-02-11
 # dependencies: base-devel arch-install-scripts git pacutils jshon *
 # * Aurutils is installed and setup in the chroot. Not as a dependency on host.
-# set -e
+
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
@@ -134,7 +134,7 @@ fi
 #========================================================================================================================#
 is_it_available(){
 
-	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${package}" \
+	check=$(curl --compressed -s "https://aur.archlinux.org/rpc?v=5&type=info&arg=${package}" \
 		| jshon -e results -a -e  Name \
 		| awk -F\" '{print $2}')
 
@@ -276,6 +276,7 @@ fi
 	comm -23 <(pacman -Qq) <(sort "${tmpc}"/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null \
 	|| echo " Package count: $(pacman -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Qq | wc -l)"
 EOF
+	sudo rm "${tmph}"/orig-pkgs.log
 }
 #========================================================================================================================#
 upd_aur_db(){
@@ -366,11 +367,13 @@ fi
 	for pkg in "${dirs[@]}"
     do
 	cd "${homebuilduser}/${pkg}"								|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	localHEAD=$(git rev-parse HEAD)
-	remoteHEAD=$(git ls-remote --symref -q  | head -1 | cut -f1)
+	if	[[ -d .git ]]; then
+		localHEAD=$(git rev-parse HEAD)
+		remoteHEAD=$(git ls-remote --symref -q  | head -1 | cut -f1)
 
-	if	[[ ${localHEAD} != "${remoteHEAD}" ]]; then
-		echo " ${pkg}" >> /tmp/check-ud-updates
+		if	[[ ${localHEAD} != "${remoteHEAD}" ]]; then
+			echo " ${pkg}" >> /tmp/check-ud-updates
+		fi
 	fi
     done
 if	[[ -s  /tmp/check-ud-updates ]]; then
@@ -399,7 +402,7 @@ fi
 for pkg in "${aurpkgs[@]}"; do {
 
     	pckg="${pkg%' '*}"
-	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${pckg}" \
+	check=$(curl --compressed -s "https://aur.archlinux.org/rpc?v=5&type=info&arg=${pckg}" \
 		| jshon -e results -a -e  Version \
 		| awk -F\" '{print $2}')
 	compare=$(vercmp "${pkg#*' '}" "${check}")
@@ -502,7 +505,7 @@ if      [[ -z ${*} ]]; then cat << EOF
  |    -Syu    update chroot                  --clean    remove unneeded packages  |
  | --login    log into chroot     sudo timeout, run :   sudo pacsync aur-repo     |
  |                                                                                |
- |                          Chroot ID:   $(basename "${chroot}")                               |
+ |                          Chroot ID:   $(basename "${chroot}")                                  |
  |================================================================================|
 EOF
 fi

@@ -87,6 +87,11 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  Feb 11, 2022** <br>
+Change curl commands to reflect AUR RPC interface update/changes. <br>
+Add removal of /var/tmp/aurch/orig-pkgs.log ("${tmph}"/orig-pkgs.log) in chroot so 'orig package list' reflects edits/changes made to .#orig-pkgs.log in base dir. <br>
+Add if statement to check build dir/s for .git dir. This allows adding misc dir's (ie: 'testing' toolchain pkgs) under buildusers home. <br>
+<br>
 **UPDATE For  Jan 21, 2022** <br>
 Disable 'set -e'. <br>
 Testing in virtual hw system revealed failure to build pkg that was not present on test system. <br>
