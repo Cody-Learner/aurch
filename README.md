@@ -94,7 +94,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  Jan 07, 2023** <br>
-When deleting AUR packages from host, fixed the removal of "all versions" of the pkg from the AUR package cache. <br>
+When deleting AUR packages from host, corrected ability to remove "all versions" of pkgs from the host AUR package cache. <br>
 Add an if statement to 'check_host_updates' function to properly handle and print message 'No Updates Available'. <br>
 Edited message in 'check_host_updates' function when package is newer than the AUR rpc version to:  <br>
 "VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates.".<br>
