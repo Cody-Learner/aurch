@@ -4,10 +4,10 @@ The emphasis of aurch is using a chroot for AUR 'build isolation' rather than 'c
 Aurch isolates the build environment to mitigate build script errors or malicious intent causing issues on the host. <br>
 The original aurch script has been split into two scripts. The setup operations are now separate from the AUR package building  operations. 
 <br>
-**aurch-setup:
+**aurch-setup:**
 Aurch-setup builds and sets up an systemd nspawn chroot for building packages with aurutils, a local AUR repo, and user name "builduser", all within the chroot. The chroot is persistent, and intended for data storage and to be used for all AUR builds. Aurch-setup is also  capable of setting up the host system with a local pacman AUR repo.
 <br>
-**aurch:
+**aurch:**
 Builds all AUR packages in the chroot, isolated from the host. <br>
 After the packages are built, they're copied into the host AUR cache and entered into the pacman database.<br>
 Builds and installs all required AUR dependencies in the chroot. <br>
