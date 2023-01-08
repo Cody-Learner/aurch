@@ -87,8 +87,8 @@ OPTIONS
 		Do not mix order or attempt to use 'i' other than described.
 
 OVERVIEW
-		Run 'aurch --setup' before using aurch.
-		Run aurch from directory containing chroot created during 'aurch --setup'.
+		Run 'aurch-setup' before using aurch.
+		Run aurch from directory containing chroot created during 'aurch-setup'.
 
 EXAMPLES
 		Create a directory to setup chroot in:		mkdir ~/aurbuilds
