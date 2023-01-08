@@ -1,12 +1,12 @@
 #!/bin/bash
-# aurch-setup 2021-12-10
-# dependencies: base-devel arch-install-scripts git pacutils jshon *
-# * Aurutils is installed and setup in the chroot. Not as a dependency on host.
+# aurch-setup 2023-01-08
+# dependencies: base-devel arch-install-scripts git pacutils jshon
+
 #======================================================================================================================#
 #-----------------------------# 3 User Set variables below. Uncomment and set paths. #------------------------------#
-# BASEDIR=/home/jeff/.aurch-AUR
-# AURREPO=/var/cache/pacman/aur
-# REPONAME=aurrepo
+# BASEDIR=
+# AURREPO=
+# REPONAME=
 #-------------------------------------------# Default variables list #----------------------------------------------#
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST chroot base path
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST aur repo path
@@ -54,10 +54,12 @@ NAME
 
 DESCRIPTION
 		Aurch-setup sets up a system for the aurch script to build AUR packages.
-		It sets up a custom chroot specifically for building AUR packages. 
-		It will also set up a local pacman repo for AUR package on the host.
-		Aurutils is setup and installed within the chroot for building AUR packages.
+		It can set up a chroot for building AUR packages. 
+		It cat set up a local pacman repo for AUR package on the host.
+		Aurutils is setup and installed within the chroot to build AUR packages.
 		It is not necessary to have an AUR helper installed on the host system.
+		AUR packages are installed using 'pacman -S' rather than 'pacman -U'.
+		All AUR package build related 'aurutils and makepkg' operations are performed from within the chroot.
 
 USAGE
 		aurch-setup [operation]
@@ -207,7 +209,7 @@ EOF
 
 	install -d "${AURREPO}" -o "${USER}"
 	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz |& grep -v WARNING
-	sudo pacsync aur
+	sudo pacsync "${REPONAME}"
 	sudo pacman -Syy
 
 	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."

@@ -1,8 +1,10 @@
 #!/bin/bash
-# aurch 2023-01-07
-# dependencies: base-devel arch-install-scripts git pacutils jshon *
+# aurch 2023-01-08
+# dependencies: base-devel arch-install-scripts git pacutils jshon
 
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
+#------------------# IMPORTANT: These variables must match those used in aurch-setup if changed/set #-------------------#
+#--------------------------# If you did not changed/set them in aurch-setup, do nothing here #--------------------------#
 
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
