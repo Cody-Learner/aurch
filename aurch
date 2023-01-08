@@ -1,12 +1,13 @@
 #!/bin/bash
-# aurch 2022-02-11
+# aurch 2023-01-07
 # dependencies: base-devel arch-install-scripts git pacutils jshon *
-# * Aurutils is installed and setup in the chroot. Not as a dependency on host.
 
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
+
 # BASEDIR="${HOME}"/.cache/aurch/base						# HOST  path to chroot base
 # AURREPO="${HOME}"/.cache/aurch/repo						# HOST  path to aur repo
 # REPONAME=aur									# HOST  aur repo name
+
 #========================================================================================================================#
 [[ ! -v BASEDIR ]] && BASEDIR="${HOME}"/.cache/aurch/base			# HOST    Set BASEDIR to default if unset
 cd "${BASEDIR}" || { echo "[line ${LINENO}]"; exit 1 ; }			#         cd to BASEDIR
@@ -134,6 +135,7 @@ fi
 #========================================================================================================================#
 is_it_available(){
 
+#	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${package}"
 	check=$(curl --compressed -s "https://aur.archlinux.org/rpc?v=5&type=info&arg=${package}" \
 		| jshon -e results -a -e  Name \
 		| awk -F\" '{print $2}')
@@ -288,7 +290,7 @@ if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/added-pkgs.file 
 	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 	done < "${tmph}"/added-pkgs.file
 fi
-if	[[ ${udb} == alldone ]]; then
+if	[[ ${udb} == alldone ]]; then 
 	return
     else
 	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/warning.file ]]; then
@@ -312,8 +314,8 @@ if	[[ -n ${pkg} ]]; then
 			repo-remove "${chroot}"/build/aur.db.tar.gz "${pkg}"
 			cd "${chroot}"/build							|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
-			remove=$(find "${pkg}"*.pkg.tar* 2>/dev/null)
-			rm  "${remove}" && echo "${czm} Removed ${remove} from /build."
+			remove=$(find "${pkg}"*.pkg.tar*)
+			rm  ${remove} && echo "${czm} Removed ${remove} from /build."		# SC2086 Removed quotes for proper operation.
 			cd "${homebuilduser}"							|| { echo "[line ${LINENO}]" ; exit 1 ; }
 			sudo rm -rd "${pkg}"
 			sudo systemd-nspawn -a -q -D "${chroot}" --pipe pacsync aur
@@ -340,7 +342,7 @@ if	[[ -n ${pkg} ]]; then
 		fi
 	cd "${AURREPO}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	remove=$(find "${pkg}"*.pkg.tar*)
-	rm "${remove}" 2>/dev/null
+	rm ${remove} && echo "${czm} Removed ${remove}"						# SC2086 Removed quotes for proper operation.
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 			sudo pacsync "${REPONAME}"  >/dev/null
@@ -372,7 +374,7 @@ fi
 		remoteHEAD=$(git ls-remote --symref -q  | head -1 | cut -f1)
 
 		if	[[ ${localHEAD} != "${remoteHEAD}" ]]; then
-			echo " ${pkg}" >> /tmp/check-ud-updates
+				echo " ${pkg}" >> /tmp/check-ud-updates
 		fi
 	fi
     done
@@ -416,14 +418,18 @@ for pkg in "${aurpkgs[@]}"; do {
 done; wait
 
 if	[[ $1 == -Luhq ]]; then
-	awk '{print $1}' /tmp/aurch-updates
+	awk '{print $1}' /tmp/aurch-updates 2>/dev/null
     else
-	echo; echo "${czm} Updates available:"
-	 column -t /tmp/aurch-updates
-	echo
+	if	[[ -s  /tmp/aurch-updates ]]; then
+		echo; echo "${czm} Updates available:"
+	 	column -t /tmp/aurch-updates
+		echo
+	    else
+		echo; echo "${czm} No Updates available"	
+	fi
 	if	[[ -s  /tmp/aurch-updates-newer ]]; then
-		echo " Newer than update:"
-		 column -t /tmp/aurch-updates-newer
+		echo "${czm} VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates."
+		column -t /tmp/aurch-updates-newer
 		echo
 	fi
 fi
@@ -494,6 +500,7 @@ fi
 }
 #=======================================### Aurch called with no args ###================================================#
 if      [[ -z ${*} ]]; then cat << EOF
+	$(echo -e '\033[0;96m')
  |================================================================================|
  |   Aurch, an AUR helper script.    USAGE:  $ aurch [operation[*opt]] [package]  |
  |--------------------------------------------------------------------------------|
@@ -505,8 +512,9 @@ if      [[ -z ${*} ]]; then cat << EOF
  |    -Syu    update chroot                  --clean    remove unneeded packages  |
  | --login    log into chroot     sudo timeout, run :   sudo pacsync aur-repo     |
  |                                                                                |
- |                          Chroot ID:   $(basename "${chroot}")                                  |
+ | Chroot ID:  $(basename "${chroot}")               List Orphans:   pacman -Qdtq              |
  |================================================================================|
+	$(echo -e '\033[00m')
 EOF
 fi
 #========================================================================================================================#
