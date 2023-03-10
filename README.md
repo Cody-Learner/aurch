@@ -28,10 +28,10 @@ References: <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
 <br>
 
-USAGE
+    USAGE
 		aurch [operation[options]] [package | pgp key]
 
-OPERATIONS
+    OPERATIONS
 		-B* --build	Builds a new or updates an existing AUR package.
 		-G  --git	Git clones an AUR package.
 		-C  --compile	Builds an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
