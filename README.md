@@ -62,11 +62,11 @@ References: <br>
     OVERVIEW
     		Run aurch-setup before using aurch.
     		Run aurch to manage AUR packages.
-		Aurch is designed to handle AUR packages individually, one at a time.
-		ie: No group updates or multi package per operation capability.
+    		Aurch is designed to handle AUR packages individually, one at a time.
+    		ie: No group updates or multi package per operation capability.
 
-		Important: The aurch chroot must be manually updated via the 'aurch -Syu' command.
-			   I'd suggest updating chroot before buiding packages.
+    		Important: The aurch chroot must be manually updated via the 'aurch -Syu' command.
+    			   I'd suggest updating chroot before buiding packages.
     
     EXAMPLES
 		SETUP TO USE AURCH:
@@ -74,7 +74,7 @@ References: <br>
     		Create a directory to setup the chroot:		mkdir ~/aurbuilds
     		Move into directory:				cd ~/aurbuilds
     		Set up chroot:					aurch-setup --setupchroot
-		Set up local AUR repo:				aurch-setup --setuphost
+    		Set up local AUR repo:				aurch-setup --setuphost
 
 
 		USING AURCH:
@@ -83,23 +83,23 @@ References: <br>
     		Build and install AUR package:			aurch -Bi <aur-package>
     		Git clone package				aurch -G  <aur-package>
     		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C  <aur-package>
-		Remove AUR package from host:			aurch -Rh <aur-package>
-		Remove AUR package from chroot:			aurch -Rc <aur-package>
+    		Remove AUR package from host:			aurch -Rh <aur-package>
+    		Remove AUR package from chroot:			aurch -Rc <aur-package>
     		List chroot AUR repo updates available:		aurch -Luc
     		List chroot AUR sync database contents:		aurch -Lac
     		List host AUR sync database contents:		aurch -Lah
     		List host AUR repo updates available:		aurch -Lah
     		Manually import a pgp key in chroot:		aurch --pgp <short or long key id>
     		Manually remove unneeded packages in chroot:	aurch --clean
-		Login to chroot for maintenance:                aurch --login
+    		Login to chroot for maintenance:                aurch --login
     
     USER VARIABLES
     		BASEDIR = path to chroot base dir
     		AURREPO = path to host aur repo
     		REPONAME =  host aur repo name
 
-*Package is placed into local AUR repo and entry made in pacman AUR database.
- Install with pacman -S <aur-package>
+    *Package is placed into local AUR repo and entry made in pacman AUR database.
+     Install with pacman -S <aur-package>
     		
 <br>
 <br>
@@ -114,8 +114,9 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  March 10, 2023** <br>
-Updated script for compatiblity with interface changes made to aurutils-11. https://github.com/AladW/aurutils/releases/tag/11
-Updated README to reflect changes and clarify info.
+Updated script for compatiblity with interface changes made to aurutils-11. <br>
+https://github.com/AladW/aurutils/releases/tag/11<br>
+Updated README to reflect changes and clarify info.<br>
 <br>
 **UPDATE For  Jan 07, 2023** <br>
 When deleting AUR packages from host, corrected ability to remove "all versions" of pkgs from the host AUR package cache. <br>
