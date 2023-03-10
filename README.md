@@ -78,7 +78,7 @@ References: <br>
 
     		USING AURCH:
 
-    		Build an AUR package*:				aurch -B  <aur-package>
+    		Build an AUR package(+):			aurch -B  <aur-package>
     		Build and install AUR package:			aurch -Bi <aur-package>
     		Git clone package				aurch -G  <aur-package>
     		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C  <aur-package>
@@ -97,8 +97,8 @@ References: <br>
     		AURREPO = path to host aur repo
     		REPONAME =  host aur repo name
 
-    *Package is placed into local AUR repo and entry made in pacman AUR database.
-     Install with pacman -S <aur-package>
+    (+) Package is placed into local AUR repo and entry made in pacman AUR database.
+        Install with pacman -S <aur-package>
     		
 <br>
 <br>
