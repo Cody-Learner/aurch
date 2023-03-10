@@ -64,9 +64,8 @@ References: <br>
     		Run aurch to manage AUR packages.
     		Aurch is designed to handle AUR packages individually, one at a time.
     		ie: No group updates or multi package per operation capability.
-
-    		Important: The aurch chroot must be manually updated via the 'aurch -Syu' command.
-    			   I'd suggest updating chroot before buiding packages.
+     Important: The aurch chroot must be manually updated via the 'aurch -Syu' command.
+    		I'd suggest updating chroot before buiding packages.
     
     EXAMPLES
 		SETUP TO USE AURCH:
