@@ -68,7 +68,7 @@ References: <br>
     		Update chroot before buiding packages.
     
     EXAMPLES
-		SETUP TO USE AURCH:
+		SETUP FOR AURCH:
 
     		Create a directory to setup the chroot:		mkdir ~/aurbuilds
     		Move into directory:				cd ~/aurbuilds
