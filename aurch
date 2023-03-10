@@ -1,6 +1,6 @@
 #!/bin/bash
-# aurch 2023-01-08
-# dependencies: base-devel arch-install-scripts git pacutils jshon
+# aurch 2023-03-10
+# dependencies: base-devel arch-install-scripts git pacutils(pacsync) jshon
 
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
 #------------------# IMPORTANT: These variables must match those used in aurch-setup if changed/set #-------------------#
@@ -127,7 +127,7 @@ fetch_pkg(){											# SC2120 Not args, its awk code.
 
 	is_it_available
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
-	aur depends -b "${package}" | aur fetch -S - | tee >(awk -F\' '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
+	aur depends -r "${package}" | tsort | aur fetch -S - | tee >(awk -F\' '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
 EOF
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
@@ -159,8 +159,8 @@ build_pkg(){
 	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
-	aur depends -b "${package}" >"${tmpc}"/buildorder.file
-	aur depends -n "${package}" | grep -v "${package}" >"${tmpc}"/dependencies.file || { echo "0 deps" ; }
+	aur depends -r "${package}" | tsort >"${tmpc}"/buildorder.file
+	aur depends -n -r "${package}" | tsort | grep -v "${package}" >"${tmpc}"/dependencies.file || { echo "0 deps" ; }
 EOF
 	echo "${czm} Buildorder list for ${package}:"
 	nl "${tmph}"/buildorder.file
@@ -395,7 +395,7 @@ fi
 #========================================================================================================================#
 check_host_updates(){
 
-	readarray -t aurpkgs < <(pacman -Sl ${REPONAME} 2>/dev/null | awk '{print $2,$3}' ; pacman -Qm )
+	readarray -t aurpkgs < <(pacman -Sl "${REPONAME}" 2>/dev/null | awk '{print $2,$3}' ; pacman -Qm )
 if	[[ $1 == -Luhq ]]; then	:
     else
 	echo; echo "${czm} Checking for updates:"
