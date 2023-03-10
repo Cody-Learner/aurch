@@ -27,11 +27,7 @@ References: <br>
  https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
 <br>
-    
-    USAGE
-    		aurch [operation[options]] [package | pgp key]
-    
-    
+
 USAGE
 		aurch [operation[options]] [package | pgp key]
 
