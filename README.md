@@ -32,9 +32,9 @@ References: <br>
 		aurch [operation[options]] [package | pgp key]
 
     OPERATIONS
-		-B* --build	Builds a new or updates an existing AUR package.
+		-B* --build	Build new or update an existing AUR package.
 		-G  --git	Git clones an AUR package.
-		-C  --compile	Builds an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
+		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
 		-Rh		Remove AUR pkg from host.   Removes:   /AURREPO/<package>,  <package> if installed,  and database entry.
 		-Rc		Remove AUR pkg from chroot. Removes:   /build/<package>,    /${HOME}/<build dir>,    and database entry.
 		-Syu  --update  Update chroot packages. ie: Runs pacman -Syu in chroot.
