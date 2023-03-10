@@ -65,7 +65,7 @@ References: <br>
     		Aurch is designed to handle AUR packages individually, one at a time.
     		ie: No group updates or multi package per operation capability.
     		The aurch chroot must be periodically updated via the 'aurch -Syu' command.
-    		I'd suggest updating chroot before buiding packages.
+    		Update chroot before buiding packages.
     
     EXAMPLES
 		SETUP TO USE AURCH:
