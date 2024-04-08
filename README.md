@@ -112,7 +112,18 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
-**UPDATE For  March 10, 2023** <br>
+**UPDATE For  April 7, 2024** <br>
+Made changes to accommodate implementation of 'set -euo pipefail'<br>
+Although I don't personally judge the quality of bash scripts based on the controversial use of 'set -euo pipefail, <br>
+I've none the less been curious about what changes would be required to implement it. <br>
+Directly from my notes: <br>
+# _'set -u' Will not allow printing vars to file, lines 48-58.	Appending '-' to all vars fixed issue._ <br>
+# _'set -u' Will not allow using positional parameters.		Appending '-' to all positional parameters fixed issue._ <br>
+# _'set -u' Exits on: "/path/to/script/ line 147: $2: unbound variable" <br>
+# _Line 147, '$2' is part of an awk command inside an "EOF [here doc]" and not a bash positional parameter. (A bash bug?)_ <br>
+# _Rewrote 'fetch_pkg' function lines ~143-159, to accommodate 'set -u' by removing awk from the here doc._ <br>
+<br>
+**UPDATE For  March 10, 2023** <br><br>
 Updated script for compatiblity with interface changes made to aurutils-11. <br>
 https://github.com/AladW/aurutils/releases/tag/11<br>
 Updated README to reflect changes and clarify info.<br>
