@@ -114,7 +114,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 **UPDATE For  April 7, 2024** <br>
 Made changes to accommodate implementation of 'set -euo pipefail'<br>
-Although I don't personally judge the quality of bash scripts based on the controversial use of 'set -euo pipefail', 
+Although I don't judge the quality of bash scripts based on the controversial use of 'set -euo pipefail',
 I've been curious none the less, about what changes would be required to implement it. <br>
 Directly from my notes: <br>
 
@@ -124,7 +124,7 @@ Directly from my notes: <br>
     Line 147, '$2' is part of an awk command inside an "EOF [here doc]" and not a bash positional parameter. (A bash bug?)
     Rewrote 'fetch_pkg' function lines ~143-159, to accommodate 'set -u' by removing awk from the here doc.
 
-**UPDATE For  March 10, 2023** <br><br>
+**UPDATE For  March 10, 2023** <br>
 Updated script for compatiblity with interface changes made to aurutils-11. <br>
 https://github.com/AladW/aurutils/releases/tag/11<br>
 Updated README to reflect changes and clarify info.<br>
