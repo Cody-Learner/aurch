@@ -27,7 +27,6 @@ set -euo pipefail
 [[ ! -v BASEDIR ]] && BASEDIR="${HOME}"/.cache/aurch/base			# HOST    Set BASEDIR to default if unset
 cd "${BASEDIR}" || { echo "[line ${LINENO}]"; exit 1 ; }			#         cd to BASEDIR
 chroot="${BASEDIR}/chroot-$(< .#ID)"						# HOST    path to chroot root
-chroot="${BASEDIR}/chroot-$(< /home/jeff/.a-Aurch-AUR/base/.#ID)"
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination)
 [[ -v 2 ]] && package="${2-,,}"	|| package="${2-}"				#         Convert <package> to lower case or unset for no pkg
