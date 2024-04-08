@@ -114,7 +114,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 **UPDATE For  April 7, 2024** <br>
 Made changes to accommodate implementation of 'set -euo pipefail'<br>
-Although I don't personally judge the quality of bash scripts based on the controversial use of 'set -euo pipefail, 
+Although I don't personally judge the quality of bash scripts based on the controversial use of 'set -euo pipefail', 
 I've been curious none the less, about what changes would be required to implement it. <br>
 Directly from my notes: <br>
 
