@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-04-07	### TESTING 'set -euo pipefail' edition ###
+# aurch 2024-04-07	 ### TESTING 'set -euo pipefail' edition ###
 # dependencies: base-devel arch-install-scripts git pacutils(pacsync) jshon
 
 set -euo pipefail
