@@ -115,7 +115,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **UPDATE For  April 8, 2024** <br>
 Fix 'Convert <package> input to all lower case', positional paramter to 'package' variable. <br>
 Added error handling for no package input combined with '-B' and '-G' operations. <br>
-Cleaned up script comments and commented out testing code. <br>
+Cleaned up script comments and removed commented out testing code. <br>
 <br>
 **UPDATE For  April 7, 2024** <br>
 Although I don't base the quality of bash scripts on the use of the controversial 'set -euo pipefail',
