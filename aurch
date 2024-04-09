@@ -1,19 +1,10 @@
 #!/bin/bash
-# aurch 2024-04-07	### TESTING 'set -euo pipefail' edition ###
+# aurch 2024-04-08	### TESTING 'set -euo pipefail' edition ###
 # dependencies: base-devel arch-install-scripts git pacutils(pacsync) jshon
 
 set -euo pipefail
 
-#=======================================================================================================================
-# NOTES: 2024-04-07
-# 'set -u' Will not allow printing vars to file, lines 48-58.	Appending '-' to all vars fixed issue.
-# 'set -u' Will not allow using positional parameters.		Appending '-' to all positional parameters fixed issue.
-# "set -u" Exits on: "/path/to/script/ line 147: $2: unbound variable" 
-# Line 147, '$2' is part of an awk command inside an "EOF [here doc]" and not a bash positional parameter. (A bash bug?)
-# Rewrote 'fetch_pkg' function lines ~143-159, to accommodate 'set -u' by removing awk from the here doc.
-#=======================================================================================================================
-
-# Variable list: BASEDIR AURREPO REPONAME chroot chrbuilduser homebuilduser package tmpc tmph czm
+#========================================================================================================================#
 
 #-----------------------------------# 3 User variables below. Uncomment and set paths. #--------------------------------#
 #------------------# IMPORTANT: These variables must match those used in aurch-setup if changed/set #-------------------#
@@ -29,7 +20,7 @@ cd "${BASEDIR}" || { echo "[line ${LINENO}]"; exit 1 ; }			#         cd to BASED
 chroot="${BASEDIR}/chroot-$(< .#ID)"						# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination)
-[[ -v 2 ]] && package="${2-,,}"	|| package="${2-}"				#         Convert <package> to lower case or unset for no pkg
+[[ -n ${2-} ]] && package="${2,,}" || package="" 				#         Convert <package> input to all lower case
 [[ ! -v AURREPO  ]] && AURREPO="${HOME}"/.cache/aurch/repo			# HOST    Set AURREPO to default if unset
 [[ ! -v REPONAME ]] && REPONAME=aur						# HOST    Set REPONAME to default if unset
 tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination)
@@ -53,9 +44,6 @@ line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal w
 	tmpc=${tmpc-}
 	tmph=${tmph-}" \
 	| awk ' {print;} NR % 1 == 0 {print "";}' > "${BASEDIR}"/.#aurch-vars
-
-##TEST##TEST
-##TEST##	"${BASEDIR}"/.#aurch-vars
 
 #========================================================================================================================#
 help(){
@@ -139,19 +127,16 @@ ${line2}
 EOF
 }
 #========================================================================================================================#
-fetch_pkg(){											
+fetch_pkg(){
+
+	[[ -z ${package} ]] && { echo "${czm} Need to specify package."; echo; exit ; } 
 
 	is_it_available
-###	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF		# SC2120 Not args, its awk code.
-###	aur depends -r "${package}" | tsort | aur fetch -S - | tee >(awk -F\' '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
-
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
 	aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' >"${tmpc}"/cloned-pkgs.file)
 EOF
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
-
-###	nl "${tmph}"/cloned-pkgs.file
 
 	awk -F\' '/Cloning/ {print $2}' "${tmph}"/cloned-pkgs.file | nl
 fi
@@ -159,7 +144,6 @@ fi
 #========================================================================================================================#
 is_it_available(){
 
-#	check=$(curl --compressed -s "https://aur.archlinux.org/rpc/?v=5\&type=info&arg\[\]=${package}"
 	check=$(curl --compressed -s "https://aur.archlinux.org/rpc?v=5&type=info&arg=${package}" \
 		| jshon -e results -a -e  Name \
 		| awk -F\" '{print $2}')
@@ -375,7 +359,7 @@ if	[[ -n ${pkg} ]]; then
 		fi
 	fi
     else
-	echo "${czm} Need to specify package to remove."
+	echo "${czm} Need to specify package."; echo
 fi
 }
 #========================================================================================================================#
@@ -534,11 +518,10 @@ if      [[ -z ${*} ]]; then cat << EOF
  |     -Rc    remove AUR pkg from chroot        -Lah*   list AUR sync db host     |
  |     -Rh    remove AUR pkg from host         --pgp    import pgp key            |
  |    -Syu    update chroot                  --clean    remove unneeded packages  |
- | --login    log into chroot     sudo timeout, run :   sudo pacsync aur-repo     |
+ | --login    log into chroot     sudo timeout, run :   sudo pacsync aur          |
  |                                                                                |
- | Chroot ID:  $(basename "${chroot}")               List Orphans:   pacman -Qdtq              |
+ |       Chroot Path:  ${chroot}                    |
  |================================================================================|
-			TESTING 'set -euo pipefail' edition
 	$(echo -e '\033[00m')
 EOF
 fi
