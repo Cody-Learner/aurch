@@ -118,8 +118,8 @@ Some time back, pacman enabled debug packages by default in '/etc/makepkg.conf'.
 This results in a dbug package being build for AUR packages. <br>
 If this is unwanted behavior, edit '/etc/makepkg.conf' appropriately. See: Notes in makepkg.conf. <br>
 To remove any unwanted AUR debug packages from the host and/or AUR sync db,  <br>
-* Install the 'package-debug' with pacman. <br>
-* Remove it using aurch. ie: aurch -Rh 'package-debug'. <br>
+Install the 'package-debug' with pacman. <br>
+Remove it using aurch. ie: aurch -Rh 'package-debug'. <br>
 <br>
 **UPDATE For  April 12, 2024** <br>
 Setup virtual environment for testing. <br>
