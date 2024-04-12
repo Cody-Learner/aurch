@@ -124,7 +124,6 @@ Discovered a new issue upon initial run caused by adding 'set -euo pipefail. <br
 Script exited on a 'find' command returning an empty result, along with expected non zero exit code. <br>
 Set place holder files in AUR repos so find command returns a result, and zero exit code. <br>
  <br>
- <br>
 **UPDATE For  April 8, 2024** <br>
 Fix 'Convert <package> input to all lower case', positional parameter expansion to 'package' variable. <br>
 Added error handling for no package input used with '-B' and '-G' operations. <br>
