@@ -110,14 +110,15 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **NEWS/UPDATE INFO:**<br>
+<br>
 **NEWS For  April 12, 2024** <br>
 Subject: Debug Packages <br>
-Some time back, pacman enabled debug packages by default in '/etc/makepkg.conf'.
-This results in a dbug package being build for AUR packages.
-If this is unwanted behavior, edit '/etc/makepkg.conf' appropriately. See: Notes in makepkg.conf.
-To remove any unwanted AUR debug packages from the host and/or AUR sync db, 
-1) Install the <package-debug> with pacman.
-2) Remove it using aurch. ie: aurch -Rh <package-debug>.
+Some time back, pacman enabled debug packages by default in '/etc/makepkg.conf'. <br>
+This results in a dbug package being build for AUR packages. <br>
+If this is unwanted behavior, edit '/etc/makepkg.conf' appropriately. See: Notes in makepkg.conf. <br>
+To remove any unwanted AUR debug packages from the host and/or AUR sync db,  <br>
+1) Install the <package-debug> with pacman. <br>
+2) Remove it using aurch. ie: aurch -Rh <package-debug>. <br>
 <br>
 <br>
 **UPDATE For  April 12, 2024** <br>
