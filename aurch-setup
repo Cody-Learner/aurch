@@ -2,6 +2,8 @@
 # aurch-setup 2023-01-08
 # dependencies: base-devel arch-install-scripts git pacutils jshon
 
+set -euo pipefail
+
 #======================================================================================================================#
 #-----------------------------# 3 User Set variables below. Uncomment and set paths. #------------------------------#
 # BASEDIR=
@@ -116,20 +118,11 @@ if      sudo pacstrap -c "${chroot}" base base-devel git ; then
 	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	mkdir -p "${chroot}"/var/tmp/aurch						|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	sudo rm -rd "${chroot}"/var/lib/pacman/sync/*.db
-	sudo systemd-nspawn -q    useradd -m -G wheel -s /bin/bash builduser
-	sudo systemd-nspawn -q    mkdir /build
-	sudo systemd-nspawn -q    chown builduser:builduser /build
-	sudo systemd-nspawn -q sed -i '$a\#'				/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\[options]'			/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\CacheDir    = /build'		/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\[aur]'			/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\SigLevel = Optional TrustAll'	/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '$a\Server = file:///build'	/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '/CacheDir/s/^#//g'		/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '/ParallelDownloads/s/^#//g'	/etc/pacman.conf
-	sudo systemd-nspawn -q sed -i '/VerbosePkgLists/s/^#//g'	/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q    useradd -m -G wheel -s /bin/bash builduser
+	sudo systemd-nspawn --as-pid2 -q    mkdir /build
+	sudo systemd-nspawn --as-pid2 -q    chown builduser:builduser /build
+
+
     else
 	echo "${czm} Pacstrap failed."
 fi
@@ -146,31 +139,50 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 	sudo chown root:root 01-sudoers-addendum
 	sudo mv ./01-sudoers-addendum "${chroot}/etc/sudoers.d/01-sudoers-addendum"
 
-	sudo systemd-nspawn -q   -D "${chroot}"   -u builduser \
+	sudo systemd-nspawn --as-pid2 -q   -D "${chroot}"   -u builduser \
 	install -d /build -o builduser
 
-	sudo systemd-nspawn -q   -D "${chroot}"   -u builduser \
-	repo-add /build/aur.db.tar.gz |& grep -v WARNING
-
-	sudo systemd-nspawn -q   -D "${chroot}"  \
-	pacman -Syy
-
-	sudo systemd-nspawn -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}" --pipe \
+	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}" --pipe \
 	git clone https://aur.archlinux.org/aurutils.git
 
-	sudo systemd-nspawn -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
+	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
 	makepkg -sri --noconfirm
+
+	cd "${chroot}"								|| { echo "[line ${LINENO}]" ; exit 1 ; }
+
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\#'					/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\[options]'				/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\CacheDir    = /build'		/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\[aur]'				/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\SigLevel = Optional TrustAll'	/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '$a\Server = file:///build'		/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '/CacheDir/s/^#//g'			/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '/ParallelDownloads/s/^#//g'		/etc/pacman.conf
+	sudo systemd-nspawn --as-pid2 -q sed -i '/VerbosePkgLists/s/^#//g'		/etc/pacman.conf
+
+	cat << "EOF" > "${homebuilduser}/aurutils/add-aur-repo"
+	#!/bin/bash
+	repo-add /build/aur.db.tar.gz   $(find /home/builduser/aurutils/ -maxdepth 1 -type f -name aurutils*pkg.tar.zst)
+EOF
+	chmod +x "${homebuilduser}/aurutils/add-aur-repo"
+
+	sudo systemd-nspawn --as-pid2 -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
+	./add-aur-repo
+
+	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}" --pipe \
+	pacman -Sy
 
 	sudo pacman     -r "${chroot}" \
 			-b "${chroot}/var/lib/pacman/" \
 			--config "${chroot}/etc/pacman.conf" \
 			--noconfirm -Qq \
-			| nl > .#orig-pkgs.log
+			| nl > "${BASEDIR}/.#orig-pkgs.log"
 
 	if	[[ -e  aurch.README ]]; then
 		rm aurch.README
 	fi
-	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >aurch.README)
+	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >"${BASEDIR}/aurch.README")
 	${czm} Setup completed.
 	${czm} Chroot has base, base-devel, git, and aurutils installed.
 	${czm} User builduser is set up, no password required for sudo.
@@ -208,9 +220,12 @@ EOF
 	sudo chown "${USER}":"${USER}" "${AURREPO}"
 
 	install -d "${AURREPO}" -o "${USER}"
-	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz |& grep -v WARNING
+
+	pkg=$(find "${homebuilduser}/aurutils/" -type f -name "aurutils*pkg.tar.zst")
+	repo-add "${AURREPO}/${REPONAME}".db.tar.gz "${pkg}"
+
 	sudo pacsync "${REPONAME}"
-	sudo pacman -Syy
+ 	sudo pacman -Sy
 
 	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."
 	echo " In order to avoid an unplanned system update within the script, your system has been left in a"
@@ -229,7 +244,7 @@ EOF
 fi
 #========================================================================================================================#
 while :; do
-	case "${1}" in
+	case "${1-}" in
 	-Sc|--setupchroot)     check_depends; setup_chroot                                 ;;
 	-Sh|--setuphost)       check_depends; setup_local_aur_repo                         ;;
 	-h|--help)             help                                                        ;;

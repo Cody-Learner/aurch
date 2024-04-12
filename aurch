@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-04-08	### TESTING 'set -euo pipefail' edition ###
+# aurch 2024-04-12	### TESTING 'set -euo pipefail' edition ###
 # dependencies: base-devel arch-install-scripts git pacutils(pacsync) jshon
 
 set -euo pipefail
@@ -158,8 +158,14 @@ build_pkg(){
 
 	rm -f "${tmph}"/*.file
 
+if	[[ ! -f ${AURREPO}/placeholder.pkg.tar ]]; then
+	touch "${AURREPO}"/placeholder.pkg.tar
+fi
 	cacheB=$(find "${AURREPO}"/*pkg.tar* 2>/dev/null |sort)
 
+if	[[ ! -f ${chroot}/build/placeholder.pkg.tar ]]; then	
+	touch "${chroot}"/build/placeholder.pkg.tar
+fi
 	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${tmph}"/before.file
 
 	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }

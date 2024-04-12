@@ -112,6 +112,17 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  April 12, 2024** <br>
+Aurch: <br>
+Setup a new virtual environment for testing. Discovered issue upon initial run caused by adding 'set -euo pipefail. <br>
+Added code for 'set -euo pipefail' incorrectly exiting on the find command returning "nothing" (a normal non zero exit code). <br>
+Set place holder files in AUR repos so the find command returns a result, and a zero exit code, allowing the script to proceed. <br>
+Aurch-Setup: <br>
+Discovered script was broken due to repo-add no longer allowing a new, empty repo to be initialized. <br>
+Made changes to accommodate repo-add commit. https://gitlab.archlinux.org/pacman/pacman/-/commit/f91fa546f65af9ca7cdbe2b419c181df609969b7 <br>
+Edited script to use 'set -euo pipefail'.
+ <br>
+ <br>
 **UPDATE For  April 8, 2024** <br>
 Fix 'Convert <package> input to all lower case', positional paramter to 'package' variable. <br>
 Added error handling for no package input combined with '-B' and '-G' operations. <br>
