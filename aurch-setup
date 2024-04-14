@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch-setup 2023-01-08 -1
+# aurch-setup 2023-01-14
 # dependencies: base-devel arch-install-scripts git pacutils jshon
 
 set -euo pipefail
@@ -70,6 +70,7 @@ OPERATIONS
                 -Sc  --setupchroot	Sets up a chroot.
                 -Sh  --setuphost	Sets up the host aur repo.
                 -h   --help		Prints help.
+                -V   --version		Prints aurch version.
 
 VARIABLES
 		User variables:
@@ -241,17 +242,17 @@ cat << EOF
             	Run 'aurch-setup -h' for help.
   Chroot ID 	$(basename "${chroot}")
 
-    Version:    2024-04-12
 EOF
 fi
 #========================================================================================================================#
 while :; do
 	case "${1-}" in
-	-Sc|--setupchroot)     check_depends; setup_chroot                                 ;;
-	-Sh|--setuphost)       check_depends; setup_local_aur_repo                         ;;
-	-h|--help)             help                                                        ;;
-	-?*)                   echo "${czm}${error} Input error. Running --help" ; help    ;;
-	*)                     break
+	-Sc|--setupchroot)	check_depends; setup_chroot					;;
+	-Sh|--setuphost)	check_depends; setup_local_aur_repo				;;
+	-h|--help)		help								;;
+	-V|--version)		awk -e '/^# aurch/ {print $2,$3}' $(which aurch-setup)		;;
+	-?*)			echo "${czm}${error} Input error. Running --help" ; help	;;
+	*)			break
         esac
     shift
 done
