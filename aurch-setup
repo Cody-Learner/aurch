@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch-setup 2023-01-14
+# aurch-setup 2023-04-14
 # dependencies:  base-devel arch-install-scripts git pacutils jshon
 
 set -euo pipefail
