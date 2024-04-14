@@ -112,6 +112,9 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  April 14, 2024** <br>
+Added '-v --version' operation to both aurch and aurch-setup <br>
+<br>
 **NEWS For  April 12, 2024** <br>
 Subject: Debug Packages <br>
 Some time back, pacman enabled debug packages by default in '/etc/makepkg.conf'. <br>
