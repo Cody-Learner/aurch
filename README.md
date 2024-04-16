@@ -113,7 +113,8 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  April 14, 2024** <br>
-Added '-v --version' operation to both aurch and aurch-setup <br>
+Added '-V --version' operation to both aurch and aurch-setup. <br>
+Append '-' to 'udb' variable in 'upd_aur_db' function as required by 'set -u'. <br>
 <br>
 **NEWS For  April 12, 2024** <br>
 Subject: Debug Packages <br>
