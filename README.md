@@ -112,6 +112,12 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  April 17, 2024** <br>
+Aurch: <br>
+Fix info box "Chroot Path" line, to automatically align.<br>
+Added '-' to 'opt' variable in '# Optionally install package #' section for <br>
+incorrect shellcheck SC2154. # SC2154 opt is assigned in option parsing.<br>
+<br>
 **UPDATE For  April 14, 2024** <br>
 Added '-V --version' operation to both aurch and aurch-setup. <br>
 Append '-' to 'udb' variable in 'upd_aur_db' function as required by 'set -u'. <br>
