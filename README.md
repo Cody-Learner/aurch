@@ -112,6 +112,9 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  April 21, 2024** <br>
+Aurch-setup: Added 'mc' package as checked/installed dependency.<br>
+<br>
 **UPDATE For  April 17, 2024** <br>
 Aurch: <br>
 Fix info box "Chroot Path" line, to automatically align.<br>

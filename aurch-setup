@@ -1,6 +1,6 @@
 #!/bin/bash
-# aurch-setup 2024-04-14
-# dependencies:  base-devel arch-install-scripts git pacutils jshon
+# aurch-setup 2024-04-21
+# dependencies:  base-devel arch-install-scripts git pacutils jshon mc
 
 set -euo pipefail
 
@@ -43,7 +43,7 @@ line2=$(printf %"$(tput cols)"s |tr " " "-")					# Set line '---' to terminal wi
 check_depends(){
 
 	echo "${czm} Checking dependencies for aurch and arch-install."
-	sudo pacman --needed -S base-devel arch-install-scripts git pacutils jshon
+	sudo pacman --needed -S base-devel arch-install-scripts git pacutils jshon mc
 	echo
 }
 #========================================================================================================================#
