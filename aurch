@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-04-17
+# aurch 2024-07-13
 # dependencies: base-devel git pacutils(pacsync) jshon
 
 set -euo pipefail
