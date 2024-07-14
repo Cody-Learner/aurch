@@ -96,6 +96,7 @@ References: <br>
     		BASEDIR = path to chroot base dir
     		AURREPO = path to host aur repo
     		REPONAME =  host aur repo name
+		PAGER = mc (midnight commander). Search 'PAGER=mc' to reset.
 
     (+) Package is placed into local AUR repo and entry made in pacman AUR database.
         Install with pacman -S <aur-package>
@@ -112,6 +113,10 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  July 14, 2024** <br>
+Updated dependencies list in aurch. <br>
+Updated -help option and README file to mention PAGER variable. <br>
+ <br>
 **UPDATE For  April 21, 2024** <br>
 Aurch-setup: Added 'mc' package as checked/installed dependency.<br>
 <br>

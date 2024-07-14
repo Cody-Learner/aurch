@@ -120,6 +120,8 @@ VARIABLES
 
 		To copy built AUR packages to host, set:
 		AURREPO="/path/to/host/local-pacman-repo"
+
+		PAGER=mc (midnight commander). Search 'PAGER=mc' to reset.
 MISC
 		Aurch runtime messages will be proceeded with this:	${czm}
 		Aurch runtime errors will be proceeded with this:	${czm}${error}
