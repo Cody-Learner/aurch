@@ -96,7 +96,7 @@ References: <br>
     		REPONAME =  host aur repo name
 		AURFM = AUR file manager,editor (mc = midnight commander)
 
-   (+) Package is placed into host AUR repo and entry made in pacman AUR database.
+    (+) Package is placed into host AUR repo and entry made in pacman AUR database.
         Install with `pacman -S <aur-package>`
     		
 <br>
