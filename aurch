@@ -154,9 +154,9 @@ EOF
 		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(awk -F"'" '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
 		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' |cut -d"'" -f 2 >"${tmpc}"/cloned-pkgs.file)
 
-		#--------------------------------------# "grep" command above, format breaks "inspect_files" on AUR dependencies downloaded.
-		#--------------------------------------# "awk" command above, exits with error: "line 149: $2: unbound variable".
-		#--------------------------------------# "grep"|"cut" combo above, is ugly but it works.
+		#----------------------------------# "grep" command above, format breaks "inspect_files" function on AUR dependencies downloaded.
+		#----------------------------------# "awk" command above, exits with error: "line 149: $2: unbound variable", via 'set -euo pipefail'.
+		#----------------------------------# "grep"|"cut" combo above, is ugly but it works.
 
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
