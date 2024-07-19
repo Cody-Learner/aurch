@@ -90,14 +90,14 @@ References: <br>
     		Manually remove unneeded packages in nspawn container:	aurch --clean
     		Login to chroot for maintenance:                	aurch --login
     
+    		(+) Package is placed into host AUR repo and entry made in pacman AUR database.
+    		Install with `pacman -S <aur-package>`
+    
     USER VARIABLES
     		BASEDIR = path to chroot base dir
     		AURREPO = path to host aur repo
     		REPONAME =  host aur repo name
-		AURFM = AUR file manager,editor (mc = midnight commander)
-
-    (+) Package is placed into host AUR repo and entry made in pacman AUR database.
-        Install with `pacman -S <aur-package>`
+    		AURFM = AUR file manager,editor (mc = midnight commander)
     		
 <br>
 <br>
@@ -112,10 +112,9 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  July 19, 2024** <br>
-Renamed `PAGER` variable to `AURFM` to eliminate potential issues.
-Corrected incorrect/interchangeable usage of 'chroot' with 'nspawn container'.
-
-
+Renamed `PAGER` variable to `AURFM` to eliminate potential issues. <br>
+Corrected incorrect/interchangeable usage of 'chroot' with 'nspawn container'. <br>
+ <br>
 **UPDATE For  July 14, 2024** <br>
 Updated dependencies list in aurch. <br>
 Updated --help option and README file to mention PAGER variable. <br>
