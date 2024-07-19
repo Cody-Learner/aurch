@@ -147,10 +147,20 @@ fetch_pkg(){
 
 	is_it_available
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
-	aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' >"${tmpc}"/cloned-pkgs.file)
+	aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' |cut -d"'" -f 2 >"${tmpc}"/cloned-pkgs.file)
 EOF
+
+		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' >"${tmpc}"/cloned-pkgs.file)
+		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(awk -F"'" '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
+		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' |cut -d"'" -f 2 >"${tmpc}"/cloned-pkgs.file)
+
+		#--------------------------------------# "grep" command above, format breaks "inspect_files" on AUR dependencies downloaded.
+		#--------------------------------------# "awk" command above, exits with error: "line 149: $2: unbound variable".
+		#--------------------------------------# "grep"|"cut" combo above, is ugly but it works.
+
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
+
 
 	awk -F\' '/Cloning/ {print $2}' "${tmph}"/cloned-pkgs.file | nl
 fi
@@ -517,10 +527,10 @@ yes_no(){
 inspect_files(){
 
 	AURFM=mc
-if	[[ -s  ${tmpc}/cloned-pkgs.file ]]; then
+if	[[ -s  ${tmph}/cloned-pkgs.file ]]; then
 	while IFS= read -r pkg; do
 	"${AURFM}" "${homebuilduser}"/"${pkg}"
-	done < "${tmpc}"/cloned-pkgs.file
+	done < "${tmph}"/cloned-pkgs.file
     else
 	"${AURFM}" "${homebuilduser}"/"${package}"
 fi
