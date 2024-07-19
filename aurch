@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-07-14
+# aurch 2024-07-19
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 
 set -euo pipefail
@@ -51,34 +51,34 @@ cat << EOF
 ${line2}
 
 NAME
-	aurch - Isolates host when building AUR packages from potential errors or malicious content
+	aurch - Isolates the host system when building AUR packages from potential errors or malicious content.
 
 DESCRIPTION
-	Aurch builds AUR packages from within a chroot, focused on using the chroot for build isolation.
+	Aurch builds AUR packages in an nspawn container implemented for build isolation.
 	Not to be confused with building packages in a clean chroot. ie: devtools package scripts.
-	Upon completing AUR builds, aurch places copys of the packages in the host AURREPO file.
-	Keeps a copy of AUR packages and dependencies in the chroot for future use.
-	Automatically installs required pgp keys in the chroot.
-	Automatically maintains a set package count in the chroot via automated cleanup.
-	The chroot is intended to be reused rather than recreated for each package.
+	Upon completing AUR builds, aurch places copies of the packages in the host AURREPO directory.
+	Keeps a copy of AUR packages and dependencies in the nspawn container for future use.
+	Automatically installs required pgp keys in the nspawn container.
+	Automatically maintains a set package count in the nspawn container via automated cleanup.
+	The nspawn container is intended to be reused rather than recreated for each package.
 
 USAGE
 		aurch [operation[options]] [package | pgp key]
 
 OPERATIONS
-		-B* --build	Builds an AUR package in one step.
+		-B* --build	Build new or update an existing AUR package.
 		-G  --git	Git clones an AUR package.
-		-C  --compile	Builds an AUR package on existing PKGBUILD.
-		-Rc  [NA] long	Remove AUR pkg from chroot  /build/<package>, $HOME/<build dir>, and database entry.
-		-Rh  [NA] long	Remove AUR pkg from host /AURREPO/<package>, <package> if installed, and database entry.
-		-Syu  --update  Runs pacman -Syu on chroot.
-		-Luc* --lsudc	List update info for AUR packages in chroot.
+		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
+		-Rh		Remove AUR pkg from host.   Removes:   /AURREPO/<package>,  <package> if installed,  and database entry.
+		-Rc		Remove AUR pkg from nspawn container. Removes:   /build/<package>,    /${HOME}/<build dir>,    and database entry.
+		-Syu  --update  Update nspawn container packages. ie: Runs 'pacman -Syu' inside the nspawn container.
 		-Luh* --lsudh	List update info for AUR packages installed in host.
-		-Lac* --lsaurc	List AUR db contents of chroot.
-		-Lah* --lsaurh	List AUR db contents of host.
-		      --login   Login to chroot for maintenance.
-		      --clean	Manually remove unneeded packages from chroot.
-		      --pgp	Manually import pgp key in chroot.
+		-Luc* --lsudc	List update info for AUR packages/AUR dependencies in nspawn container.
+		-Lah* --lsaurh	List AUR sync database contents/status of host.
+		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
+		      --login   Login to nspawn container for maintenance.
+		      --clean	Manually remove unneeded packages from nspawn container.
+		      --pgp	Manually import pgp key in nspawn container.
 		-h,   --help	Prints help.
 		-V,   --version Prints aurch version.
 
@@ -94,34 +94,45 @@ OPTIONS
 		Do not mix order or attempt to use 'i' other than described.
 
 OVERVIEW
-		Run 'aurch-setup' before using aurch.
-		Run aurch from directory containing chroot created during 'aurch-setup'.
+    		Run aurch-setup before using aurch.
+    		Run aurch to manage AUR packages.
+    		Aurch is designed to handle AUR packages individually, one at a time.
+    		ie: No group updates or multi package per operation capability.
+    		The aurch nspawn container must be periodically updated via the 'aurch -Syu' command.
+    		Update nspawn container before buiding packages.
 
 EXAMPLES
-		Create a directory to setup chroot in:		mkdir ~/aurbuilds
-		Move into directory:				cd ~/aurbuilds
-		Build an AUR package in the chroot:		aurch -B  <aur-package>
-		Git clone package:				aurch -G  <aur-package>
-		Build (Compile) AUR pkg on existing PKGBUILD:	aurch -C  <aur-package>
-		Remove AUR pkg from chroot:			aurch -Rc <aur-package>
-		Remove AUR pkg from host:			aurch -Rh <aur-package>
-		Update chroot:					aurch -Syu
-		List update info for AUR packages in chroot:	aurch -Luc
-		List update info for AUR packages in host:	aurch -Luh
-		List AUR sync database contents in chroot:	aurch -Lac
-		List AUR sync database contents in host :	aurch -Lah
-		Manually import a pgp key in chroot:		aurch --pgp <short or long key id>
-		Manually remove unneeded packages in chroot:	aurch --clean
-		Login to chroot for maintenance:                aurch --login
+    		SETUP FOR AURCH:
+
+    		Set up nspawn container:				aurch-setup --setupchroot
+    		Set up local AUR repo:					aurch-setup --setuphost
+
+
+    		USING AURCH:
+
+    		Build an AUR package(+):				aurch -B  <aur-package>
+    		Build and install AUR package:				aurch -Bi <aur-package>
+    		Git clone package					aurch -G  <aur-package>
+    		Build (Compile) AUR pkg on existing PKGBUILD		aurch -C  <aur-package>
+    		Remove AUR package from host:				aurch -Rh <aur-package>
+    		Remove AUR package from nspawn container:		aurch -Rc <aur-package>
+    		List nspawn container AUR sync db contents:		aurch -Lac
+    		List nspawn container AUR repo updates:			aurch -Luc
+    		List host AUR sync database contents:			aurch -Lah
+    		List host AUR repo updates available:			aurch -Luh
+    		Manually import a pgp key in nspawn container:		aurch --pgp <short or long key id>
+    		Manually remove unneeded packages in nspawn container:	aurch --clean
+    		Login to chroot for maintenance:                	aurch --login
+
+		(+) Package is placed into host AUR repo and entry made in pacman AUR database.
+		    Install with 'pacman -S <aur-package>'
 
 VARIABLES
-		AURREPO </path/to/host/directory>
-		AURREPO Default: /tmp/aurch
+    		BASEDIR = path to chroot base dir
+    		AURREPO = path to host aur repo
+    		REPONAME =  host aur repo name
+		AURFM = AUR file manager,editor (mc = midnight commander)
 
-		To copy built AUR packages to host, set:
-		AURREPO="/path/to/host/local-pacman-repo"
-
-		PAGER=mc (midnight commander). Search 'PAGER=mc' to reset.
 MISC
 		Aurch runtime messages will be proceeded with this:	${czm}
 		Aurch runtime errors will be proceeded with this:	${czm}${error}
@@ -505,13 +516,13 @@ yes_no(){
 #========================================================================================================================#
 inspect_files(){
 
-	PAGER=mc
+	AURFM=mc
 if	[[ -s  ${tmpc}/cloned-pkgs.file ]]; then
 	while IFS= read -r pkg; do
-	"${PAGER}" "${homebuilduser}"/"${pkg}"
+	"${AURFM}" "${homebuilduser}"/"${pkg}"
 	done < "${tmpc}"/cloned-pkgs.file
     else
-	"${PAGER}" "${homebuilduser}"/"${package}"
+	"${AURFM}" "${homebuilduser}"/"${package}"
 fi
 	opt="${1}" build_pkg
 }
@@ -525,7 +536,7 @@ if      [[ -z ${*} ]]; then cat << EOF
  |      -B*   build AUR package                 -Luc*   list updates chroot       |
  |      -G    git clone package                 -Luh*   list updates host         |
  |      -C    build on existing git clone       -Lac*   list AUR sync db chroot   |
- |     -Rc    remove AUR pkg from chroot        -Lah*   list AUR sync db host     |
+ |     -Rc    remove AUR pkg from container     -Lah*   list AUR sync db host     |
  |     -Rh    remove AUR pkg from host         --pgp    import pgp key            |
  |    -Syu    update chroot                  --clean    remove unneeded packages  |
  |      -V    print version                  --login    log into chroot           |

@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch-setup 2024-04-21
+# aurch-setup 2024-07-19
 # dependencies:  base-devel arch-install-scripts git pacutils jshon mc
 
 set -euo pipefail
@@ -56,18 +56,15 @@ NAME
 
 DESCRIPTION
 		Aurch-setup sets up a system for the aurch script to build AUR packages.
-		It can set up a chroot for building AUR packages. 
-		It cat set up a local pacman repo for AUR package on the host.
-		Aurutils is setup and installed within the chroot to build AUR packages.
-		It is not necessary to have an AUR helper installed on the host system.
-		AUR packages are installed using 'pacman -S' rather than 'pacman -U'.
-		All AUR package build related 'aurutils and makepkg' operations are performed from within the chroot.
+		Sets up an nspawn container for building AUR packages. 
+		Sets up a local pacman repo for AUR package on the host.
+		Aurutils is setup and installed within the nspawn container to build AUR packages.
 
 USAGE
 		aurch-setup [operation]
 
 OPERATIONS 
-                -Sc  --setupchroot	Sets up a chroot.
+                -Sc  --setupchroot	Sets up an nspawn container.
                 -Sh  --setuphost	Sets up the host aur repo.
                 -h   --help		Prints help.
                 -V   --version		Prints aurch version.
@@ -250,7 +247,7 @@ while :; do
 	-Sc|--setupchroot)	check_depends; setup_chroot					;;
 	-Sh|--setuphost)	check_depends; setup_local_aur_repo				;;
 	-h|--help)		help								;;
-	-V|--version)		awk -e '/^# aurch/ {print $2,$3}' $(which aurch-setup)		;;
+	-V|--version)		awk -e '/^# aurch/ {print $2,$3}' "$(which aurch-setup)"	;;
 	-?*)			echo "${czm}${error} Input error. Running --help" ; help	;;
 	*)			break
         esac

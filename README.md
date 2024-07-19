@@ -1,29 +1,29 @@
 # aurch
 
-The emphasis of aurch is using a chroot for AUR 'build isolation' rather than 'clean chroot building'.  <br>
-Aurch isolates the build environment to mitigate build script errors or malicious intent causing issues on the host. <br>
-The original aurch script has been split into two scripts. <br>
-The setup operations are now separate from the AUR package building  operations. <br>
+The emphasis of aurch is using an nspawn container for AUR 'build isolation' rather than a 'clean chroot'.  <br>
+Aurch isolates the build environment to mitigate build script errors/malicious intent causing issues on host. <br>
+The original aurch script has been split up into two seperate scripts with a dedicated setup script now. <br>
 <br>
 <br>
 **aurch-setup:**<br>
-Aurch-setup builds and sets up an systemd nspawn chroot for building packages with aurutils, a local AUR repo, and user name "builduser", all within the chroot. The chroot is persistent, and intended for data storage and to be used for all AUR builds. Aurch-setup is also  capable of setting up the host system with a local pacman AUR repo.
+Aurch-setup creates and sets up a systemd nspawn container for building AUR packages and sets up a local AUR repo in host. The nspawn container is persistent, and intended for data storage and to be used for all AUR builds.
 <br>
 <br>
 **aurch:**<br>
-Builds all AUR packages in the chroot, isolated from the host. <br>
-After the packages are built, they're copied into the host AUR cache and entered into the pacman database.<br>
-Builds and installs all required AUR dependencies in the chroot. <br>
-Installs any required pgp keys in the chroot. <br>
-Removes all packages used in the chroot building process upon completion, maintaining a minimal footprint with a small, consistent package base. <br>
-All the AUR packages and AUR dependencies are backed up within the chroot.  <br>
+Aurch builds AUR packages in the nspawn container isolated from the host. <br>
+After packages are built, they're copied into the host AUR cache and entered into host pacman sync db.<br>
+Builds, installs, and keeps all required AUR dependencies in the nspawn container. <br>
+Installs any required pgp keys in the nspawn container. <br>
+Removes all official repo packages used in the nspawn container build process upon completion, maintaining a minimal footprint of a small, consistent set of base packages. <br>
+All the AUR packages and AUR dependencies are saved/backed up within the nspawn container. <br>
 <br>
 <br>
 Note: <br>
-Aurch script isolates the build process from the host, not to be confused with building packages in a clean chroot. <br>
+Aurch script isolates the build process from the host, not to be confused with building packages in a 'clean chroot'.
 Scripts such as devtools were not written to and do not isolate the build process from the host. <br>
-[devtools info](https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot)  <br>
+
 References: <br>
+[Arch wiki: building in a clean chroot](https://wiki.archlinux.org/title/DeveloperWiki:Building_in_a_clean_chroot)  <br>
  https://www.reddit.com/r/archlinux/comments/q2qwbr/aur_build_in_chroot_to_mitigate_risks/hfn7x0p/ <br>
  https://www.reddit.com/r/archlinux/comments/qk3rk7/wrote_script_to_setup_an_nspawn_chroot_and_build/hixia0b/ <br>
 <br>
@@ -36,17 +36,17 @@ References: <br>
 		-G  --git	Git clones an AUR package.
 		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
 		-Rh		Remove AUR pkg from host.   Removes:   /AURREPO/<package>,  <package> if installed,  and database entry.
-		-Rc		Remove AUR pkg from chroot. Removes:   /build/<package>,    /${HOME}/<build dir>,    and database entry.
-		-Syu  --update  Update chroot packages. ie: Runs pacman -Syu in chroot.
+		-Rc		Remove AUR pkg from nspawn container. Removes:   /build/<package>,    /${HOME}/<build dir>,    and database entry.
+		-Syu  --update  Update nspawn container packages. ie: Runs `pacman -Syu` inside the nspawn container.
 		-Luh* --lsudh	List update info for AUR packages installed in host.
-		-Luc* --lsudc	List update info for AUR packages in chroot.
-		-Lah* --lsaurh	List AUR database contents/status of host.
-		-Lac* --lsaurc	List AUR database contents/status of chroot.
-		      --login   Login to chroot for maintenance.
-		      --clean	Manually remove unneeded packages from chroot.
-		      --pgp	Manually import pgp key in chroot.
+		-Luc* --lsudc	List update info for AUR packages/AUR dependencies in nspawn container.
+		-Lah* --lsaurh	List AUR sync database contents/status of host.
+		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
+		      --login   Login to nspawn container for maintenance.
+		      --clean	Manually remove unneeded packages from nspawn container.
+		      --pgp	Manually import pgp key in nspawn container.
 		-h,   --help	Prints help.
-
+		-V,   --version Prints aurch version.
     
     OPTIONS *
     	-L, List:
@@ -64,42 +64,40 @@ References: <br>
     		Run aurch to manage AUR packages.
     		Aurch is designed to handle AUR packages individually, one at a time.
     		ie: No group updates or multi package per operation capability.
-    		The aurch chroot must be periodically updated via the 'aurch -Syu' command.
-    		Update chroot before buiding packages.
+    		The aurch nspawn container must be periodically updated via the `aurch -Syu` command.
+    		Update nspawn container before buiding packages.
     
     EXAMPLES
     		SETUP FOR AURCH:
 
-    		Create a directory to setup the chroot:		mkdir ~/aurbuilds
-    		Move into directory:				cd ~/aurbuilds
-    		Set up chroot:					aurch-setup --setupchroot
-    		Set up local AUR repo:				aurch-setup --setuphost
+    		Set up nspawn container:				aurch-setup --setupchroot
+    		Set up local AUR repo:					aurch-setup --setuphost
 
 
     		USING AURCH:
 
-    		Build an AUR package(+):			aurch -B  <aur-package>
-    		Build and install AUR package:			aurch -Bi <aur-package>
-    		Git clone package				aurch -G  <aur-package>
-    		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C  <aur-package>
-    		Remove AUR package from host:			aurch -Rh <aur-package>
-    		Remove AUR package from chroot:			aurch -Rc <aur-package>
-    		List chroot AUR repo updates available:		aurch -Luc
-    		List chroot AUR sync database contents:		aurch -Lac
-    		List host AUR sync database contents:		aurch -Lah
-    		List host AUR repo updates available:		aurch -Lah
-    		Manually import a pgp key in chroot:		aurch --pgp <short or long key id>
-    		Manually remove unneeded packages in chroot:	aurch --clean
-    		Login to chroot for maintenance:                aurch --login
+    		Build an AUR package(+):				aurch -B  <aur-package>
+    		Build and install AUR package:				aurch -Bi <aur-package>
+    		Git clone package					aurch -G  <aur-package>
+    		Build (Compile) AUR pkg on existing PKGBUILD		aurch -C  <aur-package>
+    		Remove AUR package from host:				aurch -Rh <aur-package>
+    		Remove AUR package from nspawn container:		aurch -Rc <aur-package>
+    		List nspawn container AUR sync db contents:		aurch -Lac
+    		List nspawn container AUR repo updates:			aurch -Luc
+    		List host AUR sync database contents:			aurch -Lah
+    		List host AUR repo updates available:			aurch -Luh
+    		Manually import a pgp key in nspawn container:		aurch --pgp <short or long key id>
+    		Manually remove unneeded packages in nspawn container:	aurch --clean
+    		Login to chroot for maintenance:                	aurch --login
     
     USER VARIABLES
     		BASEDIR = path to chroot base dir
     		AURREPO = path to host aur repo
     		REPONAME =  host aur repo name
-		PAGER = mc (midnight commander). Search 'PAGER=mc' to reset.
+		AURFM = AUR file manager,editor (mc = midnight commander)
 
-    (+) Package is placed into local AUR repo and entry made in pacman AUR database.
-        Install with pacman -S <aur-package>
+   (+) Package is placed into host AUR repo and entry made in pacman AUR database.
+        Install with `pacman -S <aur-package>`
     		
 <br>
 <br>
@@ -108,11 +106,16 @@ References: <br>
 
 Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
-<br>
+<br> 
 <br>
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  July 19, 2024** <br>
+Renamed `PAGER` variable to `AURFM` to eliminate potential issues.
+Corrected incorrect/interchangeable usage of 'chroot' with 'nspawn container'.
+
+
 **UPDATE For  July 14, 2024** <br>
 Updated dependencies list in aurch. <br>
 Updated --help option and README file to mention PAGER variable. <br>
