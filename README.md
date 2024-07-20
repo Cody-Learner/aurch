@@ -113,7 +113,8 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 **UPDATE For  July 19, 2024** <br>
 Renamed `PAGER` variable to `AURFM` to eliminate potential issues. <br>
-Corrected incorrect/interchangeable usage of 'chroot' with 'nspawn container'. <br>
+Corrected the incorrect/interchangeable usage of the words 'chroot' and 'nspawn container' in README.md
+and '--help' sections of scripts. <br>
  <br>
 **UPDATE For  July 14, 2024** <br>
 Updated dependencies list in aurch. <br>
