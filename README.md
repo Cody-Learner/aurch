@@ -34,20 +34,25 @@ References: <br>
     OPERATIONS
 		-B* --build	Build new or update an existing AUR package.
 		-G  --git	Git clones an AUR package.
-		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
-		-Rh		Remove AUR pkg from host.   Removes:   /AURREPO/<package>,  <package> if installed,  and database entry.
-		-Rc		Remove AUR pkg from nspawn container. Removes:   /build/<package>,    /${HOME}/<build dir>,    and database entry.
-		-Syu  --update  Update nspawn container packages. ie: Runs `pacman -Syu` inside the nspawn container.
-		-Luh* --lsudh	List update info for AUR packages installed in host.
-		-Luc* --lsudc	List update info for AUR packages/AUR dependencies in nspawn container.
+		-C  --compile	Build an AUR package on existing PKGBUILD.(1) 
+		-Rh		Remove AUR pkg from host.(2)
+		-Rc		Remove AUR pkg from nspawn container.(3)
+		-Syu  --update  Update nspawn container packages.(4)
 		-Lah* --lsaurh	List AUR sync database contents/status of host.
 		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
+		-Luh* --lsudh	List update info for AUR packages installed in host.
+		-Luc* --lsudc	List update info for AUR pkgs/AUR deps in nspawn container.
 		      --login   Login to nspawn container for maintenance.
 		      --clean	Manually remove unneeded packages from nspawn container.
 		      --pgp	Manually import pgp key in nspawn container.
 		-h,   --help	Prints help.
 		-V,   --version Prints aurch version.
     
+    		(1)=Useful for implementing changes to PKGBUILD, etc.
+    		(2)=Removes:  /AURREPO/<package>, <package> if installed, and database entry.
+    		(3)=Removes:  /build/<package>,   /${HOME}/<build dir>,   and database entry.
+    		(4)Runs `pacman -Syu` inside the nspawn container.
+
     OPTIONS *
     	-L, List:
     		Append 'q' to list operations -L[u,c,h] for quiet mode.
@@ -64,33 +69,33 @@ References: <br>
     		Run aurch to manage AUR packages.
     		Aurch is designed to handle AUR packages individually, one at a time.
     		ie: No group updates or multi package per operation capability.
-    		The aurch nspawn container must be periodically updated via the `aurch -Syu` command.
+    		The aurch nspawn container must be periodically updated via `aurch -Syu`.
     		Update nspawn container before buiding packages.
     
     EXAMPLES
     		SETUP FOR AURCH:
 
-    		Set up nspawn container:				aurch-setup --setupchroot
-    		Set up local AUR repo:					aurch-setup --setuphost
+    		Set up nspawn container:			aurch-setup --setupchroot
+    		Set up local AUR repo:				aurch-setup --setuphost
 
 
     		USING AURCH:
 
-    		Build an AUR package(+):				aurch -B  <aur-package>
-    		Build and install AUR package:				aurch -Bi <aur-package>
-    		Git clone package					aurch -G  <aur-package>
-    		Build (Compile) AUR pkg on existing PKGBUILD		aurch -C  <aur-package>
-    		Remove AUR package from host:				aurch -Rh <aur-package>
-    		Remove AUR package from nspawn container:		aurch -Rc <aur-package>
-    		List nspawn container AUR sync db contents:		aurch -Lac
-    		List nspawn container AUR repo updates:			aurch -Luc
-    		List host AUR sync database contents:			aurch -Lah
-    		List host AUR repo updates available:			aurch -Luh
-    		Manually import a pgp key in nspawn container:		aurch --pgp <short or long key id>
-    		Manually remove unneeded packages in nspawn container:	aurch --clean
-    		Login to chroot for maintenance:                	aurch --login
+    		Build an AUR package(+):			aurch -B  <aur-package>
+    		Build and install AUR package:			aurch -Bi <aur-package>
+    		Git clone package				aurch -G  <aur-package>
+    		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C  <aur-package>
+    		Remove AUR package from host:			aurch -Rh <aur-package>
+    		Remove AUR package from nspawn container:	aurch -Rc <aur-package>
+    		List nspawn container AUR sync db contents:	aurch -Lac
+    		List nspawn container AUR repo updates:		aurch -Luc
+    		List host AUR sync database contents:		aurch -Lah
+    		List host AUR repo updates available:		aurch -Luh
+    		Manually import a pgp key in nspawn container:	aurch --pgp <short/long id>
+    		Manually remove unneeded pkgs from container:	aurch --clean
+    		Login to chroot for maintenance:                aurch --login
     
-    		(+) Package is placed into host AUR repo and entry made in pacman AUR database.
+    		(+) Package placed into host AUR repo and entry made in pacman AUR database.
     		Install with `pacman -S <aur-package>`
     
     USER VARIABLES
