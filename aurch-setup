@@ -186,7 +186,7 @@ EOF
 	${czm} User builduser is set up, no password required for sudo.
 	${czm} Local chroot AUR repo is set up as /build.
 	${czm} Do not alter files proceeded with '#.' in base directory.
-	${czm} Run: 'aurch -Sh' now to setup host local AUR repo.
+	${czm} Run: 'aurch-setup -Sh' now to setup host local AUR repo.
 EOF
     else
 	echo; echo "${czm} User setup failed."

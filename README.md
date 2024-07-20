@@ -69,7 +69,7 @@ References: <br>
     		Run aurch to manage AUR packages.
     		Aurch is designed to handle AUR packages individually, one at a time.
     		ie: No group updates or multi package per operation capability.
-    		The aurch nspawn container must be periodically updated via `aurch -Syu`.
+    		The aurch nspawn container must be periodically updated via aurch -Syu.
     		Update nspawn container before buiding packages.
     
     EXAMPLES
