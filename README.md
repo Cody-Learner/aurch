@@ -112,7 +112,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **UPDATE For  July 19, 2024** <br>
-Fixed "Review Files" for AUR dependency review when they are downloaded.
+Fixed "Review Files" for AUR dependency review when they are downloaded.<br>
 Renamed `PAGER` variable to `AURFM` to eliminate potential issues. <br>
 Corrected the incorrect/interchangeable usage of the words 'chroot' and 'nspawn container' in README.md
 and '--help' sections of scripts. <br>
