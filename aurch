@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-07-19
+# aurch 2024-07-21
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 
 set -euo pipefail
@@ -552,7 +552,7 @@ if      [[ -z ${*} ]]; then cat << EOF
  |      -V    print version                  --login    log into chroot           |
  |                                                                                |
 EOF
-	printf '%-82s|\n' " |       Chroot Path:  ${chroot}"
+	printf '%-82s|\n' " |       Container Path:  ${chroot}"
 	echo " |================================================================================|"
 	echo -e '\033[00m'
 fi
