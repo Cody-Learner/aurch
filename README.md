@@ -116,6 +116,15 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  Aug 1, 2024**                                            <br>
+aurch:                                                                 <br>
+Worked on elimimating 'sudo timeouts' on long running package builds.  <br>
+Edited 'cleanup_chroot' function to eliminate sudo timeouts,           <br>
+works in conjunction with supplied '/etc/sudoers.d/aurch' example.     <br>
+Edited 'check_host_updates' function to provide accurate results       <br>
+on installed version if package is downgraded or held back from latest.<br>
+Cleaned up script comments.                                            <br>
+                                                                       <br>
 **UPDATE For  July 19, 2024** <br>
 Fixed "Review Files" for AUR dependency review when they are downloaded.<br>
 Renamed `PAGER` variable to `AURFM` to eliminate potential issues. <br>

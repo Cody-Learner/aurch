@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-07-21
+# aurch 2024-08-01
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 
 set -euo pipefail
@@ -143,20 +143,12 @@ EOF
 #========================================================================================================================#
 fetch_pkg(){
 
-	[[ -z ${package} ]] && { echo "${czm} Need to specify package."; echo; exit ; } 
+	[[ -z ${package} ]] && { echo "${czm} Need to specify package."; echo; exit ; }
 
 	is_it_available
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
 	aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' |cut -d"'" -f 2 >"${tmpc}"/cloned-pkgs.file)
 EOF
-
-		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' >"${tmpc}"/cloned-pkgs.file)
-		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(awk -F"'" '/Cloning/ {print $2}' >"${tmpc}"/cloned-pkgs.file)
-		# aur depends -r "${package}" | tsort | aur fetch -S - |& tee >(grep 'Cloning' |cut -d"'" -f 2 >"${tmpc}"/cloned-pkgs.file)
-
-		#----------------------------------# "grep" command above, format breaks "inspect_files" function on AUR dependencies downloaded.
-		#----------------------------------# "awk" command above, exits with error: "line 149: $2: unbound variable", via 'set -euo pipefail'.
-		#----------------------------------# "grep"|"cut" combo above, is ugly but it works.
 
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
@@ -187,7 +179,7 @@ if	[[ ! -f ${AURREPO}/placeholder.pkg.tar ]]; then
 fi
 	cacheB=$(find "${AURREPO}"/*pkg.tar* 2>/dev/null |sort)
 
-if	[[ ! -f ${chroot}/build/placeholder.pkg.tar ]]; then	
+if	[[ ! -f ${chroot}/build/placeholder.pkg.tar ]]; then
 	touch "${chroot}"/build/placeholder.pkg.tar
 fi
 	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${tmph}"/before.file
@@ -312,7 +304,8 @@ if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
 	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
 fi
 	echo "${czm} Checking/Cleaning chroot."
-	sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+
+	sudo /usr/bin/systemd-nspawn -a -q -D "${chroot}" --pipe /usr/bin/bash << EOF
 	comm -23 <(pacman -Qq) <(sort "${tmpc}"/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null \
 	|| echo " Package count: $(pacman -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Qq | wc -l)"
 EOF
@@ -328,7 +321,7 @@ if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/added-pkgs.file 
 	repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 	done < "${tmph}"/added-pkgs.file
 fi
-if	[[ ${udb-} == alldone ]]; then 
+if	[[ ${udb-} == alldone ]]; then
 	return
     else
 	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/warning.file ]]; then
@@ -376,7 +369,7 @@ if	[[ -n ${pkg} ]]; then
 	fi
 	if	[[ ${1} == -Rh ]]; then
 		if	pacman -Q "${pkg}" &>/dev/null ; then
-			sudo pacman -Rns "${pkg}" 
+			sudo pacman -Rns "${pkg}"
 		fi
 	cd "${AURREPO}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	remove=$(find "${pkg}"*.pkg.tar*)
@@ -431,7 +424,7 @@ fi
 #========================================================================================================================#
 check_host_updates(){
 
-	readarray -t aurpkgs < <(pacman -Sl "${REPONAME}" 2>/dev/null | awk '{print $2,$3}' ; pacman -Qm )
+	readarray -t aurpkgs < <(pacman --color=never -Slq "${REPONAME}" | pacman -Q - ; pacman --color=never -Qm)
 if	[[ $1 == -Luhq ]]; then	:
     else
 	echo; echo "${czm} Checking for updates:"
@@ -463,7 +456,7 @@ if	[[ $1 == -Luhq ]]; then
 	 	column -t /tmp/aurch-updates
 		echo
 	    else
-		echo; echo "${czm} No Updates available"	
+		echo; echo "${czm} No Updates available"
 	fi
 	if	[[ -s  /tmp/aurch-updates-newer ]]; then
 		echo "${czm} VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates."
