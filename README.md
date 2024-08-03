@@ -116,6 +116,15 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  Aug 3, 2024**								<br>
+Fixed the processing of a printed message to the user.					<br>
+Added a file of experimental code for aurch to build packages in clean chroot, 		<br>
+rather the aurch nspawn container.							<br>
+Somewhat Unrelated:									<br>
+Added an `.sh` suffix to several of the scripts in here and my other repos/scripts. 	<br>
+The suffix is used in the [github-ca.sh](https://github.com/Cody-Learner/github-clone-all) 
+script to streamline installing my scripts in a new system.		<br>
+									<br>
 **UPDATE For  Aug 1, 2024**                                            <br>
 aurch:                                                                 <br>
 Worked on elimimating 'sudo timeouts' on long running package builds.  <br>
