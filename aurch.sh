@@ -1,6 +1,7 @@
 #!/bin/bash
 # aurch 2024-08-01
 # dependencies: base-devel git pacutils(pacsync) jshon mc
+# shellcheck source=aurch-cc #Run with: shellcheck -x aurch
 
 set -euo pipefail
 
@@ -153,8 +154,8 @@ EOF
 if	[[ -s ${tmph}/cloned-pkgs.file ]]; then
 	echo "${czm} Git cloned ${package} and/or it's dependencies:"
 
-
-	awk -F\' '/Cloning/ {print $2}' "${tmph}"/cloned-pkgs.file | nl
+	# awk -F\' '/Cloning/ {print $2}' "${tmph}"/cloned-pkgs.file | nl
+	nl "${tmph}"/cloned-pkgs.file
 fi
 }
 #========================================================================================================================#
@@ -529,6 +530,22 @@ if	[[ -s  ${tmph}/cloned-pkgs.file ]]; then
 fi
 	opt="${1}" build_pkg
 }
+#=======================================### EXPERIMENTAL: Clean chroot build  ###================================================#
+
+clean_chroot(){
+
+aurcc="$(which aurch)-cc"
+
+if	[[ -s "${aurcc}" ]]; then 
+	printf '\f%s\f\n' "${error} Experiential feature 'build pkg in clean chroot' being enabled. Proceed? [y/n]."
+	while read -r reply ; do
+	[[ ${reply} == y ]] && break
+	[[ ${reply} == n ]] && exit
+	done
+	source "${aurcc}"
+fi
+
+}
 #=======================================### Aurch called with no args ###================================================#
 
 if      [[ -z ${*} ]]; then cat << EOF
@@ -555,6 +572,7 @@ while :; do
 	-B*|--build)	fetch_pkg ; yes_no	"${1-}" 			;;
 	-G|--git)	fetch_pkg ; 						;;
 	-C|--compile)	opt="${1-}" build_pkg					;;
+	-Cc|--cchroot)	clean_chroot		"${1-}"				;;
 	-R*)		pkg="${2-}" remove	"${1-}"				;;
 	-Syu|--update)  update_chroot						;;
 	-Luh*|--lsudh)	check_host_updates	"${1-}"				;;
