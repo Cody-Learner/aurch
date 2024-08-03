@@ -1,6 +1,7 @@
 # Experimental aurch 'add on' feature to build aur packages in a clean chroot, integrating them with both aurch aur repos. 
 # To enable, place this in the directory containing the aurch script to allow sourcing.
 # Clones repo to /tmp/aurch/pkg, builds in chroot /var/lib/archbuild/*, installs/syncs package in aurch host and nspawn aur repos.
+# 2024-08-03
 # shellcheck shell=bash disable=SC2154
 
 	echo "${czm} Clean chroot building depends on aurutils for dependency resolution and ordering."

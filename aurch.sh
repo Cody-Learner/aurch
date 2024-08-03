@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-08-01
+# aurch 2024-08-03
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck source=aurch-cc #Run with: shellcheck -x aurch
 
@@ -534,7 +534,7 @@ fi
 
 clean_chroot(){
 
-aurcc="$(which aurch)-cc"
+aurcc="$(type -p aurch)-cc"
 
 if	[[ -s "${aurcc}" ]]; then 
 	printf '\f%s\f\n' "${error} Experiential feature 'build pkg in clean chroot' being enabled. Proceed? [y/n]."
