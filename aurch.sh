@@ -537,7 +537,7 @@ clean_chroot(){
 aurcc="$(type -p aurch)-cc"
 
 if	[[ -s "${aurcc}" ]]; then 
-	printf '\f%s\f\n' "${error} Experiential feature 'build pkg in clean chroot' being enabled. Proceed? [y/n]."
+	printf '\f%s\f\n' "${error} Experimental feature 'build pkg in clean chroot' being enabled. Proceed? [y/n]."
 	while read -r reply ; do
 	[[ ${reply} == y ]] && break
 	[[ ${reply} == n ]] && exit
