@@ -116,6 +116,16 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**UPDATE For  Aug 9, 2024**										<br>
+* aurch-setup.sh:											<br>
+Added container shell configs: colored shell prompts, header id's, and alias's.				<br>
+Corrected script comments and printed comments replacing 'chroot' with 'container'/'nspawn-container'.	<br>
+Changed 'sleep' times.											<br>
+Added printed comments for added container configuration.						<br>
+Cleaned up trailing white space.									<br>
+* README.md:												<br>
+Updated to report changes.										<br>
+												<br>
 **UPDATE For  Aug 3, 2024**								<br>
 Fixed the processing of a printed message to the user.					<br>
 Added a file of experimental code for aurch to build packages in clean chroot, 		<br>

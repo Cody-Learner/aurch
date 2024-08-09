@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch-setup 2024-07-19
+# aurch-setup 2024-08-09
 # dependencies:  base-devel arch-install-scripts git pacutils jshon mc
 
 set -euo pipefail
@@ -21,8 +21,8 @@ set -euo pipefail
 [[ ! -v REPONAME   ]] && REPONAME=aur						# Set    REPONAME to default if unset
 [[ ! -s ${BASEDIR}/.#ID ]] && mktemp -u XXX > "${BASEDIR}"/.#ID			# If not present, create unique suffix file
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST   path to chroot
-chrbuilduser=/home/builduser							# CHROOT builduser home directory (same destination)
-homebuilduser="${chroot}"/home/builduser					# HOST   builduser home directory (same destination)
+chrbuilduser=/home/builduser							# CHROOT builduser home directory
+homebuilduser="${chroot}"/home/builduser					# HOST   builduser home directory
 #-------------------------------------------------------------------------------------------------------------------#
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')				# Aurch color pointer
 error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')				# Red 'ERROR' text.
@@ -56,14 +56,14 @@ NAME
 
 DESCRIPTION
 		Aurch-setup sets up a system for the aurch script to build AUR packages.
-		Sets up an nspawn container for building AUR packages. 
+		Sets up an nspawn container for building AUR packages.
 		Sets up a local pacman repo for AUR package on the host.
 		Aurutils is setup and installed within the nspawn container to build AUR packages.
 
 USAGE
 		aurch-setup [operation]
 
-OPERATIONS 
+OPERATIONS
                 -Sc  --setupchroot	Sets up an nspawn container.
                 -Sh  --setuphost	Sets up the host aur repo.
                 -h   --help		Prints help.
@@ -78,7 +78,7 @@ VARIABLES
 				AURREPO   "${HOME}"/.cache/aurch/repo
 
 EXAMPLES
-		Setup a chroot for aurch on the host:        aurch-setup -Sc		 
+		Setup a chroot for aurch on the host:        aurch-setup -Sc
 		Setup a pacman local AUR repo on the host:   aurch-setup -Sh
 
 MISC
@@ -96,13 +96,13 @@ setup_chroot(){
 
 if      [[ -n ${existing} ]]; then
 	echo "${czm}${error}An aurch chroot, '${chroot}' detected in '${BASEDIR}'."
-	echo " If you want to setup a new aurch chroot, the following need removed."
+	echo " If you want to setup a new aurch container, the following needs removed."
 	echo " ${chroot}"
 	echo " ${BASEDIR}/.#ID"
 	exit
 fi
-	echo "${czm} Building chroot."
-	sleep 5
+	echo "${czm} Building aurch nspawn-container."
+	sleep 2
 
 	mkdir "${chroot}"
 
@@ -110,8 +110,9 @@ fi
 
 if      sudo pacstrap -c "${chroot}" base base-devel git ; then
 
-	echo "${czm} Pacstrap finished chroot install."
-	sleep 2
+	echo "${czm} Pacstrap finished nspawn-container install."
+	echo "${czm} Setting up container with builduser, colored shell prompts, header id's, and alias's."
+	sleep 5
 
 	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
@@ -120,15 +121,52 @@ if      sudo pacstrap -c "${chroot}" base base-devel git ; then
 	sudo systemd-nspawn --as-pid2 -q    mkdir /build
 	sudo systemd-nspawn --as-pid2 -q    chown builduser:builduser /build
 
+	cat << 'EOF' | sudo tee -a "${chroot}"/etc/bash.bashrc
+
+if	[[ $(whoami) == root ]]; then
+	# Color bash prompt bold red
+	PS1="\[\033[1;91m\][\u@\h \W]\\$ \[\e[0m\]"
+	tput setaf 1
+	echo " |_____________________________________| Root Aurch Container |______________________________________|"
+	tput sgr0
+fi
+
+if	[[ $(whoami) == builduser ]]; then
+	# Color bash prompt bold green
+	PS1="\[\033[1;92m\][\u@\h \W]\\$ \[\e[0m\]"
+	tput setaf 2
+	echo " |___________________________________| Builduser Aurch Container |___________________________________|"
+	tput sgr0
+fi
+
+alias sub='		su builduser; cd'
+alias ls='		ls --color=auto -h --group-directories-first'
+alias c='	reset; source /etc/bash.bashrc' # reset
+
+	### PACMAN ALIASES ###
+
+alias Syy='		sudo pacman --color=always -Syy'
+alias Syu='		sudo pacman --color=always -Syu'
+alias p='		pacman --color=always '
+alias sp='		sudo pacman --color=always '
+alias Q='		pacman --color=always -Q'
+alias S='		sudo pacman --color=always -S'
+alias R='		sudo pacman --color=always -Rns'
+alias U='		sudo pacman --color=always -U'
+alias F='		pacman --color=always -F'
+
+EOF
+	sed -e '/^PS1/s/^/#/g' -i "${homebuilduser}"/.bashrc
 
     else
 	echo "${czm} Pacstrap failed."
 fi
-#----------------------------------------------------------------------------------------------
-# set up chroot for aurch
 
-	echo "${czm} Setting up chroot for building AUR packages."
-	sleep 5
+#----------------------------------------------------------------------------------------------
+# set up container for aurch
+
+	echo "${czm} Setting up container for building AUR packages."
+	sleep 3
 	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
@@ -181,15 +219,15 @@ EOF
 		rm aurch.README
 	fi
 	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >"${BASEDIR}/aurch.README")
-	${czm} Setup completed.
-	${czm} Chroot has base, base-devel, git, and aurutils installed.
+	${czm} Aurch nspawn-container setup completed.
+	${czm} Has base, base-devel, git, and aurutils installed.
+	${czm} Container AUR repo is set up in ${chroot}/build.
 	${czm} User builduser is set up, no password required for sudo.
-	${czm} Local chroot AUR repo is set up as /build.
 	${czm} Do not alter files proceeded with '#.' in base directory.
-	${czm} Run: 'aurch-setup -Sh' now to setup host local AUR repo.
+	${czm} To setup host local AUR repo, run: aurch-setup -Sh
 EOF
     else
-	echo; echo "${czm} User setup failed."
+	echo; echo "${czm} builduser setup failed in container."
 fi
 }
 #========================================================================================================================#
@@ -237,7 +275,7 @@ cat << EOF
  aurch-setup	Sets up host for aurch usage.
 
             	Run 'aurch-setup -h' for help.
-  Chroot ID 	$(basename "${chroot}")
+ Container ID: 	$(basename "${chroot}")
 
 EOF
 fi
