@@ -137,7 +137,7 @@ Commenting out the DownloadUser line will have pacman fall back to $USER rather 
 *Additional info:* `$ man pacman.conf` *DownloadUser* `$ man pacman` *--disable-sandbox* 		<br>
 *Pacman gitlab:* https://gitlab.archlinux.org/archlinux/packaging/packages/pacman			<br>
 *Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/ <br>
-*Keep in mind the Arch News on pacman has left out the mandatory additional steps outlined above.*	<br>
+*Keep in mind the Arch News on pacman does not include the mandatory additional steps outlined above.*	<br>
 													<br>
 **UPDATE For  Aug 9, 2024**										<br>
 aurch-setup.sh:												<br>
