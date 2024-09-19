@@ -116,8 +116,31 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS/UPDATE INFO:**<br>
 <br>
 <br>
+**NEWS For  Sep 18, 2024**										<br>
+Pacman 7 introduces new features and changes requiring manual intervention for Aurch.			<br>
+The system running aurch needs changes to allow pacman user 'alpm' access to the local AUR repo.	<br>
+The pacman user 'alpm', is a dropped permission system user:group used to download packages.		<br>
+The following commands assume the local AUR repo is located in the default location, within $HOME.	<br>
+The first two commands change $HOME directory group to 'alpm' and 700 to 750 permission. 		<br>
+The last command changes AUR repo directory to group 'alpm' recursively.				<br>
+
+    $ chown :alpm "${HOME}"
+    $ chmod 750 "${HOME}"
+    $ sudo chown -R :alpm "${HOME}/.cache/aurch/repo"
+
+An edit to pacman.conf in nspawn is needed as 'Linux landlock' is unavailable in the container.		<br>
+In the AUR nspawn container /etc/pacman.conf, comment out the following line.				<br>
+Commenting out the DownloadUser line will have pacman fall back to $USER rather than user 'alpm'.	<br>
+
+    DownloadUser = alpm
+
+*Additional info:* `$ man pacman.conf` *DownloadUser* `$ man pacman` *--disable-sandbox* 		<br>
+*Pacman gitlab:* https://gitlab.archlinux.org/archlinux/packaging/packages/pacman			<br>
+*Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/ <br>
+*Keep in mind the Arch News on pacman has left out the mandatory additional steps outlined above.*	<br>
+													<br>
 **UPDATE For  Aug 9, 2024**										<br>
-aurch-setup.sh:											<br>
+aurch-setup.sh:												<br>
 Added container shell configs: colored shell prompts, header id's, and alias's.				<br>
 Corrected script comments and printed comments replacing 'chroot' with 'container'/'nspawn-container'.	<br>
 Changed 'sleep' times.											<br>
