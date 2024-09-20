@@ -139,6 +139,13 @@ Commenting out the DownloadUser line will have pacman fall back to $USER rather 
 *Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/ <br>
 *Keep in mind the Arch News on pacman does not include the mandatory additional steps outlined above.*	<br>
 													<br>
+                        **Additional show stopping findings:**						<br>
+													<br>
+If you've implemented the above and still have issues, see link below for info on ACL permissions.	<br>
+https://bbs.archlinux.org/viewtopic.php?pid=2196652#p2196652						<br>
+													<br>
+Next you can try commenting out 'DownloadUser'. Last resort, uncomment 'DisableSandbox' in pacman.conf	<br>
+													<br>
 **UPDATE For  Aug 9, 2024**										<br>
 aurch-setup.sh:												<br>
 Added container shell configs: colored shell prompts, header id's, and alias's.				<br>
