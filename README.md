@@ -117,35 +117,51 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 <br>
 <br>
 **NEWS For  Sep 18, 2024**										<br>
-Pacman 7 introduces new features and changes requiring manual intervention for Aurch.			<br>
-The system running aurch needs changes to allow pacman user 'alpm' access to the local AUR repo.	<br>
-The pacman user 'alpm', is a dropped permission system user:group used to download packages.		<br>
+Pacman 7 has added new security related features requiring manual intervention for both Arch and Aurch.	<br>
+Systems using Aurch need changes to allow pacman user 'alpm' access to the local AUR repo.	<br>
+The pacman user 'alpm', is a new, minimally permissioned system user:group used to download packages.	<br>
 The following commands assume the local AUR repo is located in the default location, within $HOME.	<br>
-The first two commands change $HOME directory group to 'alpm' and 700 to 750 permission. 		<br>
-The last command changes AUR repo directory to group 'alpm' recursively.				<br>
+The first two commands change $HOME directory group to 'alpm' and the 700 permission to 750.		<br>
+The last command changes the AUR repo directory group to 'alpm' recursively.				<br>
 
     $ chown :alpm "${HOME}"
     $ chmod 750 "${HOME}"
     $ sudo chown -R :alpm "${HOME}/.cache/aurch/repo"
 
-An edit to pacman.conf in nspawn is needed as 'Linux landlock' is unavailable in the container.		<br>
-In the AUR nspawn container /etc/pacman.conf, comment out the following line.				<br>
-Commenting out the DownloadUser line will have pacman fall back to $USER rather than user 'alpm'.	<br>
+An edit to pacman.conf in nspawn is also required as Linux 'landlock' is unavailable in the container.	<br>
+In the AUR nspawn container, /etc/pacman.conf, comment out the following line containing DownloadUser.	<br>
+Commenting out the 'DownloadUser' line will have pacman fall back to using root to download packages.	<br>
 
-    DownloadUser = alpm
+    # DownloadUser = alpm
 
-*Additional info:* `$ man pacman.conf` *DownloadUser* `$ man pacman` *--disable-sandbox* 		<br>
-*Pacman gitlab:* https://gitlab.archlinux.org/archlinux/packaging/packages/pacman			<br>
-*Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/ <br>
+**Additional Info:**											<br>
+*Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/<br>
+*Additional info:* `$ man pacman.conf` search: *DownloadUser* `$ man pacman` search: *--disable-sandbox*<br>
+*pacman-dev mail list:* https://www.mail-archive.com/pacman-dev@lists.archlinux.org/msg01132.html	<br>
 *Keep in mind the Arch News on pacman does not include the mandatory additional steps outlined above.*	<br>
-													<br>
-                        **Additional show stopping findings:**						<br>
-													<br>
-If you've implemented the above and still have issues, see link below for info on ACL permissions.	<br>
+
+**Opinion Short:**											<br>
+Unfortunately, changes to pacman effecting users has at times seemed tightly held within the pacman development team.
+Seems the pacman project just doesn't place much emphsis or resources on user level documentation.
+That said, this is nothing unusual for open source projects. It's almost as if these talented volunteer 
+programmers prefer writing code over writing accurate, thourough user level documentation!		<br>
+I know, difficult to imagine! There's also source code available for a relaxing, insightful read. 		<br>
+
+**Additional Show Stopping Findings:**									<br>
+If you've implemented the above and still have issues, see the link below for info on ACL permissions.	<br>
+Search for 'Additional show stopping finding:' located near the bottom the page.			<br>
 https://bbs.archlinux.org/viewtopic.php?pid=2196652#p2196652						<br>
 													<br>
-Next you can try commenting out 'DownloadUser'. Last resort, uncomment 'DisableSandbox' in pacman.conf	<br>
+I did have to make the ACL setting changes outlined in the link above on one Arch setup.		<br>
+Last resort if all else fails in the host system: 							<br>
+ (1) Try commenting out 'DownloadUser'.									<br>
+ (2) Lastly, uncomment 'DisableSandbox' in pacman.conf							<br>
 													<br>
+Disabling the sandbox features in pacman would of course not take advantage of the new security enhancments.
+Although I'd strongly advise against disabling snadboxing in the host system, there has never been a
+reported case of a pacman security related exploit from downloading packages as root to my knowledge.
+AFAIK, there has never been a security exploit of pacman reported since it's introduction ~20 years ago.
+
 **UPDATE For  Aug 9, 2024**										<br>
 aurch-setup.sh:												<br>
 Added container shell configs: colored shell prompts, header id's, and alias's.				<br>
