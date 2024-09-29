@@ -113,10 +113,38 @@ Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
 <br> 
 <br>
-**NEWS/UPDATE INFO:**<br>
+**NEWS, UPDATE, INFO:**<br>
 <br>
 <br>
-**NEWS For  Sep 18, 2024**										<br>
+**INFO For  Sep 18, 2024** <br>
+I've figured out how to easily enable pacman 7.0 sandboxing in the nspawn container used by aurch. <br>
+These findings will eventually make their way into aurch-install.<br>
+To use pacman sandboxing in an nspawn container there are a few options. <br>
+<br>
+ Use '@sandbox' with '--system-call-filter=' on the CLI. ie: <br>
+
+    $ sudo systemd-nspawn --system-call-filter=@sandbox    ..... 
+
+Or setup a config file as follows for regularly used containers. See refs below for details. <br>
+<br>
+As root, create a dir '/etc/systemd/nspawn/' and file '/etc/systemd/nspawn/\<nspawn-root-dir-name\>' <br>
+using the directory name containing the nspawn root FS or image name, with the following content. <br>
+ie: If directory 'chroot-Dz8' contains the root filesystem of an nspawn container. <br>
+
+    $ sudo nano /etc/systemd/nspawn/chroot-Dz8.nspawn
+
+    [Exec]
+    SystemCallFilter=@sandbox
+
+Now the config will be automatically used by container "chroot-Dz8". That's all there is to it. Enjoy!<br>
+<br>
+References:<br>
+https://wiki.archlinux.org/title/Systemd-nspawn#Configuration<br>
+https://man.archlinux.org/man/systemd.nspawn.5<br>
+
+
+
+**INFO For  Sep 18, 2024**										<br>
 Pacman 7 has added new security related features requiring manual intervention for both Arch and Aurch.	<br>
 Systems using Aurch need changes to allow pacman user 'alpm' access to the local AUR repo.	<br>
 The pacman user 'alpm', is a new, minimally permissioned system user:group used to download packages.	<br>
