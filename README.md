@@ -127,7 +127,7 @@ To use pacman sandboxing in an nspawn container there are a few options. <br>
 
 Or setup a config file as follows for regularly used containers. See refs below for details. <br>
 <br>
-As root, create a dir '/etc/systemd/nspawn/' and file '/etc/systemd/nspawn/\<nspawn-root-dir-name\>' <br>
+As root, create a dir '/etc/systemd/nspawn/' and file '/etc/systemd/nspawn/\<nspawn-root-dir-name\>.nspawn' <br>
 using the directory name containing the nspawn root FS or image name, with the following content. <br>
 ie: If directory 'chroot-Dz8' contains the root filesystem of an nspawn container. <br>
 
