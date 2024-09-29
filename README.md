@@ -136,15 +136,14 @@ ie: If directory 'chroot-Dz8' contains the root filesystem of an nspawn containe
     [Exec]
     SystemCallFilter=@sandbox
 
-Be sure 'DownloadUser' is uncommented and 'DisableSandbox' is commented in the nspawn container '/etc/pacman.conf'.<br>
-Now the configs will be used in container 'chroot-Dz8', enabling the new sandbox feature in pacman.<br>
+Be sure 'DownloadUser' is uncommented and 'DisableSandbox' is commented <br>
+in the nspawn container pacman config file '/etc/pacman.conf'.<br>
 
 <br>
 References:<br>
 https://wiki.archlinux.org/title/Systemd-nspawn#Configuration<br>
 https://man.archlinux.org/man/systemd.nspawn.5<br>
-
-
+<br>
 
 **INFO For  Sep 18, 2024**										<br>
 Pacman 7 has added new security related features requiring manual intervention for both Arch and Aurch.	<br>
