@@ -136,7 +136,9 @@ ie: If directory 'chroot-Dz8' contains the root filesystem of an nspawn containe
     [Exec]
     SystemCallFilter=@sandbox
 
-Now the config will be automatically used by container "chroot-Dz8". That's all there is to it. Enjoy!<br>
+Be sure 'DownloadUser' is uncommented and 'DisableSandbox' is commented in the nspawn container '/etc/pacman.conf'.<br>
+Now the configs will be used in container 'chroot-Dz8', enabling the new sandbox feature in pacman.<br>
+
 <br>
 References:<br>
 https://wiki.archlinux.org/title/Systemd-nspawn#Configuration<br>
