@@ -141,8 +141,11 @@ in the nspawn container pacman config file '/etc/pacman.conf'.<br>
 
 <br>
 References:<br>
-https://wiki.archlinux.org/title/Systemd-nspawn#Configuration<br>
-https://man.archlinux.org/man/systemd.nspawn.5<br>
+
+https://wiki.archlinux.org/title/Systemd-nspawn#Configuration  
+https://man.archlinux.org/man/systemd.nspawn.5  
+https://linux-audit.com/systemd/systemd-syscall-filtering/  
+https://man.archlinux.org/man/systemd.exec.5  
 <br>
 
 **INFO For  Sep 18, 2024**										<br>
