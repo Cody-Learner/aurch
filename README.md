@@ -173,7 +173,7 @@ Commenting out the 'DownloadUser' line will have pacman fall back to using root 
 *Keep in mind the Arch News on pacman does not include the mandatory additional steps outlined above.*	<br>
 
 **Opinion Short:**											<br>
-Unfortunately, changes to pacman effecting users has at times seemed tightly held within the pacman development team.
+Unfortunately, changes to pacman affecting users has at times seemed tightly held within the pacman development team.
 Seems the pacman project just doesn't place much emphsis or resources on user level documentation.
 That said, this is nothing unusual for open source projects. It's almost as if these talented volunteer 
 programmers prefer writing code over writing accurate, thourough user level documentation!		<br>
