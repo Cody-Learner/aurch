@@ -15,11 +15,11 @@ ie: Currently 154 packages.
 **aurch:**<br>
 Aurch builds AUR packages in the nspawn container isolated from the host. <br>
 After packages are built, they're copied into the host AUR cache and entered into host pacman sync db.<br>
-Builds and keeps all required AUR dependencies in the nspawn container AUR repo. <br>
+Automatically builds and saves all required AUR dependencies in the nspawn container AUR repo. <br>
 Installs any required pgp keys in the nspawn container. <br>
-Removes all official and AUR packages used in the nspawn container build process upon completion, 
+Removes all official and AUR* packages used in the nspawn container build process upon completion, 
 maintaining a minimal footprint of a small, consistent set of base packages. <br>
-All the AUR packages and AUR dependencies are saved/backed up in the nspawn container. <br>
+\* Removed from the containers arch install while remaining in the containers local AUR repo. <br>
 <br>
 <br>
 Note: <br>
