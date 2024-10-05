@@ -148,7 +148,7 @@ https://linux-audit.com/systemd/systemd-syscall-filtering/
 https://man.archlinux.org/man/systemd.exec.5  
 <br>
 
-**INFO For  Sep 18, 2024**										<br>
+**INFO For  Sep 30, 2024**										<br>
 Pacman 7 has added new security related features requiring manual intervention for both Arch and Aurch.	<br>
 Systems using Aurch need changes to allow pacman user 'alpm' access to the local AUR repo.	<br>
 The pacman user 'alpm', is a new, minimally permissioned system user:group used to download packages.	<br>
