@@ -6,16 +6,20 @@ The original aurch script has been split up into two seperate scripts with a ded
 <br>
 <br>
 **aurch-setup:**<br>
-Aurch-setup creates and sets up a systemd nspawn container for building AUR packages and sets up a local AUR repo in host. The nspawn container is persistent, and intended for data storage and to be used for all AUR builds.
+Aurch-setup sets up an nspawn container for building AUR packages and sets up a local AUR repo in the host. <br>
+The nspawn container has Aurutils setup within it with Aurch acting as an nspawn and aurutils wrapper. <br>
+The nspawn container is persistent, has an AUR repo, and is maintained to a minimal base package set. <br>
+ie: Currently 154 packages.
 <br>
 <br>
 **aurch:**<br>
 Aurch builds AUR packages in the nspawn container isolated from the host. <br>
 After packages are built, they're copied into the host AUR cache and entered into host pacman sync db.<br>
-Builds, installs, and keeps all required AUR dependencies in the nspawn container. <br>
+Builds and keeps all required AUR dependencies in the nspawn container AUR repo. <br>
 Installs any required pgp keys in the nspawn container. <br>
-Removes all official repo packages used in the nspawn container build process upon completion, maintaining a minimal footprint of a small, consistent set of base packages. <br>
-All the AUR packages and AUR dependencies are saved/backed up within the nspawn container. <br>
+Removes all official and AUR packages used in the nspawn container build process upon completion, 
+maintaining a minimal footprint of a small, consistent set of base packages. <br>
+All the AUR packages and AUR dependencies are saved/backed up in the nspawn container. <br>
 <br>
 <br>
 Note: <br>
@@ -297,7 +301,8 @@ Edited message in 'check_host_updates' function when package is newer than the A
 <br>
 **UPDATE For  Feb 11, 2022** <br>
 Change curl commands to reflect AUR RPC interface update/changes. <br>
-Add removal of /var/tmp/aurch/orig-pkgs.log ("${tmph}"/orig-pkgs.log) in chroot so 'orig package list' reflects edits/changes made to .#orig-pkgs.log in base dir. <br>
+Add removal of /var/tmp/aurch/orig-pkgs.log ("${tmph}"/orig-pkgs.log) in chroot so 'orig package list' reflects edits/changes made to 
+.#orig-pkgs.log in base dir. <br>
 Add if statement to check build dir/s for .git dir. This allows adding misc dir's (ie: 'testing' toolchain pkgs) under buildusers home. <br>
 <br>
 **UPDATE For  Jan 21, 2022** <br>
