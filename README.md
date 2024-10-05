@@ -60,10 +60,10 @@ References: <br>
     OPTIONS *
     	-L, List:
     		Append 'q' to  -L list operations for quiet mode.
-    		Examples: aurch -Lahq
-			  aurch -Luhq
-			  aurch -Lacq
-			  aurch -Lucq
+                Examples: aurch -Lahq
+                          aurch -Luhq
+                          aurch -Lacq
+                          aurch -Lucq
     		Do not mix order or attempt to use 'q' other than described.
     
     	-B, Build:
