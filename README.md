@@ -123,6 +123,116 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS, UPDATE, INFO:**<br>
 <br>
 <br>
+**INFO For Oct 09, 2024** <br>
+From my personal notes on aurch to use pacman7 new features. <br>
+<br>
+This is a condensed summary of the previous two **INFO** posts below. <br>
+Of course my username and the gid numbers below will vary from system to system. <br>
+*If you're trying to use aurch on a multiuser system where your user uid:gid are not 1000,* <br>
+*I've created a non released version of aurch that works in that environment.* <br>
+*Contact me for additional info.* <br>
+ <br>
+ <br>
+Pacman7 must be installed prior to using this. ie: alpm group:user will be needed <br>
+These instructions are specifically for the AUR repo residing in default location under ${HOME} <br>
+An AUR repo under / has not been tested. <br>
+
+--------------------------------------------------------------------------------------------------------<br>
+***Check file permissions:***
+
+
+		$ stat ${HOME} | grep 'Access: ('
+		Access: (0750/drwxr-x---)  Uid: ( 1000/    jeff)   Gid: (  970/    alpm)
+
+<br>
+
+		$ stat ${HOME}/.cache/aurch/repo | grep 'Access: ('
+		Access: (0755/drwxr-xr-x)  Uid: ( 1000/    jeff)   Gid: ( 1000/    jeff)
+
+<br>
+If the octal permissions and 'alpm' group for ${HOME} aren't set correctly,<br>
+use the following commands to change them as required.<br>
+<br>
+
+		$ sudo chown :alpm "${HOME}"
+		$ chmod 750 "${HOME}"
+
+<br>
+
+If the permissions on the AUR repo directory aren't set to 755, $USER:$USER per above <br>
+set them as required: <br>
+
+		$ chmod $USER:$USER "${HOME}/.cache/aurch/repo"
+		$ chmod 755 "${HOME}/.cache/aurch/repo"
+
+<br>
+
+--------------------------------------------------------------------------------------------------------<br>
+***Create the following directory and config file:***
+
+This is a configuration file for the nspawn container used by aurch. <br>
+It passes the Linux kernels landlock sandbox feature to the container. <br>
+
+
+		$ sudo mkdir /etc/systemd/nspawn/
+
+
+
+Create file '/etc/systemd/nspawn/<chroot-XXX>.nspawn' with the following content: <br>
+
+
+		$ sudo nano /etc/systemd/nspawn/<chroot-XXX>.nspawn
+
+<br>
+
+		
+		[Exec]
+		SystemCallFilter=@sandbox
+		
+
+
+-------------------------------------------------------------------------------------------------------- <br>
+***Check the pacman.conf settings in***  <br>
+***both host and nspawn container are*** <br>
+***set to the following default settings:*** <br>
+
+
+		$ grep -E 'DownloadUser|DisableSandbox' /etc/pacman.conf
+		$ grep -E 'DownloadUser|DisableSandbox' ${HOME}/.cache/aurch/base/chroot-*/etc/pacman.conf
+
+<br>
+
+		DownloadUser = alpm
+		#DisableSandbox
+
+
+-------------------------------------------------------------------------------------------------------- <br>
+***Check "${HOME}" ACL settings:***
+
+The following should be set. <br>
+
+			$ getfacl "${HOME}"
+
+			group::r-x
+
+
+If not set correctly, run: <br>
+
+			$ setfacl -m g:alpm:r-x "${HOME}"
+
+If set correctly, you should see: <br>
+
+			$ getfacl "${HOME}"
+
+			# owner: jeff
+			# group: alpm
+			user::rwx
+			group:alpm:r-x
+
+<br>
+<br>
+<br>
+
 **INFO For  Sep 30, 2024** <br>
 I've figured out how to easily enable pacman 7.0 sandboxing in the nspawn container used by aurch. <br>
 These findings will eventually make their way into aurch-install.<br>
@@ -153,6 +263,9 @@ https://wiki.archlinux.org/title/Systemd-nspawn#Configuration
 https://man.archlinux.org/man/systemd.nspawn.5  
 https://linux-audit.com/systemd/systemd-syscall-filtering/  
 https://man.archlinux.org/man/systemd.exec.5  
+
+<br>
+<br>
 <br>
 
 **INFO For  Sep 18, 2024**										<br>
@@ -173,20 +286,20 @@ Commenting out the 'DownloadUser' line will have pacman fall back to using root 
 
     # DownloadUser = alpm
 
-**Additional Info:**											<br>
+***Additional Info:***											<br>
 *Arch News:* https://archlinux.org/news/manual-intervention-for-pacman-700-and-local-repositories-required/<br>
 *Additional info:* `$ man pacman.conf` search: *DownloadUser* `$ man pacman` search: *--disable-sandbox*<br>
 *pacman-dev mail list:* https://www.mail-archive.com/pacman-dev@lists.archlinux.org/msg01132.html	<br>
 *Keep in mind the Arch News on pacman does not include the mandatory additional steps outlined above.*	<br>
 
-**Opinion Short:**											<br>
+***Opinion Short:***											<br>
 Unfortunately, changes to pacman affecting users has at times seemed tightly held within the pacman development team.
 Seems the pacman project just doesn't place much emphsis or resources on user level documentation.
 That said, this is nothing unusual for open source projects. It's almost as if these talented volunteer 
 programmers prefer writing code over writing accurate, thourough user level documentation!		<br>
 I know, difficult to imagine! There's also source code available for a relaxing, insightful read. 		<br>
 
-**Additional Show Stopping Findings:**									<br>
+***Additional Show Stopping Findings:***									<br>
 If you've implemented the above and still have issues, see the link below for info on ACL permissions.	<br>
 Search for 'Additional show stopping finding:' located near the bottom the page.			<br>
 https://bbs.archlinux.org/viewtopic.php?pid=2196652#p2196652						<br>
@@ -200,6 +313,10 @@ Disabling the sandbox features in pacman would of course not take advantage of t
 Although I'd strongly advise against disabling snadboxing in the host system, there has never been a
 reported case of a pacman security related exploit from downloading packages as root to my knowledge.
 AFAIK, there has never been a security exploit of pacman reported since it's introduction ~20 years ago.
+
+<br>
+<br>
+<br>
 
 **UPDATE For  Aug 9, 2024**										<br>
 aurch-setup.sh:												<br>
