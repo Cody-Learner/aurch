@@ -147,7 +147,7 @@ An AUR repo under / has not been tested. <br>
 <br>
 
 		$ stat ${HOME}/.cache/aurch/repo | grep 'Access: ('
-		Access: (0755/drwxr-xr-x)  Uid: ( 1000/    jeff)   Gid: ( 1000/    jeff)
+		Access: (0755/drwxr-xr-x)  Uid: ( 1000/    jeff)   Gid: (  970/    alpm)
 
 <br>
 If the octal permissions and 'alpm' group for ${HOME} aren't set correctly,<br>
@@ -159,10 +159,10 @@ use the following commands to change them as required.<br>
 
 <br>
 
-If the permissions on the AUR repo directory aren't set to 755, $USER:$USER per above <br>
+If the permissions on the AUR repo directory aren't set to 755, $USER:alpm per above <br>
 set them as required: <br>
 
-		$ chmod $USER:$USER "${HOME}/.cache/aurch/repo"
+		$ sudo chown -R :alpm "${HOME}/.cache/aurch/repo/"
 		$ chmod 755 "${HOME}/.cache/aurch/repo"
 
 <br>
