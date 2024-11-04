@@ -132,8 +132,8 @@ The file/dir is in an `aurch nspawn container`. <br>
 The full path from host to config using default locations is: <br>
 And there's a directory being created there as well: <br>
 
-    /home/user/.a-Aurch/base/chroot-XxX/home/builduser/.gnupg/common.conf   > single line: use-keyboxd
-    /home/user/.a-Aurch/base/chroot-XxX/home/builduser/.gnupg/public-keys.d > 36 files
+    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg//common.conf > single line: use-keyboxd
+    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg//public-keys.d > 36 files
  
 
 A little investigation with a fresh arch nspawn container revealed, these are created upon 
