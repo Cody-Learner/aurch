@@ -123,6 +123,111 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 **NEWS, UPDATE, INFO:**<br>
 <br>
 <br>
+**INFO For Nov 03, 2024** <br>
+
+I noticed gpg stopped working properly in my Arch nspawn containers including aurch. There's a user config 
+that seems automatigically generated in nspawn containers only, that's the culprit. I've not looked into 
+the details yet, but **getting rid of the config will get gpg back up and running.** <br>
+The file/dir is in an `aurch nspawn container`. <br>
+The full path from host to config using default locations is: <br>
+And there's a directory being created there as well: <br>
+
+    /home/user/.a-Aurch/base/chroot-XxX/home/builduser/.gnupg/common.conf   > single line: use-keyboxd
+    /home/user/.a-Aurch/base/chroot-XxX/home/builduser/.gnupg/public-keys.d > 36 files
+ 
+
+A little investigation with a fresh arch nspawn container revealed, these are created upon 
+the first invocation of gpg. An auto generated config is not something I'd expect from Arch. Possibly a
+gnupg thing where it recognises it's in a container, or even a systemd thing?
+
+The files/dirs are not present in my bare metal installs. When I get some time I may look into this a bit more.
+I did see something related to the config, a daemon? When it worked again without the config I settled for good enough.
+
+This config is already taken care of in the upcoming version of aurch-install.
+
+
+
+Now I'll take a moment to post a bit of **A LENGTHY PREVIEW BELOW:**
+
+--------------------------------------------------------------------------------
+**Manual Intervention Required For `aurch 2024-11-02.1`** <br>
+
+<br>
+
+With pacman 7 implementing Linux landlock and user `alpm`, this version of `aurch-install` is placing 
+the chroot and local AUR repo outside the users home directory, relocating them under `/usr/local/aurch/`.
+This relocation required changes to `aurch` as well, making this update non-backward compatible.
+
+The motivating factor in this change was driven by the requirement to muck around with permissions to use pacman 7's enhanced security
+features with `aurch`. This update eliminates any potential `$HOME` filesystem permission compromises required going forward.
+
+To be clear, mixing versions of `aurch-setup` and `aurch` scripts will not work, is untested, and would likely result in breakage.
+Run `aurch -V` for versions, which is also printed in the script headers. <br>
+Updating from an earlier version of `aurch` will require an aurch reinstall as outlined below.
+
+My thinking is anyone adventurous enough to use `aurch` should not need step by step instructions on how to remove and reinstall it.
+That said, I'll provide an overview of the process I used for my first aurch update/reinstall (on a bare metal) to the current 
+version in case it may possibly be found useful.
+
+I'll also provide the locations of the previous and current nspawn containers and local AUR repos.
+
+
+**Previous versions** `aurch` default locations placed the container/repo under `/home`:
+
+* nspawn container: `$HOME/.cache/aurch/base/chroot-XXX/`
+* local AUR repo  : `$HOME/.cache/aurch/repo/`
+
+<br>
+
+**Current version** `aurch 2024-11-02.1` default locations places the container/repo under `/usr` : <br>
+
+* nspawn container: `/usr/local/aurch/base/chroot-XXX`
+* local AUR repo  : `/usr/local/aurch/repo`
+
+<br>
+
+The update process I used went something like the following: <br>
+
+<br>
+
+**UPDATE PREP:**
+* Make sure your system is up to date.
+* Remove `/etc/aurch.conf`
+* Remove the line `Include = /etc/aurch.conf` from `/etc/pacman.conf`.
+* Remove `/var/lib/pacman/sync/aur.db`.
+* Remove `/var/lib/pacman/sync/aur.files`.
+* Make sure `/usr/local/aurch/` is not present.
+* Remove the previous version `aurch` scripts from $PATH.
+
+<br>
+
+I manually moved / entered previously built AUR packages and build directories from old to new locations. <br>
+A new install of AUR packages would be a viable option as well. <br>
+
+<br>
+
+**INSTALL AND SETUP:**
+* Place the latest version `aurch` scripts under $PATH. 
+* Run the `aurch-setup` script, both the `-Sc` and `-Sh` operations.
+* For reinstalling AUR packages, you're done here. Use the latest version of `aurch` to reinstall.
+* Manually move the previously built AUR packages under container `/build/` and the host aur `/repo/`
+  to the new locations under `/usr/local/aurch/`.
+* Use `repo-add` + some bash to manually add the packages to the new databases.
+* Move the previously created build directories (containing .git) under <br>
+  `... /aurch/base/chroot-XXX/home/builduser/` from the old to new container.
+
+<br>
+
+Technically the pacman databases could be relocated and re ..... **END OF PREVIEW**
+
+--------------------------------------------------------------------------------------
+I hope to have this ready to release within a week or so and it seems pretty solid at this point.
+I've got started a bit early (this time!) on the lengthy announcement including some details. 
+
+<br>
+<br>
+<br>
+
 **INFO For Oct 09, 2024** <br>
 From my personal notes on aurch to use pacman7 new features. <br>
 <br>
