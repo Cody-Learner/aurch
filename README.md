@@ -140,12 +140,19 @@ A little investigation with a fresh arch nspawn container revealed, these are cr
 the first invocation of gpg. An auto generated config is not something I'd expect from Arch. Possibly a
 gnupg thing where it recognises it's in a container, or even a systemd thing?
 
-The files/dirs are not present in my bare metal installs. When I get some time I may look into this a bit more.
+The files/dirs are not present in my bare metal installs. When I get some time I may look into this a bit more.(*)
 I did see something related to the config, a daemon? When it worked again without the config I settled for good enough.
 
 This config is already taken care of in the upcoming version of aurch-install.
 
 
+(*)
+https://gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
+> If the default home directory ~/.gnupg does not exist, GnuPG creates this directory and a common.conf file with "use-keyboxd".
+ 
+ Well this is definately not the case in my testing, as I was in the directory upon starting gpg...
+
+<br> 
 
 Now I'll take a moment to post a bit of **A LENGTHY PREVIEW BELOW:**
 
