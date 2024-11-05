@@ -127,7 +127,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 **UPDATE And INFO Info November 5, 2024**
 
-**Manual Intervention Required For `aurch 2024-11-02.1`** <br>
+**Manual Intervention Required For `aurch 2024-11-04`** <br>
 
 <br>
 
