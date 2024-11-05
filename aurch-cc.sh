@@ -1,4 +1,4 @@
-# aurch-cc 2024-11-03
+# aurch-cc 2024-11-04
 # dependencies: aurutils devtools
 #
 # Experimental aurch 'add on' feature to build aur package python2 in a clean chroot, integrating it with both aurch aur repos. 
