@@ -46,6 +46,7 @@ References: <br>
 		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
 		-Luh* --lsudh	List update info for AUR packages installed in host.
 		-Luc* --lsudc	List update info for AUR pkgs/AUR deps in nspawn container.
+		-Lv		List aurch variables.
 		      --login   Login to nspawn container for maintenance.
 		      --clean	Manually remove unneeded packages from nspawn container.
 		      --pgp	Manually import pgp key in nspawn container.
@@ -119,64 +120,42 @@ References: <br>
 Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
 <br> 
-<br>
-**NEWS, UPDATE, INFO:**<br>
-<br>
-<br>
-**INFO For Nov 03, 2024** <br>
-
-I noticed gpg stopped working properly in my Arch nspawn containers including aurch. There's a user config 
-that seems automatigically generated in nspawn containers only, that's the culprit. I've not looked into 
-the details yet, but **getting rid of the config will get gpg back up and running.** <br>
-The file/dir is in an `aurch nspawn container`. <br>
-The full path from host to config using default locations is: <br>
-And there's a directory being created there as well: <br>
-
-    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg/common.conf > single line: use-keyboxd
-    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg/public-keys.d > 36 files
- 
-
-A little investigation with a fresh arch nspawn container revealed, these are created upon 
-the first invocation of gpg. An auto generated config is not something I'd expect from Arch. Possibly a
-gnupg thing where it recognises it's in a container, or even a systemd thing?
-
-The files/dirs are not present in my bare metal installs. When I get some time I may look into this a bit more.(*)
-I did see something related to the config, a daemon? When it worked again without the config I settled for good enough.
-
-This config is already taken care of in the upcoming version of aurch-install.
 
 
-(*)
-https://gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
-> If the default home directory ~/.gnupg does not exist, GnuPG creates this directory and a common.conf file with "use-keyboxd".
- 
- Well this is definately not the case in my testing, as I was in the directory upon starting gpg...
+### NEWS, UPDATE, INFO:
+----
 
-<br> 
+**UPDATE And INFO Info November 5, 2024**
 
-Now I'll take a moment to post a bit of **A LENGTHY PREVIEW BELOW:**
-
---------------------------------------------------------------------------------
 **Manual Intervention Required For `aurch 2024-11-02.1`** <br>
 
 <br>
 
-With pacman 7 implementing Linux landlock and user `alpm`, this version of `aurch-install` is placing 
-the chroot and local AUR repo outside the users home directory, relocating them under `/usr/local/aurch/`.
+With pacman 7 implementing Linux landlock and user `alpm`, this version of `aurch-install` is placing the  
+chroot and local AUR repo outside the users home directory, relocating them under `/usr/local/aurch/`.
 This relocation required changes to `aurch` as well, making this update non-backward compatible.
 
 The motivating factor in this change was driven by the requirement to muck around with permissions to use pacman 7's enhanced security
 features with `aurch`. This update eliminates any potential `$HOME` filesystem permission compromises required going forward.
 
-To be clear, mixing versions of `aurch-setup` and `aurch` scripts will not work, is untested, and would likely result in breakage.
-Run `aurch -V` for versions, which is also printed in the script headers. <br>
-Updating from an earlier version of `aurch` will require an aurch reinstall as outlined below.
+To be clear, mixing previous versions of `aurch-setup` script including the container it provides, with this release 
+of `aurch` will not work together. The new release of `aurch` has numerous permission related changes to enable it to work properly with 
+the new location of the nspawn container.
 
-My thinking is anyone adventurous enough to use `aurch` should not need step by step instructions on how to remove and reinstall it.
-That said, I'll provide an overview of the process I used for my first aurch update/reinstall (on a bare metal) to the current 
-version in case it may possibly be found useful.
+Run the following for the scripts version, which is also printed in the script headers.
 
-I'll also provide the locations of the previous and current nspawn containers and local AUR repos.
+    aurch-setup -V
+    aurch -V
+
+Unfortunately, as much of an outspoken proponent I am of 'never break backward compatability', I just couldn't justify not making breaking 
+changes in this case. A new nspawn container using `aurch-setup` is the way forward.
+
+My thoughts about the new nspawn setup requirement are anyone adventurous enough to be using `aurch` most likely wouldn't need 
+instruction for the process. That said, I'll still provide an overview of the process I used for my first aurch container 
+switch, from the perspective of a long term user with a few dozen AUR package average over the years. Best case scenario is 
+this overview may foster some thought, leading to an improved process.
+
+I'll start by providing the default locations of the previous and current nspawn containers and local AUR repos.
 
 
 **Previous versions** `aurch` default locations placed the container/repo under `/home`:
@@ -186,7 +165,7 @@ I'll also provide the locations of the previous and current nspawn containers an
 
 <br>
 
-**Current version** `aurch 2024-11-02.1` default locations places the container/repo under `/usr` : <br>
+**Current version** `aurch` default locations place the container/repo under `/usr` : <br>
 
 * nspawn container: `/usr/local/aurch/base/chroot-XXX`
 * local AUR repo  : `/usr/local/aurch/repo`
@@ -223,17 +202,67 @@ A new install of AUR packages would be a viable option as well. <br>
 * Move the previously created build directories (containing .git) under <br>
   `... /aurch/base/chroot-XXX/home/builduser/` from the old to new container.
 
-<br>
 
-Technically the pacman databases could be relocated and re ..... **END OF PREVIEW**
+Technically the pacman databases could be relocated and reused along with the packages. <br>
+I'll give this a try on the next update and consider reporting the process, depending on the outcome.
 
---------------------------------------------------------------------------------------
-I hope to have this ready to release within a week or so and it seems pretty solid at this point.
-I've got started a bit early (this time!) on the lengthy announcement including some details. 
+Any changes made to permissions as posted previously below, can now be reverted to their previous/default settings.
+Below are the default permissions of HOME on a fresh arch install.
 
-<br>
-<br>
-<br>
+    $ stat ${HOME}
+      File: /home/jeff
+      Size: 4096      	Blocks: 8          IO Block: 4096   directory
+    Device: 8,4	Inode: 261633      Links: 9
+    Access: (0700/drwx------)  Uid: ( 1000/    jeff)   Gid: ( 1000/    jeff)
+    Access: 2024-11-04 16:26:28.510897414 -0800
+    Modify: 2024-11-04 16:26:41.680812205 -0800
+    Change: 2024-11-04 16:26:41.680812205 -0800
+     Birth: 2024-10-28 00:23:23.049409103 -0700
+    
+    $ getfacl "${HOME}"
+    getfacl: Removing leading '/' from absolute path names
+    # file: home/jeff
+    # owner: jeff
+    # group: jeff
+    user::rwx
+    group::---
+    other::---
+
+See the latest commmits for additional details on changes.
+
+----
+
+**INFO For Nov 03, 2024** <br>
+
+I noticed **gpg stopped working** in my Arch Linux `aurch` nspawn container. There's a user gpg config 
+file that's automagically generated in nspawn containers, that's breaking pgp and is the culprit. I've not yet looked into 
+the details, but **getting rid of the config will get gpg back up and running.** <br>
+The file/dir is in an `aurch nspawn container`. <br>
+The full path from host to config using default locations is: <br>
+And there's a directory being created there as well: <br>
+
+    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg/common.conf > single line: use-keyboxd
+    /home/jeff/.cache/aurch/base/chroot-Hj8/home/builduser/.gnupg/public-keys.d > 36 files
+ 
+
+A little investigation with a fresh arch nspawn container revealed, these are created upon 
+the first invocation of gpg. An auto generated config is not something I'd expect from Arch. Possibly a
+gnupg thing where it recognises it's in a container, or even a systemd thing?
+
+The files/dirs are not present in my bare metal installs. When I get some time I may look into this a bit more.(*)
+I did see something related to the config, a daemon? When it worked again without the config I settled for good enough.
+
+This config is already taken care of in the upcoming version of `aurch-install`.
+
+
+(*)
+https://gnupg.org/documentation/manuals/gnupg/GPG-Configuration.html
+> If the default home directory ~/.gnupg does not exist, GnuPG creates this directory and a common.conf file with "use-keyboxd".
+ 
+This was not the case in my testing, as I was in the ~/.gnupg directory before starting gpg.
+
+----
+
 
 **INFO For Oct 09, 2024** <br>
 From my personal notes on aurch to use pacman7 new features. <br>
@@ -341,9 +370,8 @@ If set correctly, you should see: <br>
 			user::rwx
 			group:alpm:r-x
 
-<br>
-<br>
-<br>
+
+----
 
 **INFO For  Sep 30, 2024** <br>
 I've figured out how to easily enable pacman 7.0 sandboxing in the nspawn container used by aurch. <br>
@@ -376,9 +404,7 @@ https://man.archlinux.org/man/systemd.nspawn.5
 https://linux-audit.com/systemd/systemd-syscall-filtering/  
 https://man.archlinux.org/man/systemd.exec.5  
 
-<br>
-<br>
-<br>
+----
 
 **INFO For  Sep 18, 2024**										<br>
 Pacman 7 has added new security related features requiring manual intervention for both Arch and Aurch.	<br>
@@ -426,9 +452,8 @@ Although I'd strongly advise against disabling snadboxing in the host system, th
 reported case of a pacman security related exploit from downloading packages as root to my knowledge.
 AFAIK, there has never been a security exploit of pacman reported since it's introduction ~20 years ago.
 
-<br>
-<br>
-<br>
+
+----
 
 **UPDATE For  Aug 9, 2024**										<br>
 aurch-setup.sh:												<br>
@@ -439,7 +464,9 @@ Added printed comments for added container configuration.						<br>
 Cleaned up trailing white space.									<br>
 README.md:												<br>
 Updated to report changes.										<br>
-												<br>
+
+----
+
 **UPDATE For  Aug 3, 2024**								<br>
 Fixed the processing of a printed message to the user.					<br>
 Added a file of experimental code for aurch to build packages in clean chroot, 		<br>
@@ -448,7 +475,9 @@ Somewhat Unrelated:									<br>
 Added an `.sh` suffix to several of the scripts in here and my other repos/scripts. 	<br>
 The suffix is used in the [github-ca.sh](https://github.com/Cody-Learner/github-clone-all) 
 script to streamline installing my scripts in a new system.		<br>
-									<br>
+
+----
+
 **UPDATE For  Aug 1, 2024**                                            <br>
 aurch:                                                                 <br>
 Worked on elimimating 'sudo timeouts' on long running package builds.  <br>
@@ -457,30 +486,42 @@ works in conjunction with supplied '/etc/sudoers.d/aurch' example.     <br>
 Edited 'check_host_updates' function to provide accurate results       <br>
 on installed version if package is downgraded or held back from latest.<br>
 Cleaned up script comments.                                            <br>
-                                                                       <br>
+
+----
+
 **UPDATE For  July 19, 2024** <br>
 Fixed "Review Files" for AUR dependency review when they are downloaded.<br>
 Renamed `PAGER` variable to `AURFM` to eliminate potential issues. <br>
 Corrected the incorrect/interchangeable usage of the words 'chroot' and 'nspawn container' in README.md <br>
 and '--help' sections of scripts. <br>
- <br>
+
+----
+
 **UPDATE For  July 14, 2024** <br>
 Updated dependencies list in aurch. <br>
 Updated --help option and README file to mention PAGER variable. <br>
- <br>
+
+----
+
 **UPDATE For  April 21, 2024** <br>
 Aurch-setup: Added 'mc' package as checked/installed dependency.<br>
-<br>
+
+----
+
 **UPDATE For  April 17, 2024** <br>
 Aurch: <br>
 Fix info box "Chroot Path" line, to automatically align.<br>
 Added '-' to 'opt' variable in '# Optionally install package #' section for <br>
 incorrect shellcheck SC2154. # SC2154 opt is assigned in option parsing.<br>
-<br>
+
+----
+
 **UPDATE For  April 14, 2024** <br>
 Added '-V --version' operation to both aurch and aurch-setup. <br>
 Append '-' to 'udb' variable in 'upd_aur_db' function as required by 'set -u'. <br>
-<br>
+
+----
+
 **NEWS For  April 12, 2024** <br>
 Subject: Debug Packages <br>
 Some time back, pacman enabled debug packages by default in '/etc/makepkg.conf'. <br>
@@ -490,7 +531,9 @@ See: Notes in makepkg.conf for add info. <br>
 To remove any unwanted AUR debug packages from the host and/or AUR sync db,  <br>
 *Install the 'package-debug' with pacman.* <br>
 *Remove it using aurch. ie: aurch -Rh 'package-debug'.* <br>
-<br>
+
+----
+
 **UPDATE For  April 12, 2024** <br>
 Setup virtual environment for testing. <br>
 Aurch-Setup: <br>
@@ -502,12 +545,16 @@ Aurch: <br>
 Discovered a new issue upon initial run caused by adding 'set -euo pipefail. <br>
 Script exited on a 'find' command returning an empty result, along with expected non zero exit code. <br>
 Set place holder files in AUR repos so find command returns a result, and zero exit code. <br>
- <br>
+
+----
+
 **UPDATE For  April 8, 2024** <br>
 Fix 'Convert <package> input to all lower case', positional parameter expansion to 'package' variable. <br>
 Added error handling for no package input used with '-B' and '-G' operations. <br>
 Cleaned up script comments and removed commented out testing code. <br>
-<br>
+
+----
+
 **UPDATE For  April 7, 2024** <br>
 Although I don't base the quality of bash scripts on the use of the controversial 'set -euo pipefail',
 I have been curious about what changes would be required to implement it. <br>
@@ -520,34 +567,46 @@ Directly from my notes: <br>
     Line 147, '$2' is part of an awk command inside an "EOF [here doc]" and not a bash positional parameter. (A bash bug?)
     Rewrote 'fetch_pkg' function lines ~143-159, to accommodate 'set -u' by removing awk from the here doc.
 
+----
+
 **UPDATE For  March 10, 2023** <br>
 Updated script for compatiblity with interface changes made to aurutils-11. <br>
 https://github.com/AladW/aurutils/releases/tag/11<br>
 Updated README to reflect changes and clarify info.<br>
-<br>
+
+----
+
 **UPDATE For  Jan 07, 2023** <br>
 When deleting AUR packages from host, corrected ability to remove "all versions" of pkgs from the host AUR package cache. <br>
 Add an if statement to 'check_host_updates' function to properly handle and print message 'No Updates Available'. <br>
 Edited message in 'check_host_updates' function when package is newer than the AUR rpc version to:  <br>
 "VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates.".<br>
-<br>
+
+----
+
 **UPDATE For  Feb 11, 2022** <br>
 Change curl commands to reflect AUR RPC interface update/changes. <br>
 Add removal of /var/tmp/aurch/orig-pkgs.log ("${tmph}"/orig-pkgs.log) in chroot so 'orig package list' reflects edits/changes made to 
 .#orig-pkgs.log in base dir. <br>
 Add if statement to check build dir/s for .git dir. This allows adding misc dir's (ie: 'testing' toolchain pkgs) under buildusers home. <br>
-<br>
+
+----
+
 **UPDATE For  Jan 21, 2022** <br>
 Disable 'set -e'. <br>
 Testing in virtual hw system revealed failure to build pkg that was not present on test system. <br>
-<br>
+
+----
+
 **UPDATE For  Jan 06, 2022** <br>
 Implemented 'set -e' in script. <br>
 Added code line 162 to enable proper 'set -e'. <br>
 Added '-a' opt to systemd-nspawn commands. <br>
 Replaced cat with sort in subshell for comm command. <br>
 Added 'else' to if statement in upd_aur_db function. <br>
-<br>
+
+----
+
 **UPDATE For  Dec 14, 2021** <br>
 Added operations:<br>
     
@@ -562,14 +621,18 @@ Added code to remove operation in chroot to assure all possible conditions are h
 Began implementation of 'aur build --results' file to replace grepped output for conditional processing.<br>
 Added missing aur database entry for rebuilt, overwritten, same version packages.<br>
 Removed install workaround in host for missing database entry using pacman -u.<br>
-<br>
+
+----
+
 **UPDATE For  Dec 10, 2021** <br>
 The predominant focus this time around was implementing some additional flexibility to allow aurch to be usable for more 
 than my personal setup and preferences. Implemented virtual hardware testing as a start towards this objective. <br>
 Split the system setup and building packages into separate scripts. To many additional smaller changes to go over here. 
 Future road map includes implementing a built in inspection step of downloaded AUR data and running a check for existing 
 PGP keys to eliminate needless re-downloading.<br>
-<br>
+
+----
+
 **UPDATE For  Nov 29, 2021** <br>
 Added pacutils as a dependency.<br>
 Added ability when overwriting existing packages in host to handle multiple entries from split packages.<br>
@@ -598,31 +661,41 @@ List operation options:<br>
     aurch -Lcq	[q][quiet] lists chroot aur sync database [packages only].
     aurch -Lhq	[q][quiet] lists host aur sync database [packages only].
 
-<br>
+----
 
 **UPDATE For  Nov 27, 2021** <br>
 Rewrote 'here document' usage to extend systemd-nspawn functionality, rather than inserting multiple small scripts into chroot. <br>
 Added code and printed comments relating to rebuilding and reinstalling same version of packages. <br>
 Reworked 'setup_chroot' function to eliminated the evil 'eval' command. <br>
 Integrated /var/tmp directory usage in chroot and added file extensions to ease it's cleanup. <br>
-<br>
+
+----
+
 **UPDATE For  Nov 24, 2021** <br>
 Added '-L  --listup' operation, to lists updates. <br>
 The new function runs on the packages in the chroot AUR repo. <br>
 It compares local vs remote git HEAD and lists mismatching packages. <br>
-<br>
+
+----
+
 **UPDATE For  Nov 21, 2021** <br>
 Added function to add packages to hosts AUR repo database.<br>
-<br>
+
+----
+
 **UPDATE For  Nov 20, 2021** <br>
 Fixed for proper split package handling.<br>
-<br>
+
+----
+
 **UPDATE For  Nov 14, 2021** <br>
 Rewrote aurch to no longer require AUR dependencies. No AUR helper required on host. <br>
 Creates a chroot with aurutils set up, including a local pacman AUR repo, inside the chroot. <br>
 Added ability to git clone and build package independently to ease customization. <br>
 AUR packages are retained in the chroot for dependency usage. <br>
-<br>
+
+----
+
 **NEWS FOR Oct 31, 2021** <br>
 Initial release of the aurch script. <br>
 The script is in the testing phase. <br>

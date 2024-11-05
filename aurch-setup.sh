@@ -1,52 +1,41 @@
 #!/bin/bash
-# aurch-setup 2024-08-09
+# aurch-setup 2024-11-03
 # dependencies:  base-devel arch-install-scripts git pacutils jshon mc
 
 set -euo pipefail
 
-#======================================================================================================================#
-#-----------------------------# 3 User Set variables below. Uncomment and set paths. #------------------------------#
-# BASEDIR=
-# AURREPO=
-# REPONAME=
-#-------------------------------------------# Default variables list #----------------------------------------------#
-# BASEDIR="${HOME}"/.cache/aurch/base						# HOST chroot base path
-# AURREPO="${HOME}"/.cache/aurch/repo						# HOST aur repo path
-# REPONAME=aur									# HOST aur repo name
-#========================================================================================================================#
-[[ ! -v   BASEDIR  ]] && BASEDIR="${HOME}"/.cache/aurch/base			# Set    BASEDIR to default if unset
-[[ ! -d ${BASEDIR} ]] && mkdir -p "${BASEDIR}"					# Create BASEDIR directory if not present
-[[ ! -v   AURREPO  ]] && AURREPO="${HOME}"/.cache/aurch/repo			# Set    AURREPO to default in unset
-[[ ! -d ${AURREPO} ]] && mkdir -p "${AURREPO}"  2>/dev/null			# Create host AUR repo if not present
-[[ ! -v REPONAME   ]] && REPONAME=aur						# Set    REPONAME to default if unset
-[[ ! -s ${BASEDIR}/.#ID ]] && mktemp -u XXX > "${BASEDIR}"/.#ID			# If not present, create unique suffix file
-chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST   path to chroot
-chrbuilduser=/home/builduser							# CHROOT builduser home directory
-homebuilduser="${chroot}"/home/builduser					# HOST   builduser home directory
-#-------------------------------------------------------------------------------------------------------------------#
-czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')				# Aurch color pointer
-error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')				# Red 'ERROR' text.
-line2=$(printf %"$(tput cols)"s |tr " " "-")					# Set line '---' to terminal width
-#========================================================================================================================#
-# Print variables to .#aurch-setup-vars
+if	[[ $(id -u) != 0 ]]; then
+	echo " Need to run with elevated privileges."
+	echo " Has been tested with sudo."
+	exit
+fi
+	[[ ! -v   BASEDIR  ]] && BASEDIR=/usr/local/aurch/base				# Set    BASEDIR if unset
+	[[ ! -d ${BASEDIR} ]] && mkdir -p "${BASEDIR}"					# Create BASEDIR dir if not present
+	[[ ! -v   AURREPO  ]] && AURREPO=/usr/local/aurch/repo				# Set    AURREPO if unset
+	[[ ! -d ${AURREPO} ]] && mkdir -p "${AURREPO}"  2>/dev/null			# Create AURREPO dir if not present
+	[[ ! -v REPONAME   ]] && REPONAME=aur						# Set    REPONAME if unset
+	[[ ! -s ${BASEDIR}/.#ID ]] && mktemp -u XXX > "${BASEDIR}"/.#ID			# Create unique suffix file if not present
 
+chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)					# HOST   path to chroot
+chrbuilduser=/home/builduser								# CHROOT builduser home directory
+homebuilduser="${chroot}"/home/builduser						# HOST   builduser home directory
+czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')					# Aurch color pointer
+error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')					# Red 'ERROR' text.
+line2=$(printf %"$(tput cols)"s |tr " " "-")						# Set line '---' to terminal width
+
+#========================================================================================================================#
+print_env(){
 	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	echo "
 	BASEDIR=${BASEDIR}
 	AURREPO=${AURREPO}
 	chroot=${chroot}
 	chrbuilduser=${chrbuilduser}
-	homebuilduser=${homebuilduser}" \
-	| awk ' {print;} NR % 1 == 0 { print ""; }' > "${BASEDIR}"/.#aurch-setup-vars
-
-#========================================================================================================================#
-check_depends(){
-
-	echo "${czm} Checking dependencies for aurch and arch-install."
-	sudo pacman --needed -S base-devel arch-install-scripts git pacutils jshon mc
-	echo
+	homebuilduser=${homebuilduser}" |
+	awk ' {print;} NR % 1 == 0 { print ""; }' > "${BASEDIR}"/.#aurch-setup-vars
 }
 #========================================================================================================================#
+
 help(){
 cat << EOF
 ${line2}
@@ -55,13 +44,13 @@ NAME
 		aurch-setup - sets up a system for aurch
 
 DESCRIPTION
-		Aurch-setup sets up a system for the aurch script to build AUR packages.
-		Sets up an nspawn container for building AUR packages.
-		Sets up a local pacman repo for AUR package on the host.
-		Aurutils is setup and installed within the nspawn container to build AUR packages.
+		Aurch-setup sets up an nspawn container for the aurch script to build AUR packages.
+		Aurutils is installed and setup in the nspawn container.
+		Sets up a local pacman repo for AUR packages on the host.
+
 
 USAGE
-		aurch-setup [operation]
+		sudo aurch-setup [operation]
 
 OPERATIONS
                 -Sc  --setupchroot	Sets up an nspawn container.
@@ -69,24 +58,25 @@ OPERATIONS
                 -h   --help		Prints help.
                 -V   --version		Prints aurch version.
 
-VARIABLES
-		User variables:
-				BASEDIR   Path to host aurch chroot setup.
-				AURREPO   Path to host pacman local AUR repo.
-		Defaults:
-				BASEDIR   "${HOME}"/.cache/aurch/build
-				AURREPO   "${HOME}"/.cache/aurch/repo
 
 EXAMPLES
-		Setup a chroot for aurch on the host:        aurch-setup -Sc
-		Setup a pacman local AUR repo on the host:   aurch-setup -Sh
+		Setup an nspawn container for aurch:  sudo aurch-setup -Sc
+		Setup a pacman local AUR repo:        sudo aurch-setup -Sh
 
 MISC
 		Aurch-setup runtime messages will be proceeded with this:   ${czm}
 		Aurch-setup runtime errors will be proceeded with this:     ${czm}${error}
+		Aurch-setup prints additional important info while running.
 
 ${line2}
 EOF
+}
+#========================================================================================================================#
+check_depends(){
+
+	echo "${czm} Checking dependencies for aurch and arch-install."
+	pacman --needed -S base-devel arch-install-scripts git pacutils jshon mc
+	echo
 }
 #========================================================================================================================#
 setup_chroot(){
@@ -106,9 +96,7 @@ fi
 
 	mkdir "${chroot}"
 
-	sudo chown root:root "${chroot}"
-
-if      sudo pacstrap -c "${chroot}" base base-devel git ; then
+if      pacstrap -c "${chroot}" base base-devel git ; then
 
 	echo "${czm} Pacstrap finished nspawn-container install."
 	echo "${czm} Setting up container with builduser, colored shell prompts, header id's, and alias's."
@@ -117,11 +105,14 @@ if      sudo pacstrap -c "${chroot}" base base-devel git ; then
 	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	mkdir -p "${chroot}"/var/tmp/aurch						|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	sudo systemd-nspawn --as-pid2 -q    useradd -m -G wheel -s /bin/bash builduser
-	sudo systemd-nspawn --as-pid2 -q    mkdir /build
-	sudo systemd-nspawn --as-pid2 -q    chown builduser:builduser /build
+	systemd-nspawn -a -q    useradd -m -G wheel -s /bin/bash builduser
+	systemd-nspawn -a -q    mkdir /build
+	systemd-nspawn -a -q    chown -R builduser:builduser /build
 
-	cat << 'EOF' | sudo tee -a "${chroot}"/etc/bash.bashrc
+	chmod 755 "${chroot}/build"
+	chown -R :alpm "${chroot}/build"
+
+	cat << 'EOF' >> "${chroot}"/etc/bash.bashrc
 
 if	[[ $(whoami) == root ]]; then
 	# Color bash prompt bold red
@@ -161,71 +152,82 @@ EOF
     else
 	echo "${czm} Pacstrap failed."
 fi
-
 #----------------------------------------------------------------------------------------------
 # set up container for aurch
 
 	echo "${czm} Setting up container for building AUR packages."
 	sleep 3
-	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+	cd "${BASEDIR}"								|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 
-	printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL"  > 01-sudoers-addendum
-	sudo chown root:root 01-sudoers-addendum
-	sudo mv ./01-sudoers-addendum "${chroot}/etc/sudoers.d/01-sudoers-addendum"
+	printf '%s\n' "%wheel ALL=(ALL) NOPASSWD: ALL"  > "${chroot}/etc/sudoers.d/01-sudoers-addendum"
 
-	sudo systemd-nspawn --as-pid2 -q   -D "${chroot}"   -u builduser \
-	install -d /build -o builduser
-
-	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}" --pipe \
+	systemd-nspawn -a -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}" --pipe \
 	git clone https://aur.archlinux.org/aurutils.git
 
-	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
+	systemd-nspawn -a -q  -D "${chroot}"  -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
 	makepkg -sri --noconfirm
 
 	cd "${chroot}"								|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\#'					/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\[options]'				/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\CacheDir    = /build'		/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\[aur]'				/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\SigLevel = Optional TrustAll'	/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '$a\Server = file:///build'		/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '/CacheDir/s/^#//g'			/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '/ParallelDownloads/s/^#//g'		/etc/pacman.conf
-	sudo systemd-nspawn --as-pid2 -q sed -i '/VerbosePkgLists/s/^#//g'		/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\#'				/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\[options]'			/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\CacheDir    = /build'		/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\[aur]'				/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\SigLevel = Never TrustAll'	/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\Server = file:///build'		/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '/CacheDir/s/^#//g'			/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '/Color/s/^#//g'			/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '/VerbosePkgLists/s/^#//g'		/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '/ParallelDownloads/s/^#//g'	/etc/pacman.conf
 
-	cat << "EOF" > "${homebuilduser}/aurutils/add-aur-repo"
+
+	cat <<-"EOF" > "${homebuilduser}/add-aur-repo"
 	#!/bin/bash
+
+	set -e
 	repo-add /build/aur.db.tar.gz   $(find /home/builduser/aurutils/ -maxdepth 1 -type f -name aurutils*pkg.tar.zst)
+	chmod 646 /build/aur.db.tar.gz
+	chown builduser:alpm /build/aur.db.tar.gz
 EOF
-	chmod +x "${homebuilduser}/aurutils/add-aur-repo"
+	systemd-nspawn -a -q  -D "${chroot}" --chdir="${chrbuilduser}" --pipe \
+	chmod +x add-aur-repo
 
-	sudo systemd-nspawn --as-pid2 -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}"/aurutils --pipe \
-	./add-aur-repo
+	systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
+	sudo ./add-aur-repo
 
-	sudo systemd-nspawn --as-pid2 -q  -D "${chroot}" --pipe \
+	systemd-nspawn -a -q  -D "${chroot}" --pipe \
 	pacman -Sy
 
-	sudo pacman     -r "${chroot}" \
-			-b "${chroot}/var/lib/pacman/" \
-			--config "${chroot}/etc/pacman.conf" \
-			--noconfirm -Qq \
-			| nl > "${BASEDIR}/.#orig-pkgs.log"
+	pacman	-r "${chroot}" \
+		-b "${chroot}/var/lib/pacman/" \
+		--config "${chroot}/etc/pacman.conf" \
+		--noconfirm -Qq |
+		nl > "${BASEDIR}/.#orig-pkgs.log"
+												 	# Fix auto generated broken user gpg config.
+	systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
+	gpg --list-keys &>/dev/null
+	mv /home/builduser/.gnupg/common.conf  /home/builduser/.gnupg/common.conf-BU
 
-	if	[[ -e  aurch.README ]]; then
-		rm aurch.README
-	fi
+EOF
+
+if	[[ -d /usr/local/aurch ]] && [[ ! -h /home/${SUDO_USER}/.aa-Aurch ]]; then
+	ln -s /usr/local/aurch  "/home/${SUDO_USER}/.aa-Aurch"
+fi
+	echo
 	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >"${BASEDIR}/aurch.README")
 	${czm} Aurch nspawn-container setup completed.
 	${czm} Has base, base-devel, git, and aurutils installed.
 	${czm} Container AUR repo is set up in ${chroot}/build.
-	${czm} User builduser is set up, no password required for sudo.
+	${czm} A symlink has been created from /usr/local/aurch to /home/${SUDO_USER}/.aa-Aurch
+	${czm} User builduser is set up in container, no password required for sudo.
 	${czm} Do not alter files proceeded with '#.' in base directory.
-	${czm} To setup host local AUR repo, run: aurch-setup -Sh
+	${czm} This info has been printed to: /usr/local/aurch/base/aurch.README
 EOF
+	sleep 1
+	echo "${czm} To proceed with setting up the required local AUR repo, run:  aurch-setup -Sh"
     else
 	echo; echo "${czm} builduser setup failed in container."
 fi
@@ -235,55 +237,47 @@ setup_local_aur_repo(){
 
 	echo "${czm} Local AUR repo: ${AURREPO}"
 
-	sudo sed -i '$a\#'                         /etc/pacman.conf
-	sudo sed -i '$a\# Path to aurch.conf'      /etc/pacman.conf
-	sudo sed -i '$a\Include = /etc/aurch.conf' /etc/pacman.conf
-	sudo sed -i '/CacheDir/s/^#//g'            /etc/pacman.conf
+	sed -i '$a\#'                         /etc/pacman.conf
+	sed -i '$a\# Path to aurch.conf'      /etc/pacman.conf
+	sed -i '$a\Include = /etc/aurch.conf' /etc/pacman.conf
+	sed -i '/CacheDir/s/^#//g'            /etc/pacman.conf
 
-	echo "${czm} Following is aurch.conf file: /etc/aurch.conf"
+	echo "${czm} Following is the aurch.conf file: /etc/aurch.conf"
 
-cat	<<-EOF	  | sudo tee /etc/aurch.conf
+ cat	<<-EOF > /etc/aurch.conf
 
 	[options]
 	CacheDir    = ${AURREPO}
 	CleanMethod = KeepInstalled
 
 	[${REPONAME}]
-	SigLevel = Optional TrustAll
+	SigLevel = Never TrustAll
 	Server = file://${AURREPO}
 
 EOF
-	sudo mkdir -p "${AURREPO}"
-	sudo chown "${USER}":"${USER}" "${AURREPO}"
 
-	install -d "${AURREPO}" -o "${USER}"
-
-	pkg=$(find "${homebuilduser}/aurutils/" -type f -name "aurutils*pkg.tar.zst")
-	repo-add "${AURREPO}/${REPONAME}".db.tar.gz "${pkg}"
-
-	sudo pacsync "${REPONAME}"
- 	sudo pacman -Sy
+if	[[ ! -d  ${AURREPO} ]]; then
+	mkdir -p "${AURREPO}"
+fi
+	repo-add "${AURREPO}/${REPONAME}".db.tar.gz
+	pacsync "${REPONAME}"
+	chown -R :alpm "${AURREPO}"
+	pacman -Sy
 
 	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."
-	echo " In order to avoid an unplanned system update within the script, your system has been left in a"
-	echo " 'partial update' condition. It's imperative to run a 'pacman -Syu' update upon completion."; echo
+	echo "             In order to avoid an unplanned system update within the script,"
+	echo "             your system has been left in a partial update' state."
+	echo "${czm} Run 'pacman -Syu' upon completion."; echo
 }
 #========================================================================================================================#
 if      [[ -z ${*} ]]; then
-cat << EOF
-
- aurch-setup	Sets up host for aurch usage.
-
-            	Run 'aurch-setup -h' for help.
- Container ID: 	$(basename "${chroot}")
-
-EOF
+	help
 fi
-#========================================================================================================================#
+
 while :; do
 	case "${1-}" in
-	-Sc|--setupchroot)	check_depends; setup_chroot					;;
-	-Sh|--setuphost)	check_depends; setup_local_aur_repo				;;
+	-Sc|--setupchroot)	print_env; check_depends; setup_chroot				;;
+	-Sh|--setuphost)	print_env; check_depends; setup_local_aur_repo			;;
 	-h|--help)		help								;;
 	-V|--version)		awk -e '/^# aurch/ {print $2,$3}' "$(which aurch-setup)"	;;
 	-?*)			echo "${czm}${error} Input error. Running --help" ; help	;;

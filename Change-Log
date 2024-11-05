@@ -1,0 +1,28 @@
+aurch.sh 2024-11-04
+aurch-setup.sh 2024-11-04
+aurch-cc.sh 2024-11-04
+
+This a non backwards compatable release.
+Relocating container/AUR-repo from under HOME/.cache to  under /usr/local.
+
+aurch-setup:
+Setup script to require sudo invocation.
+Added 'check_depends' function to optionally install missing deps.
+Removed several sudo calls due to running as sudo.
+Changed AUR repo config from 'SigLevel Optional' to 'SigLevel = Never'
+Added fix to disable gpg auto generated broken user config.
+Added function to create a hidden symlink from /usr/local/aurch to SUDO_USER HOME dir.
+Added 'print_env' function so script can be called w --help and no operation without sudo.
+
+aurch:
+Added '-Lv' operation to print script variables and expansion to terminal.
+Added 'reset and restore permission' on container AUR database.
+Added 'change to 777 permission' tmpc file in container.
+Added error handling in '--complie' in case of not git cloning repo prior to '--compile' operation.
+Added several 'sudo' calls to deal with permission changes from new container/repo location outside HOME.
+Added 'set_env' function so script can be called without sudo for some operations.
+
+aurch-cc.sh
+Added some sudo calls.
+Added info to header.
+Added missing devtools to depends.
