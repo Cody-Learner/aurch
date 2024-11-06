@@ -1,18 +1,21 @@
-# aurch-cc 2024-11-04
+# aurch-cc 2024-11-05
 # dependencies: aurutils devtools
 #
-# Experimental aurch 'add on' feature to build aur package python2 in a clean chroot, integrating it with both aurch aur repos. 
-# To enable, place this in the directory containing the aurch script to allow sourcing.
-# Clones repo to /tmp/aurch/pkg, builds in chroot /var/lib/archbuild/*, installs/syncs package in aurch host and nspawn aur repos.
+# Experimental 'add on' feature to build aur python2 in a clean chroot.
+# Clones repo to:   /tmp/aurch/pkg 
+# Builds in chroot: /var/lib/archbuild/*
+# Copies package, adds to db's, syncs db's, in both aurch host and nspawn container.
+# Copies git repo to container allowing aurch to check for updates.
 #
-# This script requires manually handling AUR depends and pgp keys.
-# Used/tested for python2 only. https://aur.archlinux.org/packages/python2
-# This would likely work for other AUR packages, however it's untested.
+# REQUIRES MANUAL HANDLING OF AUR DEPENDS and PGP KEYS.
+# Tested only on AUR python2.
+#
+# To enable, place this in the directory containing the aurch script to allow sourcing.
 # shellcheck shell=bash disable=SC2154
 
 set -euo pipefail
 
-	printf '%s\n' "${czm} Clean chroot building depends on aurutils for dependency resolution and ordering."
+	printf '%s\n' "${czm} Clean chroot building depends on devtools and aurutils for dependency resolution and ordering."
 
 if	pacman -Q aurutils devtools; then
 	printf '%s\n' "${czm} Checking....  aurutils and devtools installed."

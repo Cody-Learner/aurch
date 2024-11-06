@@ -1,12 +1,12 @@
 #!/bin/bash
-# aurch-setup 2024-11-04
+# aurch-setup 2024-11-05
 # dependencies:  base-devel arch-install-scripts git pacutils jshon mc
 
 set -euo pipefail
 
 if	[[ $(id -u) != 0 ]]; then
-	echo " Need to run with elevated privileges."
-	echo " Has been tested with sudo."
+	echo " Needs elevated privileges. Run with sudo."
+	echo " FYI: This script uses 'SUDO_USER' for symlink."
 	exit
 fi
 	[[ ! -v   BASEDIR  ]] && BASEDIR=/usr/local/aurch/base				# Set    BASEDIR if unset
@@ -16,6 +16,7 @@ fi
 	[[ ! -v REPONAME   ]] && REPONAME=aur						# Set    REPONAME if unset
 	[[ ! -s ${BASEDIR}/.#ID ]] && mktemp -u XXX > "${BASEDIR}"/.#ID			# Create unique suffix file if not present
 
+
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)					# HOST   path to chroot
 chrbuilduser=/home/builduser								# CHROOT builduser home directory
 homebuilduser="${chroot}"/home/builduser						# HOST   builduser home directory
@@ -24,18 +25,15 @@ error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')					# Red 'ERROR' text.
 line2=$(printf %"$(tput cols)"s |tr " " "-")						# Set line '---' to terminal width
 
 #========================================================================================================================#
-print_env(){
-	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
+
 	echo "
 	BASEDIR=${BASEDIR}
 	AURREPO=${AURREPO}
 	chroot=${chroot}
 	chrbuilduser=${chrbuilduser}
-	homebuilduser=${homebuilduser}" |
-	awk ' {print;} NR % 1 == 0 { print ""; }' > "${BASEDIR}"/.#aurch-setup-vars
-}
-#========================================================================================================================#
+	homebuilduser=${homebuilduser}" > "${BASEDIR}"/.#aurch-setup-vars
 
+#========================================================================================================================#
 help(){
 cat << EOF
 ${line2}
@@ -53,7 +51,7 @@ USAGE
 		sudo aurch-setup [operation]
 
 OPERATIONS
-                -Sc  --setupchroot	Sets up an nspawn container.
+                -Sc  --setupcontainer	Sets up an nspawn container.
                 -Sh  --setuphost	Sets up the host aur repo.
                 -h   --help		Prints help.
                 -V   --version		Prints aurch version.
@@ -61,7 +59,7 @@ OPERATIONS
 
 EXAMPLES
 		Setup an nspawn container for aurch:  sudo aurch-setup -Sc
-		Setup a pacman local AUR repo:        sudo aurch-setup -Sh
+		Setup host with a local AUR repo:     sudo aurch-setup -Sh
 
 MISC
 		Aurch-setup runtime messages will be proceeded with this:   ${czm}
@@ -177,7 +175,7 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 	systemd-nspawn -a -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '$a\[aur]'				/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '$a\SigLevel = Never TrustAll'	/etc/pacman.conf
-	systemd-nspawn -a -q sed -i '$a\Server = file:///build'		/etc/pacman.conf
+	systemd-nspawn -a -q sed -i '$a\Server = file:///build'		/etc/pacman.conf		# SC2016 We don't want expansion here!
 	systemd-nspawn -a -q sed -i '/CacheDir/s/^#//g'			/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '/Color/s/^#//g'			/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '/VerbosePkgLists/s/^#//g'		/etc/pacman.conf
@@ -216,6 +214,11 @@ EOF
 if	[[ -d /usr/local/aurch ]] && [[ ! -h /home/${SUDO_USER}/.aa-Aurch ]]; then
 	ln -s /usr/local/aurch  "/home/${SUDO_USER}/.aa-Aurch"
 fi
+
+if	[[ -d "${BASEDIR}" ]]; then
+	echo "To populate with variables run: 'aurch -Lv'" > "${BASEDIR}/.#aurch-vars"
+fi
+
 	echo
 	cat <<-EOF | tee >( sed 's/\x1B\[[0-9;]*[A-Za-z]//g' >"${BASEDIR}/aurch.README")
 	${czm} Aurch nspawn-container setup completed.
@@ -276,8 +279,8 @@ fi
 
 while :; do
 	case "${1-}" in
-	-Sc|--setupchroot)	print_env; check_depends; setup_chroot				;;
-	-Sh|--setuphost)	print_env; check_depends; setup_local_aur_repo			;;
+	-Sc|--setupcontainer)	check_depends ; setup_chroot					;;
+	-Sh|--setuphost)	check_depends ; setup_local_aur_repo				;;
 	-h|--help)		help								;;
 	-V|--version)		awk -e '/^# aurch/ {print $2,$3}' "$(which aurch-setup)"	;;
 	-?*)			echo "${czm}${error} Input error. Running --help" ; help	;;

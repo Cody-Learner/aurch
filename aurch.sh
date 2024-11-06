@@ -1,29 +1,32 @@
 #!/bin/bash
-# aurch 2024-11-04
+# aurch 2024-11-05
 # dependencies: base-devel git pacutils(pacsync) jshon mc
-# shellcheck source=aurch-cc.sh #Run with: shellcheck -x aurch.sh
+# shellcheck source=aurch-cc.sh # Run: shellcheck -x aurch.sh
 
 set -euo pipefail
 
 	[[ ! -v BASEDIR ]]	&& BASEDIR=/usr/local/aurch/base		# HOST    Set BASEDIR to default if unset
-	[[ -n ${2-} ]]		&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
+	[[ -n "${2-}" ]]	&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 
-chroot="${BASEDIR}/chroot-$(< "${BASEDIR}"/.#ID)"				# HOST    path to chroot root
+chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination 1)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination 1)
 tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination 2)
 tmph="${chroot}${tmpc}"								# HOST    path to tmp dir (same destination 2)
+perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)				# Container octal permission: /build/aur.db.tar.gz
+AURFM=mc									# Application to inspect git cloned repos
+
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')				# Aurch color pointer
 error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')				# Red 'ERROR' text
 line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
-perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)				# Debug
 
 #========================================================================================================================#
-set_env(){
-	cd "${BASEDIR}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	echo "
+print_vars(){
+
+	cat <<-EOF | sudo tee "${BASEDIR}"/.#aurch-vars &>/dev/null
+
 	BASEDIR=${BASEDIR-}
 	AURREPO=${AURREPO-}
 	REPONAME=${REPONAME-}
@@ -33,8 +36,13 @@ set_env(){
 	package=${package-}
 	tmpc=${tmpc-}
 	tmph=${tmph-}
-	" | sudo tee "${BASEDIR}"/.#aurch-vars &>/dev/null
-	print_vars(){ sed 's/=/ = /g' "${BASEDIR}"/.#aurch-vars | column -t -o " " ; }
+	perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)
+	AURFM=${AURFM}
+	czm=unprintable_fancy_text_effects
+	error=same_as_above
+	line2=same_as_above
+EOF
+	sed 's/=/ = /g' "${BASEDIR}"/.#aurch-vars | column -t
 }
 #========================================================================================================================#
 help(){
@@ -58,26 +66,26 @@ USAGE
 
 OPERATIONS
 		-B* --build	Build new or update an existing AUR package.
-		-G  --git	Git clones an AUR package.
+		-G  --gitclone	Git clones AUR package to ${homebuilduser}/<aur-package>.
 		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
-		-Rh		Remove AUR pkg from host. Removes: /AURREPO/<package>, <package> if installed,database entry.
-		-Rc		Remove AUR pkg from nspawn container. Removes: /build/<package>, /${HOME}/<build dir>, database entry.
-		-Syu  --update  Update nspawn container packages. ie: Runs 'pacman -Syu' inside the nspawn container.
+		-Rh		Remove AUR pkg from host. Removes: ${AURREPO}/<aur-package>, if installed <aur-package> and database entry.
+		-Rc		Remove AUR pkg from container. Removes: /build/<package>, ${chrbuilduser}/<aur-package>, database entry.
+		-Lah* --lsaurh	List all host AUR sync database contents/status.
+		-Lac* --lsaurc	List all container AUR sync database contents/status.
 		-Luh* --lsudh	List update info for AUR packages installed in host.
-		-Luc* --lsudc	List update info for AUR packages/AUR dependencies in nspawn container.
-		-Lah* --lsaurh	List AUR sync database contents/status of host.
-		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
-		-Lv		List aurch expanded variables.
+		-Luc* --lsudc	List update info for AUR packages/AUR dependencies in container.
+		-Lv		List variables expanded in console and print to ${BASEDIR}/.#aurch-vars.
+		-Syu  --update  Update container system. ie: Runs 'pacman -Syu' inside container.
 		      --login   Login to nspawn container for maintenance.
 		      --clean	Manually remove unneeded packages from nspawn container.
 		      --pgp	Manually import pgp key into nspawn container.
 		-h,   --help	Prints help.
 		-V,   --version Prints aurch <version>.
 
-OPTIONS
+*OPTIONS
 	-L, List:
 		Append 'q' to  -L list operations for quiet mode.
-		Example: aurch -Luhq
+		Example: aurch -Lahq
 		Do not mix order or attempt to use 'q' other than described.
 
 	-B, Build:
@@ -91,36 +99,37 @@ OVERVIEW
     		 ie: No group updates or multiple packages per operation capability.
     		The aurch nspawn container must be manually updated 'aurch -Syu'
 		 and pacman cache maintained 'aurch --login' or manually via filesystem.
-    		Best results with nspawn container update before buiding packages.
+    		Best results obtained with container updated before buiding packages.
 
 EXAMPLES
     		SETUP FOR AURCH:
 
-    		Set up nspawn container:				aurch-setup --setupchroot
-    		Set up local AUR repo:					aurch-setup --setuphost
+    		Set up nspawn container:				sudo aurch-setup --setupcontainer
+    		Set up local AUR repo:					sudo aurch-setup --setuphost
 
 
     		USING AURCH:
 
     		Build an AUR package(+):				aurch -B  <aur-package>
     		Build and install AUR package:				aurch -Bi <aur-package>
-    		Git clone package					aurch -G  <aur-package>
-    		Build (Compile) AUR pkg on existing PKGBUILD		aurch -C  <aur-package>
-    		Remove AUR package from host:				aurch -Rh <aur-package>
-    		Remove AUR package from nspawn container:		aurch -Rc <aur-package>
-    		List nspawn container AUR sync db contents:		aurch -Lac
-    		List nspawn container AUR repo updates:			aurch -Luc
-    		List host AUR sync database contents:			aurch -Lah
-    		List host AUR repo updates available:			aurch -Luh
-    		Manually import a pgp key in nspawn container:		aurch --pgp <short or long key id>
-    		Manually remove unneeded packages in nspawn container:	aurch --clean
-    		Login to chroot for maintenance:                	aurch --login
+    		Git clone an AUR package:				aurch -G  <aur-package>
+    		Compile (build) a git cloned AUR pkg:			aurch -C  <aur-package>
+    		Remove host AUR package:				aurch -Rh <aur-package>
+    		Remove container AUR package:				aurch -Rc <aur-package>
+    		List all host AUR packages:				aurch -Lah
+    		List all container packages:				aurch -Lac
+    		List host updates, AUR packages:			aurch -Luh
+    		List container updates, AUR packages:			aurch -Luc
+    		pgp key import in container: 				aurch --pgp <short or long key id>
+    		Clean unneeded packages in container:			aurch --clean
+    		Login to container for maintenance:                	aurch --login
 
 		(+) Package is placed into host AUR repo and entry made in pacman AUR database.
 		    Install with 'pacman -S <aur-package>'
 
 VARIABLES
-		AURFM = AUR file manager,editor (mc = midnight commander)
+		AURFM = AUR file manager,editor Default: AURFM=mc (midnight commander)
+		        Note: Untested, possibly use vifm.
 
 MISC
 		Aurch runtime messages will be proceeded with this:	${czm}
@@ -130,7 +139,7 @@ ${line2}
 EOF
 }
 #========================================================================================================================#
-# Reset and restore container AUR db permission
+# Reset container AUR db permission
 
 set_perm(){
 
@@ -138,9 +147,12 @@ if	((perm != 646)); then
 	sudo systemd-nspawn -a -q -D "${chroot}" chmod 646 /build/aur.db.tar.gz
 fi
 }
+#========================================================================================================================#
 # Restore container AUR db permission
 
-re_pr(){ sudo systemd-nspawn -a -q -D "${chroot}" chmod 644 /build/aur.db.tar.gz ; }
+rest_perm(){
+	sudo systemd-nspawn -a -q -D "${chroot}" chmod 644 /build/aur.db.tar.gz
+}
 #========================================================================================================================#
 fetch_pkg(){
 
@@ -189,8 +201,8 @@ if	[[ ! -f ${chroot}/build/placeholder.pkg.tar ]]; then
 fi
 
 if	[[ ! -d "${homebuilduser}/${package}" ]]; then
-	echo "${error} Package build directory missing in container."
-	echo "         If running '-C --compile', run '-G --gitclone' first to fetch requirements."
+	echo "${czm}${error} Package build directory missing in container."
+	echo "               If running '-C --compile', run '-G --gitclone' first to fetch requirements."
 	exit
 fi
 
@@ -386,7 +398,7 @@ if	[[ -n ${pkg} ]]; then
 		fi
 	cd "${AURREPO}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	remove=$(find "${pkg}"*.pkg.tar*)
-	sudo rm ${remove} && echo "${czm} Removed ${remove}"						# SC2086 Removed quotes for proper operation.
+	sudo rm ${remove} && echo "${czm} Removed ${remove}"					# SC2086 Removed quotes for proper operation.
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			sudo repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 			sudo pacsync "${REPONAME}"  >/dev/null
@@ -535,7 +547,6 @@ yes_no(){
 #========================================================================================================================#
 inspect_files(){
 
-	AURFM=mc
 if	[[ -s  ${tmph}/cloned-pkgs.file ]]; then
 	while IFS= read -r pkg; do
 	"${AURFM}" "${homebuilduser}"/"${pkg}"
@@ -545,19 +556,24 @@ if	[[ -s  ${tmph}/cloned-pkgs.file ]]; then
 fi
 	opt="${1}" build_pkg
 }
-#=======================================### EXPERIMENTAL: Clean chroot build  ###================================================#
+#=======================================### EXPERIMENTAL: Clean chroot build  ###========================================#
 
 clean_chroot(){
 
 aurcc="$(type -p aurch)-cc"
 
-if	[[ -s "${aurcc}" ]]; then 
-	printf '\n%s\n\n' "${error} Experimental feature 'build pkg in clean chroot' being enabled. Proceed? [y/n]."
+if	[[ -s "${aurcc}" ]]; then
+
+	printf '\n%s\n' "${czm}${error} Experimental feature 'build pkg in clean chroot' being enabled."
+	printf '%s\n' "${czm} Printing script header for additional info...."
+	head -n12 "$(type -P aurch)-cc" | tail -n10
+	printf '%s\n' "${czm}  Proceed? [y/n]."
 	while read -n1 -r reply ; do
 	[[ ${reply} == y ]] && break
 	[[ ${reply} == n ]] && exit
 	done
 	source "${aurcc}"
+  
 fi
 
 }
@@ -585,23 +601,23 @@ fi
 #========================================================================================================================#
 while :; do
 	case "${1-}" in
-	-B*|--build)	set_env ; set_perm ; fetch_pkg ; yes_no    "${1-}" ; re_pr ;;
-	-G|--gitclone)	set_env ;            fetch_pkg                     ; re_pr ;;
-	-C|--compile)	set_env ; set_perm ; opt="${1-}" build_pkg         ; re_pr ;;
-	-Cc|--cchroot)	set_env ; set_perm ; clean_chroot          "${1-}" ; re_pr ;;
-	-R*)		set_env ;            pkg="${2-}" remove    "${1-}"         ;;
-	-Syu|--update)  set_env ;            update_chroot                         ;;
-	-Luh*|--lsudh)	set_env ;            check_host_updates    "${1-}"         ;;
-	-Luc*|--lsudc)	set_env ;            check_chroot_updates  "${1-}"         ;;
-	-Lah*|--lsaurh)	set_env ;            list_pkgs_host        "${1-}"         ;;
-	-Lac*|--lsaurc)	set_env ;            list_pkgs_chroot      "${1-}"         ;;
-	-Lv)		set_env ;            print_vars                            ;;
-	--login)	set_env ;            login_chroot                          ;;
-	--clean)	set_env ;            cleanup_chroot                        ;;
-	--pgp)		set_env ;            key="${2-}" manual_pgp_key            ;;
-	-h|--help)	help                                                       ;;
-	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"         ;;
-	-?*)		help ; echo "${czm}${error} Input error. Running help"     ;;
+	-B*|--build)	 set_perm ; fetch_pkg ; yes_no    "${1-}" ; rest_perm  ;;
+	-G|--gitclone)	            fetch_pkg                                  ;;
+	-C|--compile)	 set_perm ; opt="${1-}" build_pkg         ; rest_perm  ;;
+	-Cc|--cchroot)	 set_perm ; clean_chroot          "${1-}" ; rest_perm  ;;
+	-R*)		            pkg="${2-}" remove    "${1-}"              ;;
+	-Syu|--update)              update_chroot                              ;;
+	-Luh*|--lsudh)	            check_host_updates    "${1-}"              ;;
+	-Luc*|--lsudc)	            check_chroot_updates  "${1-}"              ;;
+	-Lah*|--lsaurh)	            list_pkgs_host        "${1-}"              ;;
+	-Lac*|--lsaurc)	            list_pkgs_chroot      "${1-}"              ;;
+	-Lv)		            print_vars                                 ;;
+	--login)	            login_chroot                               ;;
+	--clean)	            cleanup_chroot                             ;;
+	--pgp)		            key="${2-}" manual_pgp_key                 ;;
+	-h|--help)	help                                                   ;;
+	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"     ;;
+	-?*)		help ; echo "${czm}${error} Input error. Running help" ;;
 	*)		break
         esac
     shift

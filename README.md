@@ -125,7 +125,30 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
-**UPDATE And INFO Info November 5, 2024**
+**UPDATE For November 5, 2024**
+
+**aurch:** <br>
+* Added `perm` variable, octal permission of `"${chroot}"/build/aur.db.tar.gz` <br>
+* Renamed `re_pr` function to `rest_perm` for improved future readability. <br>
+* The `set_perm` and `rest_perm` functions change permission on `"${chroot}"/build/aur.db.tar.gz` from `644` to `646`, then back to `644`, 
+for the two functions requiring write access. The container system pacman sets it to `644`. <br>
+* Replaced `set_env` function with `print_vars` to print variables via `-Lv` to terminal and write to file `"${BASEDIR}"/.#aurch-vars` <br>
+* Added info and reworded `--help` information. <br>
+* Added additional info printed to terminal for `-Cc` operation. <br>
+* Removed `set_env` from option parsing. Checking indicated this unnecessary. <br>
+
+**aurch-setup:** <br>
+* Removed `print_env` function, it's contents run on base script now. Function unneeded with new `sudo` invocation requirement for script. <br>
+* Reworded `--help` information. <br>
+* Added if statement to create `"${BASEDIR}/.#aurch-vars"` if not present, with the message `"To populate with variables run: 'aurch -Lv'"`. <br>
+* Removed `print_env` function from  option parsing. <br>
+
+**aurch-cc:** <br>
+* Reworded script header info. This info is now printed to terminal for additional info when using `-Cc` <br>
+
+----
+
+**UPDATE And INFO Info November 4, 2024**
 
 
 **Manual Intervention Required For `aurch 2024-11-04`** <br>
