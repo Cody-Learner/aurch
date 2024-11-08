@@ -260,7 +260,7 @@ EOF
 	aur build -fnsr --margs -C --results=aur-build-raw.log |& tee >(grep 'WARNING:' >"${tmpc}"/warning.file) \
 							       |& tee > "${tmpc}/results-unfiltered.file"
 EOF
-
+						### exists: WIP
 if	grep '^exist:' aur-build-raw.log ; then
  	grep '^exist:' aur-build-raw.log >> "${tmpc}"/warning.file
 fi
