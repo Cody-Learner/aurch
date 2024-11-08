@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-05
+# aurch 2024-11-08
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck source=aurch-cc.sh # Run: shellcheck -x aurch.sh
 
@@ -17,9 +17,9 @@ tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination 2)
 tmph="${chroot}${tmpc}"								# HOST    path to tmp dir (same destination 2)
 perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)				# Container octal permission: /build/aur.db.tar.gz
 AURFM=mc									# Application to inspect git cloned repos
-
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')				# Aurch color pointer
 error=$(echo -e '\033[1;91m' "ERROR:" '\033[00m')				# Red 'ERROR' text
+warn=$(echo -e '\033[1;33m'"WARNING:"'\033[00m')				# Yellow 'WARNING' text
 line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
 
 #========================================================================================================================#
@@ -38,9 +38,10 @@ print_vars(){
 	tmph=${tmph-}
 	perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)
 	AURFM=${AURFM}
-	czm=unprintable_fancy_text_effects
-	error=same_as_above
-	line2=same_as_above
+	czm=Aurch_color_pointer
+	error=Red_'ERROR'_text
+	warn=Yellow_'WARNING'_text
+	line2=Line_'---'_set_to_terminal_width
 EOF
 	sed 's/=/ = /g' "${BASEDIR}"/.#aurch-vars | column -t
 }
@@ -160,6 +161,9 @@ fetch_pkg(){
 
 	is_it_available
 
+if	[[ ! -d "${chroot}/var/tmp/aurch" ]]; then
+	sudo systemd-nspawn -a -q -D "${chroot}" mkdir /var/tmp/aurch
+fi
 	sudo systemd-nspawn -a -q -D "${chroot}" chmod -R 777 "${tmpc}"
 
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
@@ -234,9 +238,14 @@ EOF
 	fetch_pgp_key
 
 	echo "${czm} Building and installing ${buildorder[${pkgi}]} dependency: ${dependency}"
-
+#----------------	
+	set_perm
+#----------------
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${dependency}" --pipe \
 	aur build -ns --margs -i
+#-----------------
+	rest_perm
+#-----------------
     done
         echo  "${czm} Building: ${buildorder[${pkgi}]}"
 
@@ -244,11 +253,23 @@ EOF
 	package="${buildorder[${pkgi}]}"
 
 	fetch_pgp_key
-
+#---------------
+	set_perm
+#---------------
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${buildorder[pkgi]}" --pipe bash << EOF
-	aur build -fnsr --margs -C --results=aur-build.log |& tee >(grep 'WARNING:'       >"${tmpc}"/warning.file) \
-							   |  tee >(grep 'Adding package' >"${tmpc}"/pkg-nv.file)
+	aur build -fnsr --margs -C --results=aur-build-raw.log |& tee >(grep 'WARNING:' >"${tmpc}"/warning.file) \
+							       |& tee > "${tmpc}/results-unfiltered.file"
 EOF
+
+if	grep '^exist:' aur-build-raw.log ; then
+ 	grep '^exist:' aur-build-raw.log >> "${tmpc}"/warning.file
+fi
+if	grep '^build:' aur-build-raw.log ; then
+	grep '^build:' aur-build-raw.log > aur-build.log
+fi
+#-----------------
+	rest_perm
+#-----------------
 #------------------------------### Move packages to host, print results ###------------------------------#
 
 	find "${chroot}"/build/*pkg.tar* 2>/dev/null >"${tmph}"/after.file
@@ -532,7 +553,7 @@ exit
 #========================================================================================================================#
 yes_no(){
 
-	message(){ printf '\n%s' "             Proceeding with build...." ; }
+	message(){ printf '\n%s\n' "             Proceeding with build...." ; }
 
 	printf '%s\n'            "${czm} Inspect git cloned files?"
 	while true; do
@@ -564,14 +585,15 @@ aurcc="$(type -p aurch)-cc"
 
 if	[[ -s "${aurcc}" ]]; then
 
-	printf '\n%s\n' "${czm}${error} Experimental feature 'build pkg in clean chroot' being enabled."
-	printf '%s\n' "${czm} Printing script header for additional info...."
-	head -n12 "$(type -P aurch)-cc" | tail -n10
+	printf '\n%s\n' "${czm} ${warn} aurch-cc being sourced."
+	printf '%s\n' "${czm} Printing header for additional info...."
+	head -n13 "$(type -P aurch)-cc"
 	printf '%s\n' "${czm}  Proceed? [y/n]."
 	while read -n1 -r reply ; do
 	[[ ${reply} == y ]] && break
 	[[ ${reply} == n ]] && exit
 	done
+	echo
 	source "${aurcc}"
   
 fi
@@ -601,23 +623,23 @@ fi
 #========================================================================================================================#
 while :; do
 	case "${1-}" in
-	-B*|--build)	 set_perm ; fetch_pkg ; yes_no    "${1-}" ; rest_perm  ;;
-	-G|--gitclone)	            fetch_pkg                                  ;;
-	-C|--compile)	 set_perm ; opt="${1-}" build_pkg         ; rest_perm  ;;
-	-Cc|--cchroot)	 set_perm ; clean_chroot          "${1-}" ; rest_perm  ;;
-	-R*)		            pkg="${2-}" remove    "${1-}"              ;;
-	-Syu|--update)              update_chroot                              ;;
-	-Luh*|--lsudh)	            check_host_updates    "${1-}"              ;;
-	-Luc*|--lsudc)	            check_chroot_updates  "${1-}"              ;;
-	-Lah*|--lsaurh)	            list_pkgs_host        "${1-}"              ;;
-	-Lac*|--lsaurc)	            list_pkgs_chroot      "${1-}"              ;;
-	-Lv)		            print_vars                                 ;;
-	--login)	            login_chroot                               ;;
-	--clean)	            cleanup_chroot                             ;;
-	--pgp)		            key="${2-}" manual_pgp_key                 ;;
-	-h|--help)	help                                                   ;;
-	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"     ;;
-	-?*)		help ; echo "${czm}${error} Input error. Running help" ;;
+	-B*|--build)		fetch_pkg ; yes_no	"${1-}"			;;
+	-G|--gitclone)		fetch_pkg					;;
+	-C|--compile)		opt="${1-}" build_pkg				;;
+	-Cc|--cchroot)		clean_chroot		"${1-}"			;;
+	-R*)			pkg="${2-}" remove	"${1-}"			;;
+	-Syu|--update)		update_chroot					;;
+	-Luh*|--lsudh)		check_host_updates	"${1-}"			;;
+	-Luc*|--lsudc)		check_chroot_updates	"${1-}"			;;
+	-Lah*|--lsaurh)		list_pkgs_host		"${1-}"			;;
+	-Lac*|--lsaurc)		list_pkgs_chroot	"${1-}"			;;
+	-Lv)			print_vars					;;
+	--login)		login_chroot					;;
+	--clean)		cleanup_chroot					;;
+	--pgp)			key="${2-}" manual_pgp_key			;;
+	-h|--help)		help						;;
+	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"	;;
+	-?*)		help ; echo "${czm}${error} Input error. Running help"	;;
 	*)		break
         esac
     shift
