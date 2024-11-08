@@ -125,6 +125,16 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For November 8, 2024**
+
+**aurch:** <br>
+
+* Added 'warn' variable.
+* Added if statement to 'fetch_pkg' function to 'mkdir $chroot/var/tmp/aurch' if not present. ie: for testing.
+* Moved 'set_perm' and 'rest_perm' functions from option parsing to specifically wrap 'aur build' commands.
+* Reworked, edited 'aur build --results=aur-build-raw.log' command to to utilize '--results=aur-build-raw.log' file rather than parsing and using raw output. Need a 'feature add' to aurutils for this to work.
+* Added code to parse 'aur-build-raw.log' data.
+
 **UPDATE For November 5, 2024**
 
 **aurch:** <br>
