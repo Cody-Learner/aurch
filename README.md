@@ -125,6 +125,30 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For November 13, 2024**
+
+**aurch.sh:** <br>
+* Added a new `-Cc --cchroot` operation. Builds package in a clean chroot. This involved a complete rewrite of the testing operation. 
+  The `aurch-cc` script has been eliminated with the new code residing in aurch. <br>
+  Note: The new clean chroot operation is functional but needs additional testing and refinement. <br>
+* Added a fix including printed text when it's ran. The issue is some build directories were left without a PKGBUILD. 
+  The issue surfaces when an existing package is rebuilt. It was caused from early clean chroot testing. <br>
+* Replaced code that was parsing and using info printed to screen, with a more robust solution. <br>
+* Function `upd_aur_db`, changed an `awk` command to be more flexible. ie: `print $5` to `$NF`. <br>
+
+
+**aurch-setup.sh:** <br>
+* New dependencies added for clean chroot builds: sudo devtools paccat. 
+  These are checked for and optionally added in aurch when '-Cc' is ran as well. <br>
+* Added printed info regarding the sudo requirement over alternatives. <br>
+* Registered aurutils installation in container aur database. <br>
+
+
+**README.md:** <br>
+Updated 'info and updates' section to reflect changes. <br>
+
+------
+
 **UPDATE For November 8, 2024**
 
 **aurch:** <br>

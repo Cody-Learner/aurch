@@ -1,14 +1,20 @@
 #!/bin/bash
-# aurch-setup 2024-11-05
-# dependencies:  base-devel arch-install-scripts git pacutils jshon mc
+# aurch-setup 2024-11-13
+# dependencies:  base-devel arch-install-scripts git pacutils jshon mc sudo devtools paccat
 
 set -euo pipefail
 
+
 if	[[ $(id -u) != 0 ]]; then
 	echo " Needs elevated privileges. Run with sudo."
-	echo " FYI: This script uses 'SUDO_USER' for symlink."
+	echo
+	echo " FYI: This script uses the 'SUDO_USER' variable to set a symlink."
+	echo "      The default 'secure_path' sudo configuration is broken."
+	echo "      If you're having issues, the sudo 'secure_path' may need setup. ie: "
+	echo "     '/etc/sudoers' line: Defaults secure_path=\"/existing/path/entries:/APPEND/PATH\""
 	exit
 fi
+
 	[[ ! -v   BASEDIR  ]] && BASEDIR=/usr/local/aurch/base				# Set    BASEDIR if unset
 	[[ ! -d ${BASEDIR} ]] && mkdir -p "${BASEDIR}"					# Create BASEDIR dir if not present
 	[[ ! -v   AURREPO  ]] && AURREPO=/usr/local/aurch/repo				# Set    AURREPO if unset
@@ -73,7 +79,7 @@ EOF
 check_depends(){
 
 	echo "${czm} Checking dependencies for aurch and arch-install."
-	pacman --needed -S base-devel arch-install-scripts git pacutils jshon mc
+	pacman -S --needed --confirm base-devel arch-install-scripts git pacutils jshon mc sudo devtools paccat
 	echo
 }
 #========================================================================================================================#
@@ -262,7 +268,9 @@ EOF
 if	[[ ! -d  ${AURREPO} ]]; then
 	mkdir -p "${AURREPO}"
 fi
-	repo-add "${AURREPO}/${REPONAME}".db.tar.gz
+#	repo-add "${AURREPO}/${REPONAME}".db.tar.gz
+	repo-add "${AURREPO}/${REPONAME}".db.tar.gz   $(find "${chroot}"/build/aurutils-*-any.pkg.tar.zst)
+
 	pacsync "${REPONAME}"
 	chown -R :alpm "${AURREPO}"
 	pacman -Sy
