@@ -125,6 +125,23 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For November 15, 2024**
+
+**aurch.sh:** <br>
+* Refined variable definition code for: `czm`, `error`, `warn`. Changes involved quoting and spaces.
+* Added `# shellcheck disable=SC2016 disable=SC2028` to script so as to not warn about intended behavior.
+* Edited `print_vars` function (`-Lv` operation) to now provide output capable of copy, paste into shell, to set all `aurch` variables currently set. 
+  This is to facilitate working with script.
+* Edited `help` function.
+* Replaced several `echo` commands with `printf` throughout script.
+* Edited `cleanup_chroot` function (`--clean` operation), `heredock`-ing a new script into the nspawn container if not present, then running the script. 
+  The script uninstalls all unneeded pkgs, cleans official pkg cache of all pkgs, cleans the AUR cache of all non AUR pkgs, 
+  cleans any `download-*` dirs left by pacman, and prints quantitative results to screen.
+* Edited `build-clean-chroot` function (`-Cc` operation), adding existing `is_it_available` function, reworded printed warning message, added printed
+  info regarding pgp keys, added the removal of any `download-*` dirs left by pacman.
+
+-------
+
 **UPDATE For November 13, 2024**
 
 **aurch.sh:** <br>
