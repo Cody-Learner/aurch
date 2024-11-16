@@ -801,7 +801,9 @@ if      [[ -z ${*} ]]; then cat << EOF
  |                                                                                |
 EOF
 	printf '%-82s|\n' " |               Aurch Container Path:  ${chroot}"
-	printf '%-82s|\n' " |         Aurutils Clean Chroot Path:  $(aur chroot --path)"
+	if	pacman -Qq aurutils &>/dev/null; then
+		printf '%-82s|\n' " |         Aurutils Clean Chroot Path:  $(aur chroot --path)"
+	fi
 	printf '%s\n\n' " |================================================================================|"
 fi
 #========================================================================================================================#
