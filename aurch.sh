@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-17
+# aurch 2024-11-18
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
@@ -740,7 +740,7 @@ fi
 		    else
 			while read -r key
 			do
-				gpg --recv-key "${key}" 2>&1 |& grep -v 'insecure memory'
+				gpg --keyserver keyserver.ubuntu.com --recv-key "${key}" 2>&1 |& grep -v 'insecure memory'
 			done < pgp-keys.file
 
 		fi
@@ -764,7 +764,7 @@ fi
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
 													# Restore local AUR pkg cache to AUR pkgs only.
-	printf '%s' "${czm} Cleaning local AUR package cache of any official repo packages."		# Sharing AUR cache with aurutils lets official
+	printf '%s' "${czm} Cleaning local AUR package cache of any official repo packages. "		# Sharing AUR cache with aurutils lets official
 													# pkgs build up during chroot build process.
 	find "${AURREPO}"/         \
 		-maxdepth 1        \
@@ -779,11 +779,7 @@ fi
 	printf '%s\n' "${czm} Clean chroot build location: $(aur chroot --path | sed "s/root/${USER}/g")"
 	printf '%s\n' "${czm} Copied and registered the following pkgs to host AUR repo: ${AURREPO}"
 
-	while read -r packgs
-	do
-		aurch -Lah | grep --color=never "${packgs}" | cut -c 3-
-
-	done < /var/tmp/aurch/cloned-pkgs.log
+	awk -F/ '{printf "\033[1m" $NF "\033[0m\n"}' "${homebuilduser}/${package}/aur-build.log" | nl -w3 -s" " | pr -T -o 11
 	echo
 }
 #=======================================### Aurch called with no args ###================================================#

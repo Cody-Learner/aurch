@@ -125,6 +125,15 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For November 18, 2024**
+
+**aurch.sh:** <br>
+* Function `build-clean-chroot` (`-Cc` operation): <br>
+  Added `--keyserver keyserver.ubuntu.com` to the `gpg --recv-key` command. <br>
+  Note: Even though `dirmngr --gpgconf-list` lists `//keyserver.ubuntu.com` as default,
+  the pgp key issues I experienced during testing stopped after making this change.
+* Fixed the 'packages built' list at end of clean chroot build that could list unrelated packages.
+
 **UPDATE For November 17, 2024**
 
 **aurch.sh**
