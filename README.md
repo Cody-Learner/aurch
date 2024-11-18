@@ -119,11 +119,24 @@ References: <br>
 
 Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
 Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
-<br> 
+<br>
 
 
 ### NEWS, UPDATE, INFO:
 ----
+
+**UPDATE For November 17, 2024**
+
+**aurch.sh**
+* Edited `cleanup_chroot` function (`-Cc` operation), the `cleanup_chroot` heredoc script, eliminated the need for 'fake pkg.tar' 
+and refined info printed to screen. Added script notes.
+
+* Edited `remove` function (`-Rh -Rc` operations). Rewrote around one half the code. Replaced several 'set vars' to use with `rm` commands with 
+`find` `-delete`, `-print/-printf` and figured out how to implement various `find` exit code conditions. Provide additional feedback printed to screen. 
+Added script notes.
+
+
+------
 
 **UPDATE For November 15, 2024**
 
@@ -134,9 +147,9 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
   This is to facilitate working with script.
 * Edited `help` function.
 * Replaced several `echo` commands with `printf` throughout script.
-* Edited `cleanup_chroot` function (`--clean` operation), `heredock`-ing a new script into the nspawn container if not present, then running the script. 
-  The script uninstalls all unneeded pkgs, cleans official pkg cache of all pkgs, cleans the AUR cache of all non AUR pkgs, 
-  cleans any `download-*` dirs left by pacman, and prints quantitative results to screen.
+* Edited `cleanup_chroot` function (`--clean` operation). It's now `heredock`-ing a new script into the nspawn container if not present, then running the script. 
+  The script uninstalls all unneeded pkgs, cleans official pkg cache of all pkgs, cleans the AUR cache of all non AUR pkgs, removes older versions 
+  of existing AUR pkgs, removes any `download-*` dirs left by pacman, and prints quantitative results to screen.
 * Edited `build-clean-chroot` function (`-Cc` operation), adding existing `is_it_available` function, reworded printed warning message, added printed
   info regarding pgp keys, added the removal of any `download-*` dirs left by pacman.
 

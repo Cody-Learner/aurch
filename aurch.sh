@@ -1,7 +1,7 @@
 #!/bin/bash
-# aurch 2024-11-15
+# aurch 2024-11-17
 # dependencies: base-devel git pacutils(pacsync) jshon mc
-# shellcheck source=aurch-cc.sh
+# shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail
 
@@ -23,7 +23,6 @@ warn=$(echo -e "\033[1;33m WARNING:\033[00m")					# Yellow 'WARNING' text
 line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
 
 #========================================================================================================================#
-# shellcheck disable=SC2016 disable=SC2028  # Explicitly do not want expansion on the echo lines below.
 print_vars(){
 	printf '%s\n' "
 	package=${package-}
@@ -325,8 +324,8 @@ fetch_pgp_key(){
 if	[[ -e .SRCINFO ]]; then
 	printf '%s\n' "[sudo] to run systemd-nspawn on chroot."
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
-	awk '/validpgpkeys/ {print $3}' .SRCINFO >pgp-keys.file					# SC2024: Is not ran as sudo within chroot.
-												# https://github.com/koalaman/shellcheck/issues/2358
+	awk '/validpgpkeys/ {print $3}' .SRCINFO >pgp-keys.file      # SC2024: Not ran using sudo. # https://github.com/koalaman/shellcheck/issues/2358
+												
     else
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
 	makepkg --printsrcinfo | awk '/validpgpkeys/ {print $3}' >pgp-keys.file
@@ -354,29 +353,24 @@ if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
 fi
 	printf '%s\n' "${czm} Cleaning aurch nspawn container."
 
-if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2024-11-14' ]]; then
+if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2024-11-17' ]]; then
 	printf '%s\n' "${czm}${warn} Updating container 'aurch-cleanup' script."
 												# Install cleanup script in container if needed
 #--------------------------------------------------------------------------------------------------------------------#
 	cat << "EOF" | sudo tee "${chroot}"/usr/bin/aurch-cleanup &>/dev/null
 #!/bin/bash
-#2024-11-14
+#2024-11-17
 
 czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 
 	pacman -S --noconfirm pacman-contrib 1>/dev/null
 
-	touch /build/aurch-1-x86_64.pkg.tar.zst /build/aurch-2-x86_64.pkg.tar.zst
-												# Fake aurch pkg = fix paccache formatting.
-	printf '%s' "${czm} Paccache output: /var/cache/pacman/pkg/"				# Paccache, a newline is created for =>1 pkg
-	paccache --cachedir /var/cache/pacman/pkg/ --remove --keep 0				# Paccache, no newline is created for 0 pkg
+	printf '%s\n' "${czm} Paccache output from cleaning both container package caches:"
+	paccache -v --cachedir /var/cache/pacman/pkg/ --remove --keep 0	| awk 'NF' | grep -v '==>'
+	paccache -v --cachedir /build/                --remove --keep 1 | awk 'NF' | grep -v '==>'
+	printf '%s\n' "${czm} Note: 'pacman-contrib' was script requirement."
 
-	printf '%s' "${czm} Paccache output: /build/"
-	paccache --cachedir /build/ --remove --keep 1
-
-	rm /build/aurch-2-x86_64.pkg.tar.zst
-
-	printf '%s\n'	"${czm} Pacman output: "
+	printf '%s\n'	"${czm} Pacman output from container: "
 	comm -23 <(pacman -Qq) <(sort /var/tmp/aurch/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null
 
 	find /build  /var/cache/pacman/pkg \
@@ -393,7 +387,6 @@ czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 	printf "%12s Official pkg cache count: $(ls -1 /var/cache/pacman/pkg | wc -l)\n"
 	printf "%12s AUR pkg cache count     : $((aurcache-1))\n"  # subtract placeholder.pkg.tar
 	printf "%12s Installed package count : ${pkgcount} \n\n"
-	printf '%s\n' "paccache: '(1) packages removed' each = 'aurch --clean' requirements."
 EOF
 #--------------------------------------------------------------------------------------------------------------------#
 
@@ -428,38 +421,46 @@ if	[[ ${udb-} == alldone ]]; then
 fi
 }
 #========================================================================================================================#
-remove(){
-
-if	[[ -n ${pkg} ]]; then
-
-	if	[[ ${1} == -Rc ]]; then
+remove(){				# Note: pkg variable is set in option parsing.			# In a dream, my spirit guide showed me
+													# how to do magic with the find command.
+if	[[ -n ${pkg} ]]; then										# Here, I use that magic to leverage the
+													# broken mess that is printf exit codes
+	if	[[ ${1} == -Rc ]]; then									# and the elegance of -delete and -print/f.
 		if	pacman -b "${chroot}/var/lib/pacman/" \
 				--config "${chroot}/etc/pacman.conf" \
 				-Slq aur \
 			| grep -q "${pkg}"; then
-			sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
+			sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+			printf '%s\n' "${czm} Removing ${pkg} from container aur database."
 			repo-remove /build/aur.db.tar.gz "${pkg}"
-			cd "${chroot}"/build							|| { echo "[line ${LINENO}]" ; exit 1 ; }
+EOF
+			printf '%s\n' "${czm} Removing from container aur package cache:"
+			find "${chroot}"/build -name "${pkg}*.pkg.tar*" -delete -print
 
-			remove=$(find "${pkg}"*.pkg.tar*)
-			sudo rm  ${remove} && printf '%s\n' "${czm} Removed ${remove} from /build." 	# SC2086 Removed quotes for proper operation.
-			cd "${homebuilduser}"							|| { echo "[line ${LINENO}]" ; exit 1 ; }
-			sudo rm -rdf "${pkg}"
-			sudo systemd-nspawn -a -q -D "${chroot}" --pipe pacsync aur
-		    else
-			printf '%s\n' "${czm} ${pkg} not present in chroot AUR repo."
-			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
+			if	[[ -d  "${homebuilduser}"/"${pkg}" ]]; then
+				printf '%s\n' "${czm} Removing container build directory:"
+				printf '%s\n' "${chrbuilduser}/${pkg}"
 				sudo rm -rd "${homebuilduser}"/"${pkg}"
-				printf '%s\n' "${czm} Removed ${pkg} build dir from chroot."
-				remove=$(find "${chroot}"/build/ -type f -name "${pkg}*.pkg.tar*" 2>/dev/null)
-				if	[[ -n ${remove} ]]; then
-					sudo rm -f "${remove}"
-					printf '%s\n' "${czm} Removed $(basename "${remove}") from chroot /build."
+			fi
+			sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+			printf '%s\n' "${czm} Syncing container aur database:"
+			pacsync aur
+EOF
+		    else
+			printf '%s\n' "${czm} ${pkg} not present in container AUR database."
+			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
+				printf '%s\n' "${czm} Removing container build directory:"
+				printf '%s\n' "${chrbuilduser}/${pkg}"
+				sudo rm -rd "${homebuilduser}"/"${pkg}"
+				cd "${chroot}"/build/
+				if	find "${pkg}"*.pkg.tar* &>/dev/null; then
+					printf '%s\n' "${czm} Removing from container aur package cache:"
+					find "${chroot}"/build/ -name "${pkg}*.pkg.tar*" -delete -print
 				    else
-					printf '%s\n' "${czm} ${pkg} not present in chroot /build."
+					printf '%s\n' "${czm} Container ${pkg} not present in AUR package cache."
 				fi
 			    else
-				printf '%s\n' "${czm} ${pkg} build dir in chroot not present."
+				printf '%s\n' "${czm} Container ${pkg} build directory not present."
 			fi
 		fi
 	fi
@@ -467,9 +468,8 @@ if	[[ -n ${pkg} ]]; then
 		if	pacman -Q "${pkg}" &>/dev/null ; then
 			sudo pacman -Rns "${pkg}"
 		fi
-	cd "${AURREPO}"										|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	remove=$(find "${pkg}"*.pkg.tar*)
-	sudo rm ${remove} && printf '%s\n' "${czm} Removed ${remove}"					# SC2086 Removed quotes for proper operation.
+	printf '%s\n' "${czm} Removed from host ${REPONAME} package cache:"
+	sudo find "${AURREPO}" -name "${pkg}*.pkg.tar*" -delete -print
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			sudo repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 			sudo pacsync "${REPONAME}"  >/dev/null
@@ -608,8 +608,8 @@ yes_no(){
 	while true; do
     		read -n1 -p "             Enter  [y/n] for yes/no " -r yn
     		case $yn in
-        	[Yy]* )           inspect_files "${1-}" ; break	;;
-        	[Nn]* ) message ; opt="${1-}" build_pkg ; break	;;
+        	[Yy]* )           inspect_files "${1-}" ; break		;;
+        	[Nn]* ) message ; opt="${1-}" build_pkg ; break		;;
         	    * ) printf '%s\n' "${czm}${error}[y/n] Only!"	;;
 		esac
 	done
@@ -657,6 +657,9 @@ if	! type -P aur &>/dev/null ; then								# Check and install aurutils if neede
 				sudo pacman -S aurutils
 		    	    else
 				aurch -Bi aurutils
+				printf '%s\n' "${czm} $(pacman -Q --color=always aurutils) installed."
+				printf '%s\n\n' "             Proceeding with clean chroot build...."
+				sleep 3
 			fi
 			break
 		fi
@@ -760,9 +763,9 @@ fi
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
-
-	printf '%s\n' "${czm} Cleaning local AUR package cache of any official repo packages."
-
+													# Restore local AUR pkg cache to AUR pkgs only.
+	printf '%s' "${czm} Cleaning local AUR package cache of any official repo packages."		# Sharing AUR cache with aurutils lets official
+													# pkgs build up during chroot build process.
 	find "${AURREPO}"/         \
 		-maxdepth 1        \
 		-type d            \
@@ -771,7 +774,7 @@ fi
 
 	keeppkgs=$(aurch -Lahq | xargs | sed 's/ /,/g')
 
-	sudo paccache -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/
+	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/
 
 	printf '%s\n' "${czm} Clean chroot build location: $(aur chroot --path | sed "s/root/${USER}/g")"
 	printf '%s\n' "${czm} Copied and registered the following pkgs to host AUR repo: ${AURREPO}"
@@ -800,9 +803,9 @@ if      [[ -z ${*} ]]; then cat << EOF
  |      -h    help                           --login    log into chroot           |
  |                                                                                |
 EOF
-	printf '%-82s|\n' " |               Aurch Container Path:  ${chroot}"
+	printf '%-82s|\n' " |           Aurch Container Path:  ${chroot}"
 	if	pacman -Qq aurutils &>/dev/null; then
-		printf '%-82s|\n' " |         Aurutils Clean Chroot Path:  $(aur chroot --path)"
+		printf '%-82s|\n' " |          Aurutils Clean Chroot Path:  $(aur chroot --path)"
 	fi
 	printf '%s\n\n' " |================================================================================|"
 fi
