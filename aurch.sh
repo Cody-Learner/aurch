@@ -424,7 +424,7 @@ fi
 remove(){				# Note: pkg variable is set in option parsing.			# In a dream, my spirit guide showed me
 													# how to do magic with the find command.
 if	[[ -n ${pkg} ]]; then										# Here, I use that magic to leverage the
-													# broken mess that is printf exit codes
+													# broken mess that is find exit codes
 	if	[[ ${1} == -Rc ]]; then									# and the elegance of -delete and -print/f.
 		if	pacman -b "${chroot}/var/lib/pacman/" \
 				--config "${chroot}/etc/pacman.conf" \
