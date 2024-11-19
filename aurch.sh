@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-18
+# aurch 2024-11-18-1
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
@@ -324,8 +324,7 @@ fetch_pgp_key(){
 if	[[ -e .SRCINFO ]]; then
 	printf '%s\n' "[sudo] to run systemd-nspawn on chroot."
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
-	awk '/validpgpkeys/ {print $3}' .SRCINFO >pgp-keys.file      # SC2024: Not ran using sudo. # https://github.com/koalaman/shellcheck/issues/2358
-												
+	awk '/validpgpkeys/ {print $3}' .SRCINFO >pgp-keys.file           # SC2024: Not ran as sudo. https://github.com/koalaman/shellcheck/issues/2358
     else
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}/${package}" --pipe \
 	makepkg --printsrcinfo | awk '/validpgpkeys/ {print $3}' >pgp-keys.file
@@ -636,7 +635,7 @@ build-clean-chroot(){                ###  C L E A N   C H R O O T   B U I L D  #
 	printf '%21s It changes, then restores USER filesystem permissions and sudo config as convenience workarounds.\n' ""
 	printf '%21s Recommend you review code in "build-clean-chroot" function before running, then proceed at your discretion.\n' ""
 	printf '%21s Proceed? [y/n]\n' ""
-													# added "" nonsense to satisfy SC2183
+													# Added "" nonsense to satisfy SC2183
 	while read -n1 -r reply
 	do
 		[[ ${reply} == y ]] && echo && break
@@ -699,12 +698,12 @@ if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then							# Create clean chroot if
 		Server = file:///usr/local/aurch/repo
 
 EOF
-		printf '\n%s\n' "${czm} Configured '/etc/aurutils/pacman-x86_64.conf' to use aurch local AUR repo."
+		printf '\n%s\n' "${czm} Configured '/etc/aurutils/pacman-x86_64.conf' to share aurch local AUR repo."
 	fi
 fi
 #-----------------------------------------  S T A R T   B U I L D  -----------------------------------------#
 
-	rm -f /var/tmp/aurch/*										# Remove existing log files
+	rm -f /var/tmp/aurch/*										# Remove any existing log files
 
 	cd "${homebuilduser}"
 
@@ -727,14 +726,14 @@ fi
 		[[ ${reply} == y ]] && "${AURFM}" "${homebuilduser}"/"${package}" && break
 		[[ ${reply} == n ]] && echo && break
 	done
-													# Build packages in cloned-pkgs.log
+													# Beginning build packages in cloned-pkgs.log
 	while read -r build
 	do
 		cd "${homebuilduser}/${build}" || exit
 		awk '/validpgpkeys/ {print $3}' .SRCINFO  >pgp-keys.file
 
 		printf '%s\n' "${czm} Checking pgp keys."
-
+													# Check/install pgp keys
 		if	[[ ! -s pgp-keys.file ]]; then
 			printf '%s' "             Not used for ${build}."
 		    else
@@ -747,11 +746,11 @@ fi
 													# Fix using a local repo outside HOME
 		sudo chmod 646 /usr/local/aurch/repo/aur.db.tar.gz
 		sudo chmod 757 /usr/local/aurch/repo/
-													# Fix bs successive sudo prompts...
+													# Fix successive pacman sudo prompts
 		printf '%s\n' "${USER} ALL=(ALL) NOPASSWD: /usr/bin/pacman" |
 				sudo tee /etc/sudoers.d/aurch &>/dev/null
 
-		printf "%s\n${czm} Building \033[1m${package}\033[0m in clean chroot.\n" 
+		printf "%s\n${czm} Building \033[1m${build}\033[0m in clean chroot.\n"
 
 		aur build -cfnsr --results=aur-build.log
 													# BUILD INDIVIDUAL CHROOT PACKAGES
@@ -760,26 +759,26 @@ fi
 		sudo chmod 644 /usr/local/aurch/repo/aur.db.tar.gz
 		sudo chmod 755 /usr/local/aurch/repo/
 
-		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/build.log
+		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log			# Append pkgs after built to aurch-build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
 													# Restore local AUR pkg cache to AUR pkgs only.
 	printf '%s' "${czm} Cleaning local AUR package cache of any official repo packages. "		# Sharing AUR cache with aurutils lets official
 													# pkgs build up during chroot build process.
-	find "${AURREPO}"/         \
-		-maxdepth 1        \
-		-type d            \
-		-name "download-*" \
-		-delete
-
-	keeppkgs=$(aurch -Lahq | xargs | sed 's/ /,/g')
-
+	find "${AURREPO}" -maxdepth 1 -type d -name "download-*" -delete -print				# Delete any stray pacman 'download' dir's.
+													# Compile a keeppkgs list of both installed
+	aurch -Lahq  >  /var/tmp/aurch/aurch-keeppkgs							# and/or build dependency AUR pkgs.
+	aurch -Lacq >>  /var/tmp/aurch/aurch-keeppkgs
+	keeppkgs=$(sort -u /var/tmp/aurch/aurch-keeppkgs | xargs | sed 's/ /,/g')
+													# Feed the keeppkgs list to paccache.
 	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/
 
 	printf '%s\n' "${czm} Clean chroot build location: $(aur chroot --path | sed "s/root/${USER}/g")"
 	printf '%s\n' "${czm} Copied and registered the following pkgs to host AUR repo: ${AURREPO}"
 
-	awk -F/ '{printf "\033[1m" $NF "\033[0m\n"}' "${homebuilduser}/${package}/aur-build.log" | nl -w3 -s" " | pr -T -o 11
+	awk -F'/' '{printf "\033[1m" $NF "\033[0m\n"}' /var/tmp/aurch/aurch-build.log \
+	| nl -w3 -s" " \
+	| pr -T -o 11    										# Print build results to screen
 	echo
 }
 #=======================================### Aurch called with no args ###================================================#
