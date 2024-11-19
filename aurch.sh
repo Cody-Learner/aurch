@@ -647,7 +647,7 @@ build-clean-chroot(){                ###  C L E A N   C H R O O T   B U I L D  #
 
 	printf '\n%s\n' "${czm}${warn} Respectively informing the user as a courtesy."
 	printf '%21s Clean chroot building is WIP with limited testing that will be further refined over time.\n' ""
-	printf '%21s It changes, then restores USER filesystem permissions and sudo config as convenience workarounds.\n' ""
+	printf '%21s It changes, restores /usr/local/aurch/* perms and adds, removes a sudo config file as convenience workarounds.\n' ""
 	printf '%21s Recommend you review code in "build-clean-chroot" function before running, then proceed at your discretion.\n' ""
 	printf '%21s Proceed? [y/n]\n' ""
 													# Added "" nonsense to satisfy SC2183
