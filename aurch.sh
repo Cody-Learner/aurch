@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-18-1
+# aurch 2024-11-19
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
@@ -72,7 +72,7 @@ OPERATIONS
 		-B* --build	Build new or update an existing AUR package.
 		-G  --gitclone	Git clones AUR package to ${homebuilduser}/<aur-package>.
 		-C  --compile	Build an AUR package on existing PKGBUILD. Useful for implementing changes to PKGBUILD.
-		-Cc --cchroot   Build package in clean chroot using aurutils.
+		-Cc* --cchroot  Build package in clean chroot using aurutils.
 		-Rh		Remove AUR pkg from host. Removes: ${AURREPO}/<aur-package>, if installed <aur-package> and database entry.
 		-Rc		Remove AUR pkg from container. Removes: /build/<package>, ${chrbuilduser}/<aur-package>, database entry.
 		-Lah* --lsaurh	List all host AUR sync database contents/status.
@@ -84,26 +84,41 @@ OPERATIONS
 		      --login   Login to nspawn container for maintenance.
 		      --clean	Manually remove unneeded packages from nspawn container.
 		      --pgp	Manually import pgp key into nspawn container.
-		-h,   --help	Prints help.
+		-h,   --help	Prints help in 'less' pager. Press [q] to quit. Optionally, pipe into cat: 'aurch -h | cat'
 		-V,   --version Prints aurch <version>.
 
 *OPTIONS
-	-L, List:
-		Append 'q' to  -L list operations for quiet mode.
-		Example: aurch -Lahq
+
+  -B, Build:
+		Append 'i' to build operation '-B' to install package in host.
+		Example: aurch '-Bi <aurpkg>'
+		Do not mix order or attempt to use 'i' other than described.
+
+  -L, List:
+		Append 'q' to  '-L' list operations for quiet mode.
+		Example: 'aurch -Lahq'
 		Do not mix order or attempt to use 'q' other than described.
 
-	-B, Build:
-		Append 'i' to build operation -B to install package in host.
-		Example: aurch -Bi
-		Do not mix order or attempt to use 'i' other than described.
+  -Cc, Clean Chroot:
+		Append 'b' to '-Cc' operation for both host and container(1). 
+		Example: 'aurch -Ccb <aurpkg>'
+		Do not mix order or attempt to use 'b' other than described.
+
+	   (1)  aurch '-Cc' builds and sets up pkg for host install only.
+	   IE:	Copy and register packages in both host and container AUR
+		cache and database.
+	Usage:	Python2 is a dependency of many AUR packages, but needs built
+		in a clean chroot to get through the default tests. I'll use
+		'-Ccb' to have it available in the aurch container as a 
+		dependency for other packages that depend on it.
+
 
 OVERVIEW
     		Run aurch-setup before using aurch.
     		Aurch is designed to handle AUR packages individually, one at a time.
-    		 ie: No group updates or multiple packages per operation capability.
+    	   IE:	No group updates or multiple packages per operation capability.
     		The aurch nspawn container must be manually updated 'aurch -Syu'
-		 and pacman cache maintained 'aurch --login' or manually via filesystem.
+		and pacman cache maintained 'aurch --login' or manually via filesystem.
     		Best results obtained with container updated before buiding packages.
 
 EXAMPLES
@@ -773,9 +788,22 @@ fi
 													# Feed the keeppkgs list to paccache.
 	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/
 
+if	[[ ${1} == -Ccb ]]; then
+	while read -r transfer
+	do
+		cp       "${AURREPO}/${transfer}"                 "${chroot}/build/"
+		repo-add "${chroot}/build/${REPONAME}.db.tar.gz"  "${chroot}/build/${transfer}"
+		sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
+		pacsync aur
+	done < /var/tmp/aurch/aurch-build.log
+fi
 	printf '%s\n' "${czm} Clean chroot build location: $(aur chroot --path | sed "s/root/${USER}/g")"
 	printf '%s\n' "${czm} Copied and registered the following pkgs to host AUR repo: ${AURREPO}"
 
+if	[[ ${1} == -Ccb ]]; then
+	printf '%s\n' "${czm} Copied and registered the following pkgs to container AUR repo: ${chroot}/build"
+fi
+	echo
 	awk -F'/' '{printf "\033[1m" $NF "\033[0m\n"}' /var/tmp/aurch/aurch-build.log \
 	| nl -w3 -s" " \
 	| pr -T -o 11    										# Print build results to screen
@@ -785,24 +813,25 @@ fi
 
 if      [[ -z ${*} ]]; then cat << EOF
 	$(echo -e '\033[0;96m')
- |================================================================================|
- |   Aurch, an AUR helper script.    USAGE:  $ aurch [operation[*opt]] [package]  |
- |--------------------------------------------------------------------------------|
- |      -B*   build AUR package                 -Luc*   list updates chroot       |
- |      -G    git clone package                 -Luh*   list updates host         |
- |      -C    build on existing git clone       -Lac*   list AUR sync db chroot   |
- |     -Rc    remove AUR pkg from container     -Lah*   list AUR sync db host     |
- |     -Rh    remove AUR pkg from host           -Lv    list expanded variables   |
- |    -Syu    update chroot                    --pgp    import pgp key            |
- |      -V    print version                  --clean    remove unneeded packages  |
- |      -h    help                           --login    log into chroot           |
- |                                                                                |
+ |==================================================================================|
+ |   Aurch, an AUR helper script.    USAGE:  $ aurch [operation[*opt]] [package]    |
+ |----------------------------------------------------------------------------------|
+ |      -B*   build AUR package in container    -Luc*   list updates container      |
+ |      -G    git clone package                 -Luh*   list updates host           |
+ |      -C    build on existing git clone       -Lac*   list AUR sync db container  |
+ |     -Cc*   build AUR pkg in clean chroot     -Lah*   list AUR sync db host       |
+ |     -Rc    remove AUR pkg from container      -Lv    list expanded variables     |
+ |     -Rh    remove AUR pkg from host         --pgp    import pgp key in container |  
+ |    -Syu    update container               --clean    clean container             |
+ |      -V    print version                  --login    log into container          |
+ |      -h    help, Press [q] to quit               *   options, See help           |
+ |                                                                                  |
 EOF
-	printf '%-82s|\n' " |           Aurch Container Path:  ${chroot}"
+	printf '%-84s|\n' " |            Aurch Container Path:  ${chroot}"
 	if	pacman -Qq aurutils &>/dev/null; then
-		printf '%-82s|\n' " |          Aurutils Clean Chroot Path:  $(aur chroot --path)"
+		printf '%-84s|\n' " |           Aurutils Clean Chroot Path:  $(aur chroot --path)"
 	fi
-	printf '%s\n\n' " |================================================================================|"
+	printf '%s\n\n' " |==================================================================================|"
 fi
 #========================================================================================================================#
 while :; do
@@ -810,7 +839,7 @@ while :; do
 	-B*|--build)		fetch_pkg ; yes_no	"${1-}"			;;
 	-G|--gitclone)		fetch_pkg					;;
 	-C|--compile)		opt="${1-}" build_pkg				;;
-	-Cc|--cchroot)		build-clean-chroot	"${1-}"			;;
+	-Cc*|--cchroot)		build-clean-chroot	"${1-}"			;;
 	-R*)			pkg="${2-}" remove	"${1-}"			;;
 	-Syu|--update)		update_chroot					;;
 	-Luh*|--lsudh)		check_host_updates	"${1-}"			;;
@@ -821,9 +850,9 @@ while :; do
 	--login)		login_chroot					;;
 	--clean)		cleanup_chroot					;;
 	--pgp)			key="${2-}" manual_pgp_key			;;
-	-h|--help)		help						;;
+	-h|--help)		help | /usr/bin/less -R				;;
 	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"	;;
-	-?*)		help ; echo "${czm}${error} Input error. Running help"	;;
+	-?*)		help; echo "${czm}${error} Input error. See help above"	;;
 	*)		break
         esac
     shift

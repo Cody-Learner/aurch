@@ -123,7 +123,29 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 
 ### NEWS, UPDATE, INFO:
+
 ----
+
+**UPDATE For November 19, 2024**
+
+**aurch.sh**
+* Added option to `-Cc* --cchroot` operation, `-Ccb` 'b is for both', to copy and register package in both host and container.
+Running `-Cc` copies and registers package into host only. This will be useful for example, the `python2` package. It
+requires building in a clean chroot to pass the default testing, and is a dependency of additional AUR packages. Using
+the `-Ccb` option will place `python2` in the aurch container AUR cache and sync db, which enables it to be used as a
+dependency for other AUR builds, rather than building it as an unavailable in sync db AUR dependency.
+* Display the `-h --help` operation info in the `less`(1) pager so it opens at top rather than bottom of the page.
+* Added `-Ccb` option to help page along with some rewording/reformatting.
+* Working on distinguishing the terms, 'container' vs 'chroot' in displayed info. Aurutils refers to their clean chroot container as
+'chroot'. Aurch used to use the same, 'chroot' until some time ago I decided to change it to more accuracy point out the use of
+'nspawn container', with 'container' as the short version. With the implementation of aurutils clean chroot building on the aurch
+host system now, I'd like clear distinction of these terms to avoid any possible confusion for users.
+* Function `build-clean-chroot` (`-Cc*` operation): Added code to facilitate the `b` option.
+
+(1) Note to self: Should probably either add `less` (`man-db` dep) as a dependency, check for less install and default to cat if needed, 
+or look into use/set PAGER...
+
+--------
 
 **UPDATE For November 18, 2024 (2nd)**
 
