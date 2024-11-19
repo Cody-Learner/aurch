@@ -125,6 +125,18 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For November 18, 2024 (2nd)**
+
+**aurch.sh** <br>
+* Function `build-clean-chroot` (`-Cc` operation): <br>
+* Corrected variable used from `package` to `build` that's printed to screen as current package being built.
+* Renamed `build.log` file to `aurch-build.log` for improved script readability.
+* Improved `keeppkgs` variable to include additional AUR packages in `-ignore` list used by `paccache`.
+* Corrected file used and improved formatting of printed 'copied and registered packages' list at end of build.
+* Added and clarified various script comments.
+
+------
+
 **UPDATE For November 18, 2024**
 
 **aurch.sh:** <br>
@@ -133,6 +145,8 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
   Note: Even though `dirmngr --gpgconf-list` lists `//keyserver.ubuntu.com` as default,
   the pgp key issues I experienced during testing stopped after making this change.
 * Fixed the 'packages built' list at end of clean chroot build that could list unrelated packages.
+
+------
 
 **UPDATE For November 17, 2024**
 
