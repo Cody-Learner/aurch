@@ -124,6 +124,18 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For November 22, 2024 (2nd)**
+
+This is a bug fix release that eliminates the AUR repo permission issues. <br>
+
+I spent more time describing the issue below than the actual fix once I had the tools needed for troubleshooting. <br>
+
+I'm too tired to get into great detail, so please see the commit comments link and diff for additional info: <br>
+
+https://github.com/Cody-Learner/aurch/commit/369ab0186a840176aa208f81d416d34a19e1d490
+
+--------
+
 **UPDATE And INFO For November 22, 2024**
 
 Getting a better handle on local AUR repo permission issues in both host and container.
