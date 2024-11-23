@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-22
+# aurch 2024-11-22--1
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
@@ -450,7 +450,7 @@ if	[[ -n ${pkg} ]]; then
 				--config "${chroot}/etc/pacman.conf" \
 				-Slq aur \
 			| grep -q "${pkg}"; then
-			sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+			sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 			printf '%s\n' "${czm} Removing ${pkg} from container aur database."
 			repo-remove /build/aur.db.tar.gz "${pkg}"
 EOF
@@ -462,9 +462,9 @@ EOF
 				printf '%s\n' "${chrbuilduser}/${pkg}"
 				sudo rm -rd "${homebuilduser}"/"${pkg}"
 			fi
-			sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+			sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 			printf '%s\n' "${czm} Syncing container aur database:"
-			pacsync aur
+			sudo 2>/dev/null pacsync aur
 EOF
 		    else
 			printf '%s\n' "${czm} ${pkg} not present in container AUR database."
@@ -594,7 +594,7 @@ fi
 #========================================================================================================================#
 list_pkgs_chroot(){
 
-	sudo systemd-nspawn -a -q -D "${chroot}" --pipe pacsync aur >/dev/null
+	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe sudo 2>/dev/null pacsync aur
 
 if	[[ ${1} == -Lacq ]]; then
 	pacman --color=always -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Slq aur
@@ -795,9 +795,9 @@ if	[[ ${1} == -Ccb ]]; then
 	while read -r transfer
 	do
 		cp       "${AURREPO}/${transfer}"                 "${chroot}/build/"
-		sudo systemd-nspawn -a -q -D "${chroot}" --pipe bash << EOF
+		sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 		repo-add /build/"${REPONAME}".db.tar.gz  /build/"${transfer}"
-		pacsync aur
+		sudo 2>/dev/null pacsync aur
 EOF
 	done < /var/tmp/aurch/aurch-build.log
 fi
