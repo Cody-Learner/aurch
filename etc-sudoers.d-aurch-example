@@ -18,5 +18,7 @@ jeff ALL=(ALL) NOPASSWD: /usr/bin/pacsync aur
 
 -------------------------------------------------------------------------------------------------------------------------
 
-TO TEST: sudo systemd-nspawn -a -q -D /home/jeff/.cache/aurch/base/chroot-p5g --pipe /usr/bin/bash
+TO TEST: sudo systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-g2a --pipe /usr/bin/bash
+	 sudo systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-    --pipe /usr/bin/bash
+
 TO TEST: sudo pacsync aur

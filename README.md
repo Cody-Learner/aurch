@@ -123,8 +123,71 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 
 ### NEWS, UPDATE, INFO:
-
 ----
+**UPDATE And INFO For November 22, 2024**
+
+Getting a better handle on local AUR repo permission issues in both host and container.
+Obviously moving away from the current workaround of monitoring and correcting permissions would be the best path forward.
+
+One issue is collisions upon rebuilding packages owned by user, that can't overwrite existing packages owned by root.
+Another issue is the aur db permissions randomly changing to root owner rather than user, making them inaccessible by user.
+
+Made several changes that were possibly contributing to the issues in both `aurch` and `aurch-setup`.
+Added automated diagnostic code in `aurch` and supplied a separate script `paths`, to use manually to provide a quick overview 
+of permissions on the potentially troublesome directories/files.
+
+Added an automated `chown -R user:group` to the directories containing the repos, when triggered by the db's owner being changed from user.
+
+However, I'm unsure about how and when some of the permissions on packages in my local AUR repos were changed. 
+I do way too much testing, etc on this machine that may have contributed to these issues, to attempt to track down the root cause until now.
+
+With a fresh `chown` and the changes described, it should be pretty straightforward tracking the issues into the future.
+
+With the changes made including the elimination of several unneeded `sudo` calls, time with testing will tell how this plays out. 
+If it does continue, there will be an evidence trail this time around in the new log file. 
+Having info on what operations are leading up to it should provide a solid path forward for troubleshooting.
+
+
+**aurch-setup.sh:** 
+* Removed three dependencies used for clean chroot builds. The `aurch` script installs them upon first usage of `-Cc*` operation.
+* Removed user `alpm` from permission settings.
+* Implemented `SUDO_USER` in various areas.
+
+**aurch.sh:**
+* Removed `clean local AUR repo` code from `build_clean_chroot` function, to it's own function, `cleanup_host`.
+* Replaced `set_perm` function with `ck_per`, changed repo permission correction from 'octal' to 'user:group' names, 
+  added printed warning notification when permissions have changed, and added diagnostic logging.
+* Eliminated the AUR repo 'placeholder' fake packages. Rewrote the `find` commands to exit zero on file not found.
+* Changed AUR repos permission checks/corrections to run once before `-B,-C,-R` operations. It's still located within the `build_clean_chroot` function.
+* Eliminated several sudo calls that were unnecessary.
+* Function `build_pkg` (`-B*`,`-C` operations), moved order of code around to get similar output as `-Cc*` provides at end of build.
+* Function `cleanup_chroot` changed printf quoting in 'heredoc'.
+* Moved script comments to dedicated lines rather than trailing code lines.
+* Function `build_clean_chroot` (`-Cc*` operation), improved building/installing dependencies automatically after user confirmation 
+  and changed quoting on printf commands.
+* The `--clean` operation, added `cleanup_host` function. It still performs several container cleaning tasks and now cleans up host AUR repo. 
+  Added this after testing revealed a broken AUR pkg during a "clean chroot build" exit, resulted in host local AUR repo being polluted 
+  with dozens of official pkgs.
+* Added a `trap` command to handle cleanup upon script exit while building broken AUR packages.
+
+**aurch.sh diagnostics:**
+* Added `permlog` variable that sets the aurch log location.
+* All data sent to log is formatted: \<year\>-\<month\>-\<day\> : \<args\>
+* All aurch commands with one or more args will be logged.
+* All AUR repo permission corrections will be logged.
+
+------------
+
+**UPDATE For November 20, 2024**
+
+**aurch.sh:**
+* Spelling corrections, rewording, add script comments.
+* Clean up some existing code.
+* Remove three dependencies listed and installed in aurch-setup that are only needed for `-Cc*` clean chroot build.
+  These dependencies are checked, user asked for conformation if missing, then installed when running `-Cc*` clean chroot build.
+* Changed function name `build-clean-chroot` to `build_clean_chroot` to maintain consistency, using `_` rather than `-` for seperators.
+
+-------
 
 **UPDATE For November 19, 2024**
 

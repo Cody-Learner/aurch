@@ -1,0 +1,26 @@
+#!/bin/bash
+# A quick little convenience script for troubleshooting...
+
+path1=$($(which aurch) | awk -F: '/Aurch Container Path/ {print $2}' | sed 's/|/ /g' | sed 's/ //g')
+
+	which aurch
+
+	echo "
+	"
+	stat -c '%A  %a  %U:%G  %n' /usr/local/aurch/repo/
+
+	echo
+
+	stat -c '%A  %a  %U:%G  %n' /usr/local/aurch/repo/*
+
+	echo "
+==================================================================================================================
+	"
+	stat -c '%A  %a  %U:%G  %n' "${path1}"/build
+
+	echo
+
+	stat -c '%A  %a  %U:%G  %n' "${path1}"/build/*
+
+	echo "
+	"
