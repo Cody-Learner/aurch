@@ -1,7 +1,7 @@
 #!/bin/bash
-# aurch 2024-11-22--1
+# aurch 2024-11-23
 # dependencies: base-devel git pacutils(pacsync) jshon mc
-# shellcheck disable=SC2016 disable=SC2028  # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
+# shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail
 
@@ -16,13 +16,18 @@ homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory 
 tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination 2)
 tmph="${chroot}${tmpc}"								# HOST    path to tmp dir (same destination 2)
 AURFM=mc									# Application to inspect git cloned repos
+logfile=/var/log/aurch.log							# Logfile destination
 perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)				# Container octal permission: /build/aur.db.tar.gz
 czm=$(echo -e "\033[1;96m:: aurch ==>\033[00m")					# Aurch color pointer
 error=$(echo -e "\033[1;91m ERROR:\033[00m")					# Red 'ERROR' text
 warn=$(echo -e "\033[1;33m WARNING:\033[00m")					# Yellow 'WARNING' text
+dt=$(printf '%s' "[$(date '+%Y-%m-%d %r')]")					# Date time in format: [2024-11-23 12:35:22 PM]
 line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
-permlog="${HOME}"/z-AURCH-PERMS.log
 
+if	[[ ! -e ${logfile} ]]; then
+	printf '%s\n' "${czm} '${logfile}' not present, so lets create it."
+	sudo touch ${logfile} ; sudo chown "${USER}":"${USER}" ${logfile}
+fi
 #========================================================================================================================#
 print_vars(){
 	printf '%s\n' "
@@ -35,19 +40,24 @@ print_vars(){
 	homebuilduser=${homebuilduser-}
 	tmpc=${tmpc-}
 	tmph=${tmph-}
-	AURFM=${AURFM}" | awk '{$1=$1};1'						| sudo tee    "${BASEDIR}"/.#aurch-vars
+	AURFM=${AURFM}
+	logfile=${logfile}" | awk '{$1=$1};1'						| sudo tee    "${BASEDIR}"/.#aurch-vars
 	echo 'perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)'|sed "s/%a/\'%a\'/g"	| sudo tee -a "${BASEDIR}"/.#aurch-vars
 	echo 'czm=$(echo -e "\033[1;96m:: aurch ==>\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 	echo 'error=$(echo -e "\033[1;91m ERROR:\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 	echo 'warn=$(echo -e "\033[1;33m WARNING:\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
+	echo 'dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 	echo 'line2=$(printf %"$(tput cols)"s |tr " " "-")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 
-	printf "%s\n Last five lines expanded:
+	printf '%s\n' " 
+	Last six lines expanded:
 	perm=${perm}
-	czm=$czm
-	error=$error
-	warn=$warn
-	line2=$line2 \n" | awk '{$1=$1};1'
+	czm=${czm}
+	error=${error}
+	warn=${warn}
+	dt=${dt} 
+	line2=${line2}" | awk '{$1=$1};1'
+
 }
 #========================================================================================================================#
 help(){
@@ -167,14 +177,14 @@ ck_per(){
 	local=$(stat -c '%U:%G' "${AURREPO}/${REPONAME}".db.tar.gz)
 	container=$(stat -c '%U:%G' "${chroot}"/build/aur.db.tar.gz)
 if	[[ ${local} !=  "${USER}:${USER}" ]]; then
-	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${permlog}"
-	stat -c '%a  %U:%G  %n' "${AURREPO}/${REPONAME}".db.tar.gz		>> "${permlog}"
+	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${logfile}"
+	stat -c '%a  %U:%G  %n' "${AURREPO}/${REPONAME}".db.tar.gz		>> "${logfile}"
 	printf '%s\n' "${czm}${warn} On local AUR repo permissions. Resetting..."
 	sudo chown -R "${USER}:${USER}" "${AURREPO}"
 fi
 if	[[ ${container} !=  "${USER}:${USER}" ]]; then
-	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${permlog}"
-	stat -c '%a  %U:%G  %n' "${chroot}"/build/aur.db.tar.gz			>> "${permlog}"
+	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${logfile}"
+	stat -c '%a  %U:%G  %n' "${chroot}"/build/aur.db.tar.gz			>> "${logfile}"
 	printf '%s\n' "${czm}${warn} On container AUR repo permissions. Resetting..."
 	sudo chown -R "${USER}:${USER}" "${chroot}"/build
 fi
@@ -304,7 +314,7 @@ if	[[ -s  ${tmph}/moved.file ]] ; then
 	sudo pacsync "${REPONAME}" >/dev/null
 
 	printf '%s\n\n' "${czm} Copied and registered the following pkgs to host AUR repo: ${AURREPO}"
-	cat "${tmph}"/moved.file | awk -F '-x86|-any' '{print $1}' | pr -To 13
+	awk -F '-x86|-any' '{print $1}' "${tmph}"/moved.file | pr -To 13
 	printf '\n'
 
 
@@ -401,9 +411,9 @@ czm=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 	aurcache=$(find /build -maxdepth 1 -type f -name "*pkg.tar*" | wc -l)
 
 	printf '%s\n'   "${czm} Container clean report   :"
-	printf '%s\n'   "             Official pkg cache count : $(ls -1 /var/cache/pacman/pkg | wc -l)"
-	printf '%s\n'   "             AUR pkg cache count      : ${aurcache}"
-	printf '%s\n\n' "             Installed package count  : ${pkgcount}"
+	printf '%s\n'   "              Official pkg cache count : $(ls -1 /var/cache/pacman/pkg | wc -l)"
+	printf '%s\n'   "              AUR pkg cache count      : ${aurcache}"
+	printf '%s\n\n' "              Installed package count  : ${pkgcount}"
 
 EOF
 #----------------------------------------------  END  Heredoc Script -----------------------------------------#
@@ -673,15 +683,15 @@ if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 	while read -n1 -r reply
 	do
 		if	[[ ${reply} == y ]]; then
-			printf '%s\n'
+			printf '\n'
 			if	pacman -Ssq aurutils &>/dev/null ; then
 				sudo pacman -S aurutils paccat devtools
 			    else
 				moveit=$(find "${chroot}"/build/ -name 'aurutils*')
 													# Fetch containers aurutils
 				if	[[ -n  ${moveit} ]]; then
-					cp  ${moveit} "${AURREPO}"
-					repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz ${moveit}
+					cp  "${moveit}" "${AURREPO}"
+					repo-add "${AURREPO}"/"${REPONAME}".db.tar.gz "${moveit}"
 					sudo pacsync aur
 				fi
 				sudo pacman -S --noconfirm aurutils paccat devtools
@@ -852,9 +862,10 @@ EOF
 	fi
 	printf '%s\n\n' " |==================================================================================|"
 fi
-#========================================================================================================================#
-	trap 'cleanup_host ; cleanup_chroot ; echo "ERR" >> "${permlog}" ; exit 1' ERR SIGINT
-	(($# > 0)) && printf '%s\n' "$(date '+%Y-%m-%d') : ${*}" >> "${permlog}"
+#===================================================================================================#   # Trap and Logging
+	trp(){ printf '%s\n' "${dt} : Error trap was ran : $(basename "${0}") ${*}" ; }
+	trap 'cleanup_host ; cleanup_chroot ; trp "${@} ${package}" >> "${logfile}" ; exit 1' ERR SIGINT
+	(($# > 0)) && printf '%s\n' "${dt} : $(basename "${0}") ${*}"  >> "${logfile}"
 #========================================================================================================================#
 while (($# > 0)); do
 	case "${1-}" in
