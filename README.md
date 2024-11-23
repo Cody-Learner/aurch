@@ -124,6 +124,26 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For November 23, 2024**
+
+Today we offer an actual release, or somewhat of a 'tune up' on the urgently release bug fix yesterday.<br>
+ie: clean up, additional testing, shellcheck, minimal feature creep<br>
+Keeping the `ck_per` function to check/correct the AUR repo permissions for now. 
+It will eventually be removed after additional testing time indicates everything is in order.<br>
+An aurch log file is now available, `/var/log/aurch.log`. 
+
+**aurch.sh:**<br>
+* Removed `permlog` variable.
+* Added `logfile` variable.
+* Added creation, set permission of logfile if not present.
+* Added `dt` variable (date time) used for logging.
+* Added basic logging capabilities.
+
+**README.md:**<br>
+* Update to reflect changes.
+
+---------
+
 **UPDATE For November 22, 2024 (2nd)**
 
 This is a bug fix release that eliminates the AUR repo permission issues. <br>
