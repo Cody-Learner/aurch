@@ -1,7 +1,6 @@
 #!/bin/bash
-# aurch-setup 2024-11-13
-# dependencies:  base-devel arch-install-scripts git pacutils jshon mc sudo devtools paccat
-
+# aurch-setup 2024-11-22
+# Auto installed dependencies for aurch-setup, aurch, scripts:  base-devel arch-install-scripts git pacutils(paccache) jshon mc sudo
 set -euo pipefail
 
 
@@ -79,7 +78,7 @@ EOF
 check_depends(){
 
 	echo "${czm} Checking dependencies for aurch and arch-install."
-	pacman -S --needed --confirm base-devel arch-install-scripts git pacutils jshon mc sudo devtools paccat
+	pacman -S --needed --confirm base-devel arch-install-scripts git pacutils jshon mc sudo
 	echo
 }
 #========================================================================================================================#
@@ -107,14 +106,15 @@ if      pacstrap -c "${chroot}" base base-devel git ; then
 	sleep 5
 
 	cd "${chroot}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
-
 	mkdir -p "${chroot}"/var/tmp/aurch						|| { echo "[line ${LINENO}]" ; exit 1 ; }
-	systemd-nspawn -a -q    useradd -m -G wheel -s /bin/bash builduser
-	systemd-nspawn -a -q    mkdir /build
-	systemd-nspawn -a -q    chown -R builduser:builduser /build
 
+	systemd-nspawn -a -q   chmod -R 777 /var/tmp/aurch
+	systemd-nspawn -a -q   useradd -m -G wheel -s /bin/bash builduser
+	systemd-nspawn -a -q   mkdir /build
+	systemd-nspawn -a -q   chown -R builduser:builduser /build
+
+	chown -R "${SUDO_USER}:${SUDO_USER}" "${chroot}/build"
 	chmod 755 "${chroot}/build"
-	chown -R :alpm "${chroot}/build"
 
 	cat << 'EOF' >> "${chroot}"/etc/bash.bashrc
 
@@ -181,26 +181,26 @@ if	[[ -d  ${chroot}/build ]] && [[ -d ${homebuilduser} ]] ; then
 	systemd-nspawn -a -q sed -i '$a\CleanMethod = KeepInstalled'	/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '$a\[aur]'				/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '$a\SigLevel = Never TrustAll'	/etc/pacman.conf
-	systemd-nspawn -a -q sed -i '$a\Server = file:///build'		/etc/pacman.conf		# SC2016 We don't want expansion here!
+	systemd-nspawn -a -q sed -i '$a\Server = file:///build'		/etc/pacman.conf		# SC2016 Don't want expansion on these 7!
 	systemd-nspawn -a -q sed -i '/CacheDir/s/^#//g'			/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '/Color/s/^#//g'			/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '/VerbosePkgLists/s/^#//g'		/etc/pacman.conf
 	systemd-nspawn -a -q sed -i '/ParallelDownloads/s/^#//g'	/etc/pacman.conf
 
-
 	cat <<-"EOF" > "${homebuilduser}/add-aur-repo"
 	#!/bin/bash
 
 	set -e
-	repo-add /build/aur.db.tar.gz   $(find /home/builduser/aurutils/ -maxdepth 1 -type f -name aurutils*pkg.tar.zst)
-	chmod 646 /build/aur.db.tar.gz
-	chown builduser:alpm /build/aur.db.tar.gz
+	cd /home/builduser/aurutils/  || exit 1
+	repo-add /build/aur.db.tar.gz   $(find aurutils-*-any.pkg.tar*)
+	mv $(find aurutils-*-any.pkg.tar*) /build
+	chown -R builduser:builduser /build
 EOF
 	systemd-nspawn -a -q  -D "${chroot}" --chdir="${chrbuilduser}" --pipe \
 	chmod +x add-aur-repo
 
-	systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe \
-	sudo ./add-aur-repo
+	systemd-nspawn -a -q -D "${chroot}"  --chdir="${chrbuilduser}" --pipe \
+	./add-aur-repo
 
 	systemd-nspawn -a -q  -D "${chroot}" --pipe \
 	pacman -Sy
@@ -268,11 +268,10 @@ EOF
 if	[[ ! -d  ${AURREPO} ]]; then
 	mkdir -p "${AURREPO}"
 fi
-#	repo-add "${AURREPO}/${REPONAME}".db.tar.gz
-	repo-add "${AURREPO}/${REPONAME}".db.tar.gz   $(find "${chroot}"/build/aurutils-*-any.pkg.tar.zst)
-
+  	chown -R "${SUDO_USER}:${SUDO_USER}" "${AURREPO}"
+	sudo -u  "${SUDO_USER}" repo-add "${AURREPO}/${REPONAME}".db.tar.gz 
 	pacsync "${REPONAME}"
-	chown -R :alpm "${AURREPO}"
+
 	pacman -Sy
 
 	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."
