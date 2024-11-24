@@ -117,8 +117,8 @@ References: <br>
 
 ![Screenshot_2021-11-02_18-13-26](https://user-images.githubusercontent.com/36802396/140189725-9f30c9dc-b071-447c-9cd9-a2c177ac3371.png)
 
-Screenshot: aurch --setup	 https://cody-learner.github.io/aurch-setup.html <br>
-Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
+Screenshot: `aurch --setup`	 https://cody-learner.github.io/aurch-setup.html <br>
+Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-bauerbill.html <br>
 <br>
 
 
@@ -128,7 +128,7 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 **aurch.sh:**
 * Function `ck_per`, changed formatting sent to log.
-* Function `is_it_available` added log upon error.
+* Function `is_it_available`, added log upon error.
 * Added `--log` operation to display `logfile` in less.
 
 -------
