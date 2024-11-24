@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2024-11-23
+# aurch 2024-11-24
 # dependencies: base-devel git pacutils(pacsync) jshon mc
 # shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
 
@@ -95,6 +95,7 @@ OPERATIONS
 		      --login   Login to nspawn container for maintenance.
 		      --clean	Manually clean up nspawn container and host AUR pkg cache.
 		      --pgp	Manually import pgp key into nspawn container.
+                      --log	Display '/var/log/aurch.log'.
 		-h,   --help	Prints help in 'less' pager. Press [q] to quit. Optionally, pipe into cat: 'aurch -h | cat'
 		-V,   --version Prints aurch <version>.
 
@@ -177,14 +178,14 @@ ck_per(){
 	local=$(stat -c '%U:%G' "${AURREPO}/${REPONAME}".db.tar.gz)
 	container=$(stat -c '%U:%G' "${chroot}"/build/aur.db.tar.gz)
 if	[[ ${local} !=  "${USER}:${USER}" ]]; then
-	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${logfile}"
-	stat -c '%a  %U:%G  %n' "${AURREPO}/${REPONAME}".db.tar.gz		>> "${logfile}"
+	printf '%s' "${dt} : Incorrect Permission reset "		>> "${logfile}"
+	stat -c '%a  %U:%G  %n' "${AURREPO}/${REPONAME}".db.tar.gz	>> "${logfile}"
 	printf '%s\n' "${czm}${warn} On local AUR repo permissions. Resetting..."
 	sudo chown -R "${USER}:${USER}" "${AURREPO}"
 fi
 if	[[ ${container} !=  "${USER}:${USER}" ]]; then
-	printf '%s' "$(date '+%Y-%m-%d') : "					>> "${logfile}"
-	stat -c '%a  %U:%G  %n' "${chroot}"/build/aur.db.tar.gz			>> "${logfile}"
+	printf '%s' "${dt} : Incorrect Permission reset "		>> "${logfile}"
+	stat -c '%a  %U:%G  %n' "${chroot}"/build/aur.db.tar.gz		>> "${logfile}"
 	printf '%s\n' "${czm}${warn} On container AUR repo permissions. Resetting..."
 	sudo chown -R "${USER}:${USER}" "${chroot}"/build
 fi
@@ -226,8 +227,8 @@ is_it_available(){
 		| awk -F\" '{print $2}')
 
 if	[[ ${package} != "${check}" ]] ; then
-	printf '%s\n' "${czm}${error}\"${package}\" not available. See: https://aur.archlinux.org/packages/"
-	exit
+	printf '%s\n' "${czm}${error}\"${package}\" not available. See: https://aur.archlinux.org/packages/" |& tee -a "${logfile}"
+	exit 1
 fi
 }
 #========================================================================================================================#
@@ -453,7 +454,7 @@ fi
 				# Note: pkg variable is set in option parsing.
 remove(){
 													# Using magic to leverage 'find' exit codes
-if	[[ -n ${pkg} ]]; then										
+if	[[ -n ${pkg} ]]; then
 
 	if	[[ ${1} == -Rc ]]; then
 		if	pacman -b "${chroot}/var/lib/pacman/" \
@@ -669,7 +670,7 @@ build_clean_chroot(){
 	printf '%s\n' "                     Review the code in 'build_clean_chroot' function before running, then proceed at your discretion."
 	printf '%s\n' "                     Proceed? [y/n]"
 													# Added "" to satisfy SC2183
-	while read -n1 -r reply 
+	while read -n1 -r reply
 	do
 		[[ ${reply} == y ]] && echo && break
 		[[ ${reply} == n ]] && echo && exit
@@ -726,7 +727,7 @@ if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then
 	aur chroot --create
 
 	if	! grep -q 'aurch' /etc/aurutils/pacman-x86_64.conf ; then
-													# Config shared local AUR repo/cache  
+													# Config shared local AUR repo/cache
 		cat <<-EOF | sudo tee -a /etc/aurutils/pacman-x86_64.conf &>/dev/null
 		#
 		# aurch config for 'aur build'.
@@ -795,7 +796,7 @@ fi
 		aur build -cfnsr --results=aur-build.log
 													# Remove sudo config and restore permissions
 		sudo rm /etc/sudoers.d/aurch
-													# Append pkgs to aurch-build.log after build	
+													# Append pkgs to aurch-build.log after build
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
 	done   < /var/tmp/aurch/cloned-pkgs.log
 
@@ -853,8 +854,8 @@ if      [[ -z ${*} ]]; then cat << EOF
  |     -Rh    remove AUR pkg from host         --pgp    import pgp key in container |
  |    -Syu    update container               --clean    cleanup host & container    |
  |      -V    print version                  --login    log into container          |
- |      -h    help, Press [q] to quit               *   options, See help           |
- |                                                                                  |
+ |      -h    help, Press [q] to quit          --log    display aurch.log           |
+ |                                                  *   options, See help           |
 EOF
 	printf '%-84s|\n' " |            Aurch Container Path:  ${chroot}"
 	if	type -P aur &>/dev/null ; then
@@ -883,7 +884,8 @@ while (($# > 0)); do
 	--login)		login_chroot					;;
 	--clean)		cleanup_host ; cleanup_chroot			;;
 	--pgp)			key="${2-}" manual_pgp_key			;;
-	-h|--help)		help | /usr/bin/less -R				;;
+	--log)			less "${logfile}" ; exit			;;
+	-h|--help)		help | /usr/bin/less -R	; exit			;;
 	-V|--version)	awk -e '/^# aurch/ {print $2,$3}' "$(which aurch)"	;;
 	-?*)		help; echo "${czm}${error} Input error. See help above"	;;
 	*)		break

@@ -124,6 +124,15 @@ Screenshot: aurch -B bauerbill	 https://cody-learner.github.io/aurch-building-ba
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For November 24, 2024**
+
+**aurch.sh:**
+* Function `ck_per`, changed formatting sent to log.
+* Function `is_it_available` added log upon error.
+* Added `--log` operation to display `logfile` in less.
+
+-------
+
 **UPDATE For November 23, 2024**
 
 Today we offer an actual release, or somewhat of a 'tune up' on the urgently release bug fix yesterday.<br>

@@ -13,7 +13,7 @@ NOTE: Example /etc/sudoers.d/aurch
 /etc/sudoers.d/aurch
 -------------------------------------------------------------------------------------------------------------------------
 
-jeff ALL=(ALL) NOPASSWD: /usr/bin/systemd-nspawn -a -q -D /home/jeff/.cache/aurch/base/chroot-p5g --pipe /usr/bin/bash
+jeff ALL=(ALL) NOPASSWD: /usr/bin/systemd-nspawn -a -q -D /home/jeff/.cache/aurch/base/chroot-g2a --pipe /usr/bin/bash
 jeff ALL=(ALL) NOPASSWD: /usr/bin/pacsync aur
 
 -------------------------------------------------------------------------------------------------------------------------
