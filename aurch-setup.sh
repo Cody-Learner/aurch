@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch-setup 2024-11-22
+# aurch-setup 2024-11-22 
 # Auto installed dependencies for aurch-setup, aurch, scripts:  base-devel arch-install-scripts git pacutils(paccache) jshon mc sudo
 set -euo pipefail
 
