@@ -124,6 +124,24 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For November 26, 2024**
+
+***Bug fix:*** In a fresh aurch install, first run of '-B' operation with an empty local AUR repo, an empty 'find' result, resulted in aurch exiting.
+
+**aurch.sh:**
+* Remove trailing whitespace.
+* Operation `--help`, reword `-Ccb` info.
+* Function `build_pkg`, rewrite first `find` command to not exit script on empty `find` results.
+  * ie: New or empty repo.<br>
+* Function `build_clean_chroot`: <br>
+  * Change several `read` commands options including implementation of `-p` to eliminate proceeding `printf` message lines.
+  * On repetitive usage of the same variable in `while read` loops for user input, unset variable after each use.
+
+**README.md:**
+* Update to reflect changes.
+
+-------
+
 **UPDATE For November 24, 2024**
 
 **aurch.sh:**

@@ -1,7 +1,7 @@
 #!/bin/bash
-# aurch 2024-11-24
+# aurch 2024-11-26
 # dependencies: base-devel git pacutils(pacsync) jshon mc
-# shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly don't want expansion on 'echo' lines in 'print_vars'.
+# shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail
 
@@ -49,13 +49,13 @@ print_vars(){
 	echo 'dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 	echo 'line2=$(printf %"$(tput cols)"s |tr " " "-")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
 
-	printf '%s\n' " 
+	printf '%s\n' "
 	Last six lines expanded:
 	perm=${perm}
 	czm=${czm}
 	error=${error}
 	warn=${warn}
-	dt=${dt} 
+	dt=${dt}
 	line2=${line2}" | awk '{$1=$1};1'
 
 }
@@ -112,17 +112,17 @@ OPERATIONS
 		Do not mix order or attempt to use 'q' other than described.
 
   -Cc, Clean Chroot:
-		Append 'b' to '-Cc' operation for both host and container(1). 
+		Append 'b' to '-Cc' operation for both host and container(1).
 		Example: 'aurch -Ccb <aurpkg>'
 		Do not mix order or attempt to use 'b' other than described.
 
 	   (1)  aurch '-Cc' builds and sets up pkg for host install only.
-	   IE:	Copy and register packages in both host and container AUR
-		cache and database.
-	Usage:	Python2 is a dependency of many AUR packages, but needs built
-		in a clean chroot to get through the default tests. I'll use
-		'-Ccb' to have it available in the aurch container as a 
-		dependency for other packages that depend on it.
+	   IE:	Use '-Ccb' to copy and register package in both host and
+		container AUR cache and database.
+	Usage:	Python2 is a dependency of several AUR packages, that must
+		be built in a clean chroot to successfully pass tests.
+		Use '-Ccb' to have it available as a prebuilt dependency
+		in the aurch container when needed.
 
 
 OVERVIEW
@@ -236,7 +236,7 @@ build_pkg(){
 
 	rm -f "${tmph}"/*.file
 
-	cacheB=$(find "${AURREPO}"/*pkg.tar* 2>/dev/null |sort)
+        cacheB=$(find "${AURREPO}"/ -name '*pkg.tar*' 2>/dev/null |sort)
 
 if	[[ ! -d "${homebuilduser}/${package}" ]]; then
 	printf '%s\n' "${czm}${error} Package build directory missing in container."
@@ -451,9 +451,8 @@ if	[[ ${udb-} == alldone ]]; then
 fi
 }
 #========================================================================================================================#
-				# Note: pkg variable is set in option parsing.
 remove(){
-													# Using magic to leverage 'find' exit codes
+												# Note: pkg variable is set in option parsing.
 if	[[ -n ${pkg} ]]; then
 
 	if	[[ ${1} == -Rc ]]; then
@@ -633,10 +632,9 @@ exit
 yes_no(){
 
 	message(){ printf '\n%s\n' "             Proceeding with build...." ; }
-
-	printf '%s\n'            "${czm} Inspect git cloned files?"
+	printf '%s\n' "${czm} Inspect git cloned files?"
 	while true; do
-    		read -n1 -p "             Enter  [y/n] for yes/no " -r yn
+    		read -n1 -srp "             Enter  [y/n] for yes/no " yn
     		case $yn in
         	[Yy]* )           inspect_files "${1-}" ; break		;;
         	[Nn]* ) message ; opt="${1-}" build_pkg ; break		;;
@@ -665,28 +663,33 @@ build_clean_chroot(){
 	is_it_available
 
 	printf '\n%s\n' "${czm}${warn} Respectfully informing the user as a courtesy."
-	printf '%s\n' "                     Clean chroot building is WIP with limited testing that will be further refined over time."
-	printf '%s\n' "                     It adds, then removes a sudo config '/etc/sudoers.d/aurch' as a convenience workaround."
-	printf '%s\n' "                     Review the code in 'build_clean_chroot' function before running, then proceed at your discretion."
-	printf '%s\n' "                     Proceed? [y/n]"
+	printf '%s\n' "                      Clean chroot building is WIP with limited testing that will be further refined over time."
+	printf '%s\n' "                      It adds, then removes a sudo config '/etc/sudoers.d/aurch' as a convenience workaround."
+	printf '%s\n' "                      Review the code in 'build_clean_chroot' function before running, then proceed at your discretion."
 													# Added "" to satisfy SC2183
-	while read -n1 -r reply
+	while read -n1 -srp "                      Proceed? [y/n]  " reply
 	do
-		[[ ${reply} == y ]] && echo && break
-		[[ ${reply} == n ]] && echo && exit
+		if [[ ${reply} == y ]]; then printf "yes" ; echo ; break ; fi
+		if [[ ${reply} == n ]]; then printf "no"  ; echo ; exit  ; fi
+		unset reply
 	done
 													# Check for deps, confirm to install
 	printf '%s\n' "${czm} Checking dependencies for clean chroot build..."
 if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 
 	printf '%s\n' "${czm} Clean chroot building dependencies not installed. Installing now."
-	printf '%s\n' "${czm} Proceed? [y/n]"
-	while read -n1 -r reply
+
+	while read -n1 -srp "             Proceed? [y/n]  " reply
 	do
-		if	[[ ${reply} == y ]]; then
+		if	[[ ${reply} == y ]]; then printf "yes"
 			printf '\n'
 			if	pacman -Ssq aurutils &>/dev/null ; then
-				sudo pacman -S aurutils paccat devtools
+				sudo pacman -S  --noconfirm aurutils paccat devtools
+				printf '%s\n' "${czm} $(pacman -Q --color=always aurutils) installed."
+				printf '%s\n' "${czm} $(pacman -Q --color=always paccat) installed."
+				printf '%s\n' "${czm} $(pacman -Q --color=always devtools) installed."
+				printf '\n%s\n\n' "${czm} Proceeding with clean chroot build.....1"
+				sleep 4
 			    else
 				moveit=$(find "${chroot}"/build/ -name 'aurutils*')
 													# Fetch containers aurutils
@@ -699,17 +702,18 @@ if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 				printf '%s\n' "${czm} $(pacman -Q --color=always aurutils) installed."
 				printf '%s\n' "${czm} $(pacman -Q --color=always paccat) installed."
 				printf '%s\n' "${czm} $(pacman -Q --color=always devtools) installed."
-				printf '%s\n\n' "             Proceed with clean chroot build....."
-				sleep 3
+				printf '\n%s\n\n' "${czm} Proceeding with clean chroot build.....2"
+				sleep 4
 			fi
 		    break
 		fi
 
-		if	[[ ${reply} == n ]]; then
+		if	[[ ${reply} == n ]]; then printf "no"
 			echo
 			printf '%s\n' " Exiting script."
 			exit
 		fi
+		unset reply
 	done
     else
 	printf '%s\n' "${czm} $(pacman -Q --color=always aurutils) and all other dependencies installed."
@@ -759,15 +763,14 @@ fi
 	printf '%s\n' "${czm} Git cloned ${package} and AUR dependencies."
 	nl /var/tmp/aurch/cloned-pkgs.log
 
-	printf '%s\n' "${czm} Inspect git cloned files? [y/n]"
-
 if	[[ ! -d  ${HOME}/.gnupg/ ]]; then
 	gpg --list-keys &>/dev/null
 fi
-	while read -n1 -r reply
+	while read -n1 -srp "${czm} Inspect git cloned files? [y/n]  "  reply
 	do
-		[[ ${reply} == y ]] && "${AURFM}" "${homebuilduser}"/"${package}" && break
-		[[ ${reply} == n ]] && echo && break
+		if [[ ${reply} == y ]]; then printf "yes" ; "${AURFM}" "${homebuilduser}"/"${package}" ; break ; fi
+		if [[ ${reply} == n ]]; then printf "no"  ; echo && break ; fi
+		unset reply
 	done
 													# Beginning build packages in cloned-pkgs.log
 	while read -r build
@@ -778,7 +781,7 @@ fi
 		printf '%s\n' "${czm} Checking pgp keys."
 													# Check/install pgp keys
 		if	[[ ! -s pgp-keys.file ]]; then
-			printf '%s' "             Not used for ${build}."
+			printf '%s\n' "             Not used for ${build}."
 		    else
 			while read -r key
 			do
@@ -788,16 +791,15 @@ fi
 													# Fix successive pacman sudo prompts
 		printf '%s\n' "${USER} ALL=(ALL) NOPASSWD: /usr/bin/pacman" |
 				sudo tee /etc/sudoers.d/aurch &>/dev/null
-
-		printf "%s\n${czm} Building \033[1m${build}\033[0m in clean chroot.\n"
+		printf '%s\n' "${czm} Building ${build} in clean chroot."
 													# Check/correct AUR repo permissions
 		ck_per
 													# BUILD INDIVIDUAL CHROOT PACKAGES
 		aur build -cfnsr --results=aur-build.log
 													# Remove sudo config and restore permissions
 		sudo rm /etc/sudoers.d/aurch
-													# Append pkgs to aurch-build.log after build
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
+
 	done   < /var/tmp/aurch/cloned-pkgs.log
 
 	cleanup_host
@@ -817,10 +819,8 @@ fi
 if	[[ ${1} == -Ccb ]]; then
 	printf '%s\n' "${czm} Copied and registered the following pkgs to container AUR repo: ${chroot}/build"
 fi
-	echo
-	awk -F'/' '{printf "\033[1m" $NF "\033[0m\n"}' /var/tmp/aurch/aurch-build.log \
-	| nl -w3 -s" " \
-	| pr -T -o 11    										# Print build results to screen
+	echo    											# Print build results to screen
+	awk -F'/' '{print $NF}' /var/tmp/aurch/aurch-build.log | nl -w3 -s" " | pr -To 11
 	echo
 }
 #========================================================================================================================#
@@ -858,7 +858,7 @@ if      [[ -z ${*} ]]; then cat << EOF
  |                                                  *   options, See help           |
 EOF
 	printf '%-84s|\n' " |            Aurch Container Path:  ${chroot}"
-	if	type -P aur &>/dev/null ; then
+	if	aur chroot --path &>/dev/null ; then
 		printf '%-84s|\n' " |           Aurutils Clean Chroot Path:  $(aur chroot --path)"
 	fi
 	printf '%s\n\n' " |==================================================================================|"
