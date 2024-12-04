@@ -124,6 +124,19 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For DECEMBER 03, 2024**
+
+**aurch.sh:**
+* Changed temp work file names to enhance intuitive readablity.
+* Replaced array and vars with temp work files where appropriate.
+* Added printed message clarifying when rebuilding existing, current packages.
+* Replaced parsing output from `aur fetch` to implementing `--results=` file.
+* Implemented `pr` command for improved formatting printed messages.
+* Implemented `ln` `options` for improved formatting printed messages.
+* Implemented parsing output of `repo-add` to be used for verification.
+
+------
+
 **UPDATE For November 26, 2024**
 
 ***Bug fix:*** In a fresh aurch install, first run of '-B' operation with an empty local AUR repo, an empty 'find' result, resulted in aurch exiting.
