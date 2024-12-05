@@ -1,6 +1,6 @@
 #!/bin/bash
-# aurch 2024-12-03
-# dependencies: base-devel git pacutils(pacsync) jshon mc
+# aurch 2024-12-05
+# dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail

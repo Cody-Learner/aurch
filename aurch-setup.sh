@@ -1,8 +1,8 @@
 #!/bin/bash
-# aurch-setup 2024-11-22
-# Auto installed dependencies for aurch-setup, aurch, scripts:  base-devel arch-install-scripts git pacutils(paccache) jshon mc sudo
+# aurch-setup 2024-12-05
+# Auto installed deps: base-devel pacman-contrib pacutils arch-install-scripts git jshon mc less
+# Additionl info deps: base-devel(sudo) pacman-contrib (paccache) pacutils(pacsync)
 set -euo pipefail
-
 
 if	[[ $(id -u) != 0 ]]; then
 	echo " Needs elevated privileges. Run with sudo."
@@ -78,7 +78,7 @@ EOF
 check_depends(){
 
 	echo "${czm} Checking dependencies for aurch and arch-install."
-	pacman -S --needed --confirm base-devel arch-install-scripts git pacutils jshon mc sudo
+	pacman -S --needed --confirm base-devel pacman-contrib pacutils arch-install-scripts git jshon mc less
 	echo
 }
 #========================================================================================================================#
