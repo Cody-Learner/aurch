@@ -25,7 +25,7 @@ dt=$(printf '%s' "[$(date '+%Y-%m-%d %r')]")					# Date time in format: [2024-11
 line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
 
 if	[[ ! -e ${logfile} ]]; then
-	printf '%s\n' "${czm} '${logfile}' not present, so lets create it."
+	printf '%s\n' "${czm} First aurch run, '${logfile}' is needed. Creating it now."
 	sudo touch ${logfile} ; sudo chown "${USER}":"${USER}" ${logfile}
 fi
 #========================================================================================================================#
@@ -668,10 +668,10 @@ build_clean_chroot(){
 
 	is_it_available
 
-	printf '\n%s\n' "${czm}${warn} Respectfully informing the user as a courtesy." ; cat <<-EOF | pr -to 5
-        Clean chroot building is WIP with limited testing that will be further refined over time.
-        It adds, then removes a sudo config '/etc/sudoers.d/aurch' as a convenience workaround.
-        Review the code in 'build_clean_chroot' function before running, then proceed at your discretion."
+	printf '\n%s\n' "${czm}${warn} Informing as a courtesy:" ; cat <<-EOF | pr -to 5
+        Clean chroot adds, then removes a sudo config file '/etc/sudoers.d/aurch-sudo' as a convenience workaround.
+        Review the code in 'build_clean_chroot' function and the contents of '/etc/sudoers.d/' before proceeding.
+
 EOF
 	while read -n1 -srp "             Proceed? [y/n]  " reply
 	do
@@ -679,8 +679,10 @@ EOF
 		if [[ ${reply} == n ]]; then printf "no"  ; echo ; exit  ; fi
 		unset reply
 	done
+if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then
+	printf '%s\n' "${czm} First run clean chroot setup required...."
+fi
 													# Check for deps, confirm to install
-	printf '%s\n' "${czm} Checking dependencies for clean chroot build..."
 if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 
 	printf '%s\n' "${czm} Clean chroot building dependencies not installed. Installing now."
@@ -692,7 +694,7 @@ if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 			if	pacman -Ssq aurutils &>/dev/null ; then
 				sudo pacman -S  --noconfirm aurutils paccat devtools
 				pacman -Q --color=always aurutils paccat devtools | column -t
-				printf '\n%s\n\n' "${czm} Dependencies installed. Proceeding with clean chroot build.....1"
+				printf '\n%s\n\n' "${czm} Dependencies installed. Proceeding with setting up clean chroot....."
 				sleep 4
 			    else
 				moveit=$(find "${chroot}"/build/ -name 'aurutils*')
@@ -704,7 +706,7 @@ if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
 				fi
 				sudo pacman -S --noconfirm aurutils paccat devtools
 				pacman -Q --color=always aurutils paccat devtools | column -t
-				printf '\n%s\n\n' "${czm} Dependencies installed. Proceeding with clean chroot build.....2"
+				printf '\n%s\n\n' "${czm} Dependencies installed. Proceeding with setting up clean chroot....."
 				sleep 4
 			fi
 		    break
@@ -747,6 +749,8 @@ if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then
 
 EOF
 		printf '\n%s\n' "${czm} Configured '/etc/aurutils/pacman-x86_64.conf' to share aurch local AUR repo."
+		printf '\n%s\n\n' "${czm} Clean chroot environment set up completed. Start building pkg.....
+		sleep 3
 	fi
 fi
 #-----------------------------------------  S T A R T   B U I L D  ---------------------------------#	# Remove any existing log files
@@ -761,7 +765,7 @@ fi
 		aur fetch -S -
 
 	printf '%s\n' "${czm} Git cloned ${package} and AUR dependencies."
-	nl /var/tmp/aurch/cloned-pkgs.log
+	pr -To 13 /var/tmp/aurch/cloned-pkgs.log
 
 if	[[ ! -d  ${HOME}/.gnupg/ ]]; then
 	gpg --list-keys &>/dev/null
@@ -790,14 +794,14 @@ fi
 		fi
 													# Fix successive pacman sudo prompts
 		printf '%s\n' "${USER} ALL=(ALL) NOPASSWD: /usr/bin/pacman" |
-				sudo tee /etc/sudoers.d/aurch &>/dev/null
+				sudo tee /etc/sudoers.d/aurch-sudo &>/dev/null
 		printf '%s\n' "${czm} Building ${build} in clean chroot."
 													# Check/correct AUR repo permissions
 		ck_per
 													# BUILD INDIVIDUAL CHROOT PACKAGES
 		aur build -cfnsr --results=aur-build.log
 													# Remove sudo config and restore permissions
-		sudo rm /etc/sudoers.d/aurch
+		sudo rm /etc/sudoers.d/aurch-sudo
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
@@ -862,6 +866,7 @@ EOF
 		printf '%-84s|\n' " |           Aurutils Clean Chroot Path:  $(aur chroot --path)"
 	fi
 	printf '%s\n\n' " |==================================================================================|"
+	echo -e '\033[0m'
 fi
 #===================================================================================================#   # Trap and Logging
 	trp(){ printf '%s\n' "${dt} : Error trap was ran : $(basename "${0}") ${*}" ; }

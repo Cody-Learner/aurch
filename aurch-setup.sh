@@ -276,7 +276,7 @@ fi
 
 	echo; echo "${czm} Completed setting up a local pacman AUR repo in ${AURREPO}."
 	echo "             In order to avoid an unplanned system update within the script,"
-	echo "             your system has been left in a partial update' state."
+	echo "             your system has been left in a 'partial update' state."
 	echo "${czm} Run 'pacman -Syu' upon completion."; echo
 }
 #========================================================================================================================#

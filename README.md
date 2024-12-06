@@ -124,6 +124,20 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For DECEMBER 05, 2024**
+
+**aurch-setup.sh**
+* Corrected dependencies in script comments and `check_depends` function.
+* Added punctuation to printed message.
+
+**aurch.sh**
+* Corrected dependencies in script comments. 
+* Reworded and added printed comments.
+* Changed name of file `/etc/sudoers.d/aurch` to `/etc/sudoers.d/aurch-sudo` to avoid potential overwrite.
+* Added color cancel code to `if [[ -z ${*} ]]` printed script info after testing in `arch install media`.
+
+------
+
 **UPDATE For DECEMBER 03, 2024**
 
 **aurch.sh:**
