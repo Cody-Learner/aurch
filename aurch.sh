@@ -749,7 +749,7 @@ if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then
 
 EOF
 		printf '\n%s\n' "${czm} Configured '/etc/aurutils/pacman-x86_64.conf' to share aurch local AUR repo."
-		printf '\n%s\n\n' "${czm} Clean chroot environment set up completed. Start building pkg....."
+		printf '%s\n\n' "${czm} Clean chroot environment set up completed. Start building pkg....."
 		sleep 3
 	fi
 fi
