@@ -28,6 +28,9 @@ if	[[ ! -e ${logfile} ]]; then
 	printf '%s\n' "${czm} First aurch run, '${logfile}' is needed. Creating it now."
 	sudo touch ${logfile} ; sudo chown "${USER}":"${USER}" ${logfile}
 fi
+if	[[ ! -d  /var/tmp/aurch ]]; then 
+	mkdir /var/tmp/aurch
+fi
 #========================================================================================================================#
 print_vars(){
 	printf '%s\n' "
@@ -722,7 +725,7 @@ if	! type -P aur bash paccat checkpkg mkarchroot arch-nspawn &>/dev/null ; then
     else
 	printf '%s\n' "${czm} $(pacman -Q --color=always aurutils) and all other dependencies installed."
 fi													# Create log dir if needed
-	[[ ! -d /var/tmp/aurch ]] && mkdir /var/tmp/aurch
+#	[[ ! -d /var/tmp/aurch ]] && mkdir /var/tmp/aurch
 
 #----------------------------------------- M A K E   A U R - C H R O O T ---------------------------#	# Create clean chroot if needed
 if	[[ ! -d /var/lib/aurbuild/x86_64/root ]]; then

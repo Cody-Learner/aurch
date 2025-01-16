@@ -124,6 +124,17 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For JANUARY 16, 2025**
+
+***Bug fix:*** In a fresh aurch install, running `aurch --clean` before building a package in a <br>
+clean chroot `aurch -Cc` results in an error.
+
+
+**aurch.sh**
+* Relocated creation of directory  `/var/tmp/aurch` from within function `build_clean_chroot` to beginning of script.
+
+-----
+
 **UPDATE For DECEMBER 05, 2024**
 
 **aurch-setup.sh**
