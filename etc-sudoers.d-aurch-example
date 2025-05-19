@@ -6,19 +6,18 @@ See : https://wiki.archlinux.org/title/Sudo
 
 
 NOTE: Example /etc/sudoers.d/aurch
-      This example requires at minimum, changing 'jeff' to your user 'name' and 'p5g' to your chroot 'id'
+      This example requires at minimum, changing 'jeff' to your user 'name' and 'fME' to your chroot /path/'-id'
       Then put the following two lines into /etc/sudoers.d/aurch: (Note: fully qualified file paths, opts, and args required)
 
 
 /etc/sudoers.d/aurch
 -------------------------------------------------------------------------------------------------------------------------
 
-jeff ALL=(ALL) NOPASSWD: /usr/bin/systemd-nspawn -a -q -D /home/jeff/.cache/aurch/base/chroot-g2a --pipe /usr/bin/bash
+jeff ALL=(ALL) NOPASSWD: /usr/bin/systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-fME --pipe /usr/bin/bash
 jeff ALL=(ALL) NOPASSWD: /usr/bin/pacsync aur
 
 -------------------------------------------------------------------------------------------------------------------------
 
-TO TEST: sudo systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-g2a --pipe /usr/bin/bash
-	 sudo systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-    --pipe /usr/bin/bash
+TO TEST: sudo systemd-nspawn -a -q -D /usr/local/aurch/base/chroot-fME --pipe /usr/bin/bash
 
 TO TEST: sudo pacsync aur
