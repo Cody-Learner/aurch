@@ -36,41 +36,41 @@ References: <br>
 		aurch [operation[options]] [package | pgp key]
 
     OPERATIONS
-		-B* --build	Build new or update an existing AUR package.
-		-G  --git	Git clones an AUR package.
-		-C  --compile	Build an AUR package on existing PKGBUILD.(1) 
-		-Rh		Remove AUR pkg from host.(2)
-		-Rc		Remove AUR pkg from nspawn container.(3)
+		-B* --build     Build new or update an existing AUR package.
+		-G  --git       Git clones an AUR package.
+		-C  --compile   Build an AUR package on existing PKGBUILD.(1) 
+		-Rh             Remove AUR pkg from host.(2)
+		-Rc             Remove AUR pkg from nspawn container.(3)
 		-Syu  --update  Update nspawn container packages.(4)
-		-Lah* --lsaurh	List AUR sync database contents/status of host.
-		-Lac* --lsaurc	List AUR sync database contents/status of nspawn container.
-		-Luh* --lsudh	List update info for AUR packages installed in host.
-		-Luc* --lsudc	List update info for AUR pkgs/AUR deps in nspawn container.
-		-Lv		List aurch variables.
-		      --login   Login to nspawn container for maintenance.
-		      --clean	Manually remove unneeded packages from nspawn container.
-		      --pgp	Manually import pgp key in nspawn container.
-		-h,   --help	Prints help.
+		-Lah* --lsaurh  List AUR sync database contents/status of host.
+		-Lac* --lsaurc  List AUR sync database contents/status of nspawn container.
+		-Luh* --lsudh   List update info for AUR packages installed in host.
+		-Luc* --lsudc   List update info for AUR pkgs/AUR deps in nspawn container.
+		-Lv             List aurch variables.
+                  --login   Login to nspawn container for maintenance.
+                  --clean   Manually remove unneeded packages from nspawn container.
+                  --pgp     Manually import pgp key in nspawn container.
+		-h,   --help    Prints help.
 		-V,   --version Prints aurch version.
     
-    		(1) Useful for implementing changes to PKGBUILD, etc.
-    		(2) Removes:  /AURREPO/<package>, <package> if installed, and database entry.
-    		(3) Removes:  /build/<package>,   /${HOME}/<build dir>,   and database entry.
-    		(4) Runs `pacman -Syu` inside the nspawn container.
+                    (1) Useful for implementing changes to PKGBUILD, etc.
+                    (2) Removes:  /AURREPO/<package>, <package> if installed, and database entry.
+                    (3) Removes:  /build/<package>,   /${HOME}/<build dir>,   and database entry.
+                    (4) Runs `pacman -Syu` inside the nspawn container.
 
     OPTIONS *
-    	-L, List:
-    		Append 'q' to  -L list operations for quiet mode.
-                    Examples: aurch -Lahq
-                              aurch -Luhq
-                              aurch -Lacq
-                              aurch -Lucq
-    		Do not mix order or attempt to use 'q' other than described.
+              -L, List:
+                       Append 'q' to  -L list operations for quiet mode.
+                       Examples: aurch -Lahq
+                                 aurch -Luhq
+                                 aurch -Lacq
+                                 aurch -Lucq
+                       Do not mix order or attempt to use 'q' other than described.
     
-    	-B, Build:
-    		Append 'i' to build operation -B to install package in host.
-    		Example: aurch -Bi
-    		Do not mix order or attempt to use 'i' other than described.
+              -B, Build:
+                       Append 'i' to build operation -B to install package in host.
+                       Example: aurch -Bi
+                       Do not mix order or attempt to use 'i' other than described.
     
     OVERVIEW
     		Run aurch-setup before using aurch.
