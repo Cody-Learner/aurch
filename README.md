@@ -83,24 +83,24 @@ References: <br>
     EXAMPLES
     		SETUP FOR AURCH:
 
-    		Set up nspawn container:			aurch-setup --setupchroot
-    		Set up local AUR repo:				aurch-setup --setuphost
+    		Set up nspawn container:                        aurch-setup --setupchroot
+    		Set up local AUR repo:                          aurch-setup --setuphost
 
 
     		USING AURCH:
 
-    		Build an AUR package(+):			aurch -B  <aur-package>
-    		Build and install AUR package:			aurch -Bi <aur-package>
-    		Git clone package				aurch -G  <aur-package>
-    		Build (Compile) AUR pkg on existing PKGBUILD	aurch -C  <aur-package>
-    		Remove AUR package from host:			aurch -Rh <aur-package>
-    		Remove AUR package from nspawn container:	aurch -Rc <aur-package>
-    		List nspawn container AUR sync db contents:	aurch -Lac
-    		List nspawn container AUR repo updates:		aurch -Luc
-    		List host AUR sync database contents:		aurch -Lah
-    		List host AUR repo updates available:		aurch -Luh
-    		Manually import a pgp key in nspawn container:	aurch --pgp <short/long id>
-    		Manually remove unneeded pkgs from container:	aurch --clean
+    		Build an AUR package(+):                        aurch -B  <aur-package>
+    		Build and install AUR package:                  aurch -Bi <aur-package>
+    		Git clone package                               aurch -G  <aur-package>
+    		Build (Compile) AUR pkg on existing PKGBUILD    aurch -C  <aur-package>
+    		Remove AUR package from host:                   aurch -Rh <aur-package>
+    		Remove AUR package from nspawn container:       aurch -Rc <aur-package>
+    		List nspawn container AUR sync db contents:     aurch -Lac
+    		List nspawn container AUR repo updates:         aurch -Luc
+    		List host AUR sync database contents:           aurch -Lah
+    		List host AUR repo updates available:           aurch -Luh
+    		Manually import a pgp key in nspawn container:  aurch --pgp <short/long id>
+    		Manually remove unneeded pkgs from container:   aurch --clean
     		Login to chroot for maintenance:                aurch --login
     
     		(+) Package placed into host AUR repo and entry made in pacman AUR database.
