@@ -81,13 +81,13 @@ References: <br>
     		Update nspawn container before buiding packages.
     
     EXAMPLES
-    		SETUP FOR AURCH:
+                SETUP FOR AURCH:
 
     		Set up nspawn container:                        aurch-setup --setupchroot
     		Set up local AUR repo:                          aurch-setup --setuphost
 
 
-    		USING AURCH:
+                USING AURCH:
 
     		Build an AUR package(+):                        aurch -B  <aur-package>
     		Build and install AUR package:                  aurch -Bi <aur-package>
