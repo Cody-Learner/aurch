@@ -124,6 +124,27 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For August 27, 2025**
+
+**aurch.sh**
+* Set `CleanChroot` path as a variable.
+* Changed `czm` var name to 'acp' (aurch colored pointer).
+* Added `note` var for green color text formatting.
+* Deleted the `'ck_per` (check/correct file permissions) function.
+* Function `fetch_pgp_key`, edited the ubuntu keyserver to port 443, and added a fallback `hkps://keys.openpgp.org` in case of failure.
+* Function `cleanup_chroot`, added delete `/etc/sudoers.d/aurch-sudo` file, so 'trap' will remove 'aurch-sudo' file if `build_clean_chroot` function is interrupted.
+* Function `check_chroot_updates', rewrote function to speed up via batches of parallel checks and provide a progress bar.
+* Eliminate building debug packages in '-Cc' clean chroot option.
+* Added check/update `-Cc` clean chroot build env.
+* Function `cleanup_host` added delete `/etc/sudoers.d/aurch-sudo` file, so 'trap' will remove `aurch-sudo` file if `build_pkg` function is interrupted.
+* Added if statement to print `-Cc` clean chroot build path in aurch's info only if it exists (has been used).
+* Changed print `--log` operation formatting.
+
+**README.md:**
+* Update to reflect changes.
+
+----
+
 **UPDATE For JANUARY 16, 2025**
 
 ***Bug fix:*** In a fresh aurch install, running `aurch --clean` before building a package in a <br>
