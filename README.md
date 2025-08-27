@@ -47,16 +47,16 @@ References: <br>
 		-Luh* --lsudh   List update info for AUR packages installed in host.
 		-Luc* --lsudc   List update info for AUR pkgs/AUR deps in nspawn container.
 		-Lv             List aurch variables.
-                  --login   Login to nspawn container for maintenance.
-                  --clean   Manually remove unneeded packages from nspawn container.
-                  --pgp     Manually import pgp key in nspawn container.
+                      --login   Login to nspawn container for maintenance.
+                      --clean   Manually remove unneeded packages from nspawn container.
+                      --pgp     Manually import pgp key in nspawn container.
 		-h,   --help    Prints help.
 		-V,   --version Prints aurch version.
     
-                    (1) Useful for implementing changes to PKGBUILD, etc.
-                    (2) Removes:  /AURREPO/<package>, <package> if installed, and database entry.
-                    (3) Removes:  /build/<package>,   /${HOME}/<build dir>,   and database entry.
-                    (4) Runs `pacman -Syu` inside the nspawn container.
+                (1) Useful for implementing changes to PKGBUILD, etc.
+                (2) Removes:  /AURREPO/<package>, <package> if installed, and database entry.
+                (3) Removes:  /build/<package>,   /${HOME}/<build dir>,   and database entry.
+                (4) Runs `pacman -Syu` inside the nspawn container.
 
     OPTIONS *
               -L, List:
