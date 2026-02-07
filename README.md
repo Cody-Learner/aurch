@@ -124,6 +124,26 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+
+**UPDATE For Feb 6, 2026**
+
+**aurch.sh**
+* Added `sudo keep alive` to `build_pkg()` function and trap command.
+* Added ` & syncpid="$!"` ; `wait "${syncpid}"` to the `pacsync` lines in `### Optionally install package ###` section. This is in place of `; wait`. Adding the `SUDO_KEEPALIVE` caused the wait command to wait for the `sudo` job.
+* Added ` grep -v 'aur.db` to `cleanup_host` function, to filter out `aur.db` from `aurch-keeppkgs`.
+* Rewrote aurch 'menu'.
+* Rewrote `check_host_updates` function to use batch processing for the AUR rpc call.
+
+**etc-sudoers.d-aurch-example**
+
+etc-sudoers.d-aurch-example:
+* Added line for no sudo needed to remove `aurch-sudo` file created in the `-Cc` operation.  
+
+**README.md:**
+* Update to reflect changes.
+
+----
+
 **UPDATE For August 27, 2025**
 
 **aurch.sh**

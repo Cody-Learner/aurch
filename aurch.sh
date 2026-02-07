@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2025-08-27
+# aurch 2026-02-06
 # dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
 
@@ -10,6 +10,8 @@ set -euo pipefail
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 	[[ ! -v CleanChroot ]]  && CleanChroot=/var/lib/aurbuild/x86_64/	#         Set CleanChroot path if unset
+###	[[ ! -v CleanChroot ]]  && CleanChroot=${HOME}/.cache/aurch-chroot	#         Set within HOME if desired
+
 
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination 1)
@@ -229,7 +231,13 @@ fi
 }
 #========================================================================================================================#
 build_pkg(){
-		rm -f "${tmph}"/*.file
+   												# Refresh sudo credentials and keep sudo alive
+	sudo -v											# Long-lived job; use caution using a plain 'wait'.
+	while true; do sleep 60; sudo -n true; done 2>/dev/null &				# Consider 'disown' command for future issues.
+
+	SUDO_KEEPALIVE=$!
+
+	rm -f "${tmph}"/*.file
 	find "${AURREPO}"/ -name '*pkg.tar*' 2>/dev/null >"${tmph}"/host-aurrepo-before.file
 
 if	[[ ! -d "${homebuilduser}/${package}" ]]; then
@@ -341,14 +349,15 @@ fi
 if	[[ "${opt-}" == -Bi ]]; then
 	if	[[ -s "${tmph}"/repad-ver.file ]]; then
 		printf '%s\n' "${acp} Installing in host:"
-		sudo pacsync "${REPONAME}" ; wait
+		sudo pacsync "${REPONAME}" & syncpid="$!" ; wait "${syncpid}"
 		sudo pacman -S - < <(sed -e's/-[0-9].*//g' -e's/-[a-z][0-9].*//g' "${tmph}"/repad-ver.file)   ### SC2024 Irrelevant in this case.
 	    else
 		printf '%s\n' "${acp} Installing ${buildorder[${pkgi}]} in host."
-		sudo pacsync "${REPONAME}" ; wait
+		sudo pacsync "${REPONAME}" & syncpid="$!" ; wait "${syncpid}"
 		sudo pacman -S "${buildorder[${pkgi}]}"
 	fi
 fi
+	kill "${SUDO_KEEPALIVE}"
 }
 #========================================================================================================================#
 fetch_pgp_key(){
@@ -526,7 +535,7 @@ if	[[ $1 != -Lucq ]]; then
 	printf '%s' "${acp} Checking "									# start progress line
 fi
 													# update progress
-max_jobs=5												# limit parallel jobs
+max_jobs=2  # max_jobs=5										# limit parallel jobs
 running=0												# track running jobs
 tmpdir=$(mktemp -d)											# per-job temp directory
 progress_counter=0											# progress mark counter
@@ -540,7 +549,7 @@ progress_wrap=50											# wrap progress line every N marks
 	cd "${homebuilduser}/${pkg}"								|| { echo "[line ${LINENO}]" ; exit 1 ; }
 	if	[[ -d .git ]]; then
 		localHEAD=$(git rev-parse HEAD)
-		remoteHEAD=$(git ls-remote --symref -q  | head -1 | cut -f1) 				# fetch remote 
+		remoteHEAD=$(git ls-remote --symref -q  | head -1 | cut -f1) 				# fetch remote
 		if	[[ ${localHEAD} != "${remoteHEAD}" ]]; then
 			jobfile=$(mktemp "${tmpdir}/update.XXXXXX")					# unique temp file per job
 			printf '%s\n' " ${pkg}" > "$jobfile"						# write package name safely
@@ -549,7 +558,7 @@ progress_wrap=50											# wrap progress line every N marks
 	if	[[ $1 != -Lucq ]]; then
 		printf '#' >&2										# print progress bar '#' to stderr
 	fi
-    ) &	
+    ) &
 	running=$((running + 1))
 													# end run in backgrounded subshell
 	if	(( running >= max_jobs )); then
@@ -557,7 +566,7 @@ progress_wrap=50											# wrap progress line every N marks
 		running=$((running - 1))								# subtract one running job
 	fi
 
-if	[[ $1 != -Lucq ]]; then										# wrap progress line every N marks 
+if	[[ $1 != -Lucq ]]; then										# wrap progress line every N marks
 	progress_counter=$((progress_counter + 1))
 	if	(( progress_counter % progress_wrap == 0 )); then
         	printf '\n' >&2
@@ -566,10 +575,10 @@ fi
 	done
 	wait												# wait for all jobs
 if	[[ $1 != -Lucq ]]; then										# ensure final newline after progress bar
-	printf '\n' >&2 
+	printf '\n' >&2
 fi
 	readarray -t update_files < <(find "${tmpdir}" -maxdepth 1 -type f -name 'update.*')
-if	(( ${#update_files[@]} > 0 )); then							# No updates, 'set -e' safe from exiting
+if	(( ${#update_files[@]} > 0 )); then								# No updates, 'set -e' safe from exiting
 	cat "${update_files[@]}" >> "${tmpdir}"/check-ud-updates
 fi
 
@@ -588,42 +597,68 @@ fi
 #========================================================================================================================#
 check_host_updates(){
 
-	readarray -t aurpkgs < <(pacman --color=never -Slq "${REPONAME}" | pacman -Q - 2>/dev/null; pacman --color=never -Qm 2>/dev/null)
-if	[[ $1 == -Luhq ]]; then	:
-    else
-	printf '%s\n' "${acp} Checking for updates:"
-	printf '%s\n' "${aurpkgs[@]%' '*}" | nl | column -t
-fi
-	rm -f /tmp/aurch-updates /tmp/aurch-updates-newer
+	rm -f /tmp/aurch-updates /tmp/aurch-updates-newer /tmp/aur-ck_list
 
-for pkg in "${aurpkgs[@]}"; do {
+	declare -A local_aur
+												# Create associative array of installed '[pkg] ver'
+while	read -r name ver; do
+		local_aur[$name]="${ver}"
+done	< <(pacman --color=never -Slq aur | \
+	    pacman -Q - 2>/dev/null; pacman --color=never -Qm 2>/dev/null)
 
-    	pckg="${pkg%' '*}"
-	check=$(curl -s "https://aur.archlinux.org/rpc?v=5&type=info&arg=${pckg}" | jshon -e results -a -e  Version -u)
-	compare=$(vercmp "${pkg#*' '}" "${check}")
+pkg_names=("${!local_aur[@]}")
+max_size=100
+count="${#pkg_names[@]}"
 
-	if	[[ -n  ${check} && ${compare} == -1 ]]; then
-		printf '%s\n' "${pkg} -> ${check}" >>/tmp/aurch-updates
-    	elif	[[ -n  ${check} &&  ${compare} == 1 ]]; then
-    		printf '%s\n' "${pkg} <- ${check}" >>/tmp/aurch-updates-newer
-	fi } &
+	declare -A rem_aur
+												# Be polite with the AUR RPC via a batch requests
+for	(( i=0; i<count; i+=max_size )); do							# for i in $(seq 0 "${max_size}" $((count - 1))); do
+	current_query=("${pkg_names[@]:i:max_size}")
+	rpc_query=$(printf "&arg[]=%s" "${current_query[@]}")
+													# Make AUR rpc request, save reply as var
+	if	! response=$(curl -f -s "https://aur.archlinux.org/rpc?v=5&type=info${rpc_query}"); then
+		printf '\n%s\n\n' "${error} AUR RPC reply failure."
+		return 1									# Include graceful exit upon failed curl command.
+	fi
+												# Create associative array of AUR '[pkg] ver'
+	while	read -r name ver; do
+    		[[ -z "$name" ]] && continue
+    		rem_aur[$name]="$ver"
+	done	< <(jshon -e results -a -e Name -u -p -e Version -u <<< "$response" | paste -d ' ' - -)
 
-done; wait
+done
+		for key in "${!rem_aur[@]}"; do
+   	printf '%-30s %s\n' "$key" "${local_aur[$key]}" >> /tmp/aur-ck_list
+	done
+												# Version Comparison
+for	pkg in "${!rem_aur[@]}"; do
+												# Use RPC filtered 'rem_aur' pkg list
+	compare=$(vercmp "${local_aur[$pkg]}" "${rem_aur[$pkg]}")
+												# Send version compare results to file
+	if	[[ ${compare} == -1 ]]; then
+		printf '%s\n' "${pkg} ${local_aur[$pkg]} -> ${rem_aur[$pkg]}"  >>/tmp/aurch-updates
+    	  elif	[[ ${compare} == 1 ]]; then
+    		printf '%s\n' "${pkg}  ${local_aur[$pkg]} <- ${rem_aur[$pkg]}" >>/tmp/aurch-updates-newer
+	fi
+done
 
 if	[[ $1 == -Luhq ]]; then
-	awk '{print $1}' /tmp/aurch-updates 2>/dev/null
+        [[ -f /tmp/aurch-updates ]] && awk '{print $1}' /tmp/aurch-updates
+	exit
+fi
+	printf '\n%s\n' "${acp} Checking the following pkgs for updates."				# Print list of 'pkgs ver' to be checked
+	sleep 1
+	column -t /tmp/aur-ck_list |sort | nl -w 3
+if	[[ -s /tmp/aurch-updates ]]; then								# Print results
+	printf '\n%s\n' "${acp} Updates available:"
+	column -t /tmp/aurch-updates | sort
     else
-	if	[[ -s  /tmp/aurch-updates ]]; then
-		printf '%s\n\n' "${acp} Updates available:"
-		column -t /tmp/aurch-updates
-	    else
-		printf '%s\n\n' "${acp} No Updates available"
-	fi
-	if	[[ -s  /tmp/aurch-updates-newer ]]; then
-		printf '%s\n' "${acp} VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates."
-		column -t /tmp/aurch-updates-newer
-		echo
-	fi
+	printf '\n%s\n' "${acp} No Updates available"
+fi
+if	[[ -s /tmp/aurch-updates-newer ]]; then
+	printf '\n%s\n' "${acp} VCS Packages newer than AUR rpc version. Run 'aurch -Luc' to check them for updates."
+	column -t /tmp/aurch-updates-newer | sort
+	echo
 fi
 }
 #========================================================================================================================#
@@ -870,7 +905,7 @@ cleanup_host(){
 
 	aurch -Lahq  >  /var/tmp/aurch/aurch-keeppkgs
 	aurch -Lacq >>  /var/tmp/aurch/aurch-keeppkgs
-	keeppkgs=$(sort -u /var/tmp/aurch/aurch-keeppkgs | xargs | sed 's/ /,/g')
+	keeppkgs=$(sort -u /var/tmp/aurch/aurch-keeppkgs | grep -v 'aur.db' | xargs | sed 's/ /,/g')
 	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/ |& awk NF
 
 	printf '%s\n' "${acp} Cleaning leftover directories from local AUR cache:"
@@ -880,32 +915,42 @@ cleanup_host(){
 }
 #=======================================### Aurch called with no args ###================================================#
 
-if      [[ -z ${*} ]]; then cat << EOF
-	$(echo -e '\033[0;96m')
- |==================================================================================|
- |   Aurch, an AUR helper script.    USAGE:  $ aurch [operation[*opt]] [package]    |
- |----------------------------------------------------------------------------------|
- |      -B*   build AUR package in container    -Luc*   list updates container      |
- |      -G    git clone package                 -Luh*   list updates host           |
- |      -C    build on existing git clone       -Lac*   list AUR sync db container  |
- |     -Cc*   build AUR pkg in clean chroot     -Lah*   list AUR sync db host       |
- |     -Rc    remove AUR pkg from container      -Lv    list expanded variables     |
- |     -Rh    remove AUR pkg from host         --pgp    import pgp key in container |
- |    -Syu    update container               --clean    cleanup host & container    |
- |      -V    print version                  --login    log into container          |
- |      -h    help, Press [q] to quit          --log    display aurch.log           |
- |                                                  *   options, See help           |
+if      [[ -z ${*} ]]; then
+	printf '\033[0;96m'
+	cat << EOF
+ ╔══════════════════════════════════════════════════════════════════════════════════╗
+ ║   Aurch, an AUR helper script.    USAGE:  $ aurch [operation[*opt]] [package]    ║
+ ╟─────────────────────────────────────────┬────────────────────────────────────────╢
+ ║    -B*   build AUR package in container │    -Luc*   list updates container      ║
+ ║    -G    git clone package              │    -Luh*   list updates host           ║
+ ║    -C    build on existing git clone    │    -Lac*   list AUR sync db container  ║
+ ║   -Cc*   build AUR pkg in clean chroot  │    -Lah*   list AUR sync db host       ║
+ ║   -Rc    remove AUR pkg from container  │     -Lv    list expanded variables     ║
+ ║   -Rh    remove AUR pkg from host       │   --pgp    import pgp key in container ║
+ ║  -Syu    update container               │ --clean    cleanup host & container    ║
+ ║    -V    print version                  │ --login    log into container          ║
+ ║    -h    help, Press [q] to quit        │   --log    display aurch.log           ║
+ ║                                         │        *   options, See help           ║
+ ╟─────────────────────────────────────────┴────────────────────────────────────────╢
 EOF
-	printf '%-84s|\n' " |            Aurch Container Path:  ${chroot}"
 	if	[[ -d ${CleanChroot}/root ]] ; then
-		printf '%-84s|\n' " |      Aurutils Clean Chroot Path:  ${CleanChroot}"
+		printf '%-86s║\n' " ║ Aurch Nspawn Container:  ${chroot}"
+		printf '%-86s║\n' " ║ Aurutils Clean Chroot :  ${CleanChroot}"
+	    else
+		printf '%-86s║\n' " ║ Aurch Nspawn Container: ${chroot}"
 	fi
-	printf '%s\n\n' " |==================================================================================|"
-	echo -e '\033[0m'
+	printf ' ╚%s╝\n' "$(printf '═%.0s' {1..82})"
+	printf '\033[0m'
 fi
 #===================================================================================================#   # Trap and Logging
 	trp(){ printf '%s\n' "${dt} : Error trap was ran : $(basename "${0}") ${*}" ; }
-	trap 'cleanup_host ; cleanup_chroot ; trp "${@} ${package}" >> "${logfile}" ; exit 1' ERR SIGINT
+	trap '
+		cleanup_host
+		cleanup_chroot
+		trp "${@} ${package}" >> "${logfile}"
+		[[ -v SUDO_KEEPALIVE ]] && kill "$SUDO_KEEPALIVE"
+		exit 1
+	' ERR SIGINT
 	(($# > 0)) && printf '%s\n' "${dt} : $(basename "${0}") ${*}"  >> "${logfile}"
 #========================================================================================================================#
 while (($# > 0)); do
