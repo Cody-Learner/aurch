@@ -136,7 +136,6 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 **etc-sudoers.d-aurch-example**
 
-etc-sudoers.d-aurch-example:
 * Added line for no sudo needed to remove `aurch-sudo` file created in the `-Cc` operation.  
 
 **README.md:**
