@@ -1,43 +1,48 @@
 #!/bin/bash
-# aurch 2026-02-06
-# dependencies: base-devel pacman-contrib pacutils git jshon mc less
+# aurch 2026-02-18
+# Dependencies: base-devel pacman-contrib pacutils git jshon mc less
+# Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
+# Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua-http lua-dkjson
+# Optional: AURFM setup to detect an appropriate file browser in either tty console, or GUI terminal env.
 # shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail
 
+session=$(tty|awk -F"/" '{print $3}')
+AURFM=mc									#         File browser used for git cloned repos
 	[[ -n "${2-}" ]]	&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
 	[[ ! -v BASEDIR ]]	&& BASEDIR=/usr/local/aurch/base		# HOST    Set BASEDIR to default if unset
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 	[[ ! -v CleanChroot ]]  && CleanChroot=/var/lib/aurbuild/x86_64/	#         Set CleanChroot path if unset
-###	[[ ! -v CleanChroot ]]  && CleanChroot=${HOME}/.cache/aurch-chroot	#         Set within HOME if desired
-
-
+#	[[ ! -v CleanChroot ]]  && CleanChroot=${HOME}/.cache/aurch-chroot	#         Set CleanChroot path optionally in HOME
+#	[[ ${session} == pts ]] && AURFM=pcmanfm				#         Set AURFM for GUI option
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination 1)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination 1)
 tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination 2)
 tmph="${chroot}${tmpc}"								# HOST    path to tmp dir (same destination 2)
-AURFM=mc									# Application to inspect git cloned repos
-logfile=/var/log/aurch.log							# Logfile destination
-perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)				# Container octal permission: /build/aur.db.tar.gz
-acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")					# Aurch color pointer
-error=$(echo -e "\033[1;91m ERROR:\033[00m")					# Red 'ERROR' text
-warn=$(echo -e "\033[1;33m WARNING:\033[00m")					# Yellow 'WARNING' text
-note=$(echo -e "\033[1;92m Note:\033[00m")					# Green 'Note' text
-dt=$(printf '%s' "[$(date '+%Y-%m-%d %r')]")					# Date time in format: [2024-11-23 12:35:22 PM]
-line2=$(printf %"$(tput cols)"s |tr " " "-") 					# Set line '---' to terminal width
+logfile=/var/log/aurch.log							#         Set logfile destination
+acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")					#         Aurch color pointer
+error=$(echo -e "\033[1;91m ERROR:\033[00m")					#         Red 'ERROR' text
+warn=$(echo -e "\033[1;33m WARNING:\033[00m")					#         Yellow 'WARNING' text
+note=$(echo -e "\033[1;92m Note:\033[00m")					#         Green 'Note' text
+dt=$(printf '%s' "[$(date '+%Y-%m-%d %r')]")					#         Date time in format: [2024-11-23 12:35:22 PM]
+prep_line() { line2=$(printf %"$(tput cols)"s | tr " " "-"); }			#         Set line '---' dynamically to terminal width
 
 if	[[ ! -e ${logfile} ]]; then
 	printf '%s\n' "${acp} First aurch run, '${logfile}' is needed. Creating it now."
 	sudo touch ${logfile} ; sudo chown "${USER}":"${USER}" ${logfile}
 fi
-if	[[ ! -d  /var/tmp/aurch ]]; then 
+if	[[ ! -d  /var/tmp/aurch ]]; then
 	mkdir /var/tmp/aurch
 fi
 #========================================================================================================================#
 print_vars(){
-	printf '%s\n' "
+	prep_line
+	local width=$(( $(tput cols) - 6 ))
+
+	printf '%s\n\n'		"
 	package=${package-}
 	BASEDIR=${BASEDIR-}
 	AURREPO=${AURREPO-}
@@ -49,28 +54,27 @@ print_vars(){
 	tmph=${tmph-}
 	CleanChroot=${CleanChroot}
 	AURFM=${AURFM}
-	logfile=${logfile}" | awk '{$1=$1};1'						| sudo tee    "${BASEDIR}"/.#aurch-vars
-	echo 'perm=$(stat -c '%a' "${chroot}"/build/aur.db.tar.gz)'|sed "s/%a/\'%a\'/g"	| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'error=$(echo -e "\033[1;91m ERROR:\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'warn=$(echo -e "\033[1;33m WARNING:\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'note=$(echo -e "\033[1;92m Note:\033[00m")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	echo 'line2=$(printf %"$(tput cols)"s |tr " " "-")'				| sudo tee -a "${BASEDIR}"/.#aurch-vars
-
-	printf '%s\n' "
-	Last seven lines expanded:
-	perm=${perm}
+	session=${session}
+	logfile=${logfile}	"				| awk '{$1=$1};1' | sudo tee "${BASEDIR}"/.#aurch-vars
+    {	echo 'acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")'
+	echo 'error=$(echo -e "\033[1;91m ERROR:\033[00m")'
+	echo 'warn=$(echo -e "\033[1;33m WARNING:\033[00m")'
+	echo 'note=$(echo -e "\033[1;92m Note:\033[00m")'
+	echo 'dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")'
+	echo 'line2=$(printf %"$(tput cols)"s |tr " " "-")'
+    } 								| sudo tee -a "${BASEDIR}"/.#aurch-vars
+	printf '%s\n\n' "
+	Last six lines expanded:
 	acp=${acp}
 	error=${error}
 	warn=${warn}
 	note=${note}
 	dt=${dt}
-	line2=${line2}" | awk '{$1=$1};1'
-
+	line2=$(printf %"${width}"s | tr " " "-")" 		| awk '{$1=$1};1' 
 }
 #========================================================================================================================#
 help(){
+prep_line
 cat << EOF
 ${line2}
 
@@ -388,58 +392,6 @@ EOF
 fi
 }
 #========================================================================================================================#
-cleanup_chroot(){		# REMINDER: Change both dates below if heredoc script is modified.
-
-if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
-	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
-fi
-	sudo rm -f /etc/sudoers.d/aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
-											# 'build_clean_chroot' function is interrupted.
-	printf '%s\n' "${acp} Cleaning aurch nspawn container."
-
-if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2025-07-25' ]]; then
-	printf '%s\n' "${acp}${note} Updating container 'aurch-cleanup' script."
-												# Install cleanup script in container if needed
-#---------------------------------------------- START Heredoc Script -----------------------------------------#
-
-	cat << "EOF" | sudo tee "${chroot}"/usr/bin/aurch-cleanup &>/dev/null
-#!/bin/bash
-#2025-07-25
-
-acp=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
-
-	pacman -S --noconfirm pacman-contrib 1>/dev/null
-
-	printf '%s\n' "${acp} Paccache output from cleaning both container package caches:"
-	paccache -v --cachedir /var/cache/pacman/pkg/ --remove --keep 0	| awk 'NF' | grep -v '==>'
-	paccache -v --cachedir /build/                --remove --keep 1 | awk 'NF' | grep -v '==>'
-	printf '%s\n' "Note: 'pacman-contrib' was '--clean' requirement."
-
-	printf '%s\n'	"${acp} Pacman output from container: "
-	comm -23 <(pacman -Qq) <(sort /var/tmp/aurch/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null
-
-	find /build  /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +
-
-	pkgcount=$(pacman -Qq | wc -l)
-
-	aurcache=$(find /build -maxdepth 1 -type f -name "*pkg.tar*" | wc -l)
-
-	printf '%s\n'   "${acp} Container clean report   :"
-	printf '%s\n'   "             Official pkg cache count : $(ls -1 /var/cache/pacman/pkg | wc -l)"
-	printf '%s\n'   "             AUR pkg cache count      : ${aurcache}"
-	printf '%s\n\n' "             Installed package count  : ${pkgcount}"
-
-EOF
-#----------------------------------------------  END  Heredoc Script --------------------------------------#   # Run cleanup script in container
-	sudo chmod +x "${chroot}"/usr/bin/aurch-cleanup
-fi
-if	[[ -e ${tmph}/orig-pkgs.log ]]; then
-	sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
-	/usr/bin/aurch-cleanup
-fi
-	sudo rm "${tmph}"/orig-pkgs.log
-}
-#========================================================================================================================#
 upd_aur_db(){
 
 if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/host-added-pkgs.file ]]; then
@@ -509,7 +461,7 @@ EOF
 		if	pacman -Q "${pkg}" &>/dev/null ; then
 			sudo pacman -Rns "${pkg}"
 		fi
-	printf '%s\n' "${acp} Removed from host ${REPONAME} package cache:"
+	printf '%s\n' "${acp} Removing pkg from host ${REPONAME} package cache:"
 	sudo find "${AURREPO}" -name "${pkg}*.pkg.tar*" -delete -print
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
@@ -703,16 +655,34 @@ exit
 #========================================================================================================================#
 yes_no(){
 
-	message(){ printf '\n%s\n' "             Proceeding with build...." ; }
-	printf '%s\n' "${acp} Inspect git cloned files?"
 	while true; do
-    		read -n1 -srp "             Enter  [y/n] for yes/no " yn
-    		case $yn in
-        	[Yy]* )           inspect_files "${1-}" ; break		;;
-        	[Nn]* ) message ; opt="${1-}" build_pkg ; break		;;
-        	    * ) printf '%s\n' "${acp}${error}[y/n] Only!"	;;
-		esac
-	done
+
+	local dpdd=no
+	local Dop="Details of pkg"
+	local If="Inspect files"
+	local Bp="Build pkg"
+
+	printf '\n%s\n' "${acp} ${Dop} | ${If} | ${Bp} [Git cloned ${package}]"
+
+if	command -v pbs.lua >/dev/null && pacman -Qi lua-http lua-dkjson >/dev/null; then
+	local dpdd=yes
+fi
+if	[[ ${dpdd} == yes ]]; then
+	local det='Details [d]  ' sel='      Enter [d/i/b]:'
+    else
+	local det='Not Available' sel='      Enter [i/b]:'
+fi
+	printf '%s\n' "${acp} ${det}  | Inspect [i]   | Build [b]"
+	read -n1 -rp "       ${sel}
+             " dib
+	tput ind
+	case $dib in
+	[Dd]* ) printf '%s\n'   "${acp} ${Dop}:" ; [[ ${dpdd} == yes ]] && pbs.lua "${package}" ;;
+	[Ii]* ) printf '%s\n\n' "${acp} ${If}:"  ; inspect_files "${1-}"                        ;;
+	[Bb]* ) printf '%s\n\n' "${acp} ${Bp}:"  ; opt="${1-}" ; build_pkg ; break              ;;
+	    * ) printf '%s\n'   "${acp}${error}${det} only"                                     ;;
+        esac
+    done
 }
 #========================================================================================================================#
 inspect_files(){
@@ -720,12 +690,11 @@ inspect_files(){
 
 if	[[ -s  ${tmph}/inspect_files.file ]]; then
 	while IFS= read -r pkg; do
-	"${AURFM}" "${homebuilduser}"/"${pkg}"
+	"${AURFM}" "${homebuilduser}"/"${pkg}" 2>/dev/null
 	done < "${tmph}"/inspect_files.file
     else
-	"${AURFM}" "${homebuilduser}"/"${package}"
+	"${AURFM}" "${homebuilduser}"/"${package}" 2>/dev/null
 fi
-	opt="${1}" build_pkg
 }
 #===================================================================================#   # aurch -Cc*' Depends : aurutils paccat devtools
 				###  C L E A N   C H R O O T   B U I L D  ###		# aurutils scripts    : aur-build, aur-chroot use: -->
@@ -894,6 +863,58 @@ fi
 	echo    											# Print build results to screen
 	awk -F'/' '{print $NF}' /var/tmp/aurch/aurch-build.log | nl -w3 -s" " | pr -To 11
 	echo
+}
+#========================================================================================================================#
+cleanup_chroot(){		# REMINDER: Change both dates below if heredoc script is modified.
+
+if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
+	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
+fi
+	sudo rm -f /etc/sudoers.d/aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
+											# 'build_clean_chroot' function is interrupted.
+	printf '%s\n' "${acp} Cleaning aurch nspawn container."
+
+if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2025-07-25' ]]; then
+	printf '%s\n' "${acp}${note} Updating container 'aurch-cleanup' script."
+												# Install cleanup script in container if needed
+#---------------------------------------------- START Heredoc Script -----------------------------------------#
+
+	cat << "EOF" | sudo tee "${chroot}"/usr/bin/aurch-cleanup &>/dev/null
+#!/bin/bash
+#2025-07-25
+
+acp=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
+
+	pacman -S --noconfirm pacman-contrib 1>/dev/null
+
+	printf '%s\n' "${acp} Paccache output from cleaning both container package caches:"
+	paccache -v --cachedir /var/cache/pacman/pkg/ --remove --keep 0	| awk 'NF' | grep -v '==>'
+	paccache -v --cachedir /build/                --remove --keep 1 | awk 'NF' | grep -v '==>'
+	printf '%s\n' "Note: 'pacman-contrib' was '--clean' requirement."
+
+	printf '%s\n'	"${acp} Pacman output from container: "
+	comm -23 <(pacman -Qq) <(sort /var/tmp/aurch/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null
+
+	find /build  /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +
+
+	pkgcount=$(pacman -Qq | wc -l)
+
+	aurcache=$(find /build -maxdepth 1 -type f -name "*pkg.tar*" | wc -l)
+
+	printf '%s\n'   "${acp} Container clean report   :"
+	printf '%s\n'   "             Official pkg cache count : $(ls -1 /var/cache/pacman/pkg | wc -l)"
+	printf '%s\n'   "             AUR pkg cache count      : ${aurcache}"
+	printf '%s\n\n' "             Installed package count  : ${pkgcount}"
+
+EOF
+#----------------------------------------------  END  Heredoc Script --------------------------------------#   # Run cleanup script in container
+	sudo chmod +x "${chroot}"/usr/bin/aurch-cleanup
+fi
+if	[[ -e ${tmph}/orig-pkgs.log ]]; then
+	sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
+	/usr/bin/aurch-cleanup
+fi
+	sudo rm "${tmph}"/orig-pkgs.log
 }
 #========================================================================================================================#
 cleanup_host(){

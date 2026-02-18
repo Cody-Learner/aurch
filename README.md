@@ -125,6 +125,22 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For Feb 18, 2026**
+
+**aurch.sh**
+* Added comments in header section for optional features and their dependencies.
+* Setup `AURFM` var to detect an appropriate file browser in either tty console, or GUI terminal env.
+* Fixed `inspect files` selection to sequentially display all git cloned/pulled dir's including AUR dependencies in AURFM.
+* Fixed screen width line length in `-Lv` operation.
+* Relocated `cleanup_chroot` function to directly proceed `-Cc` `build_clean_chroot` function.
+* Rewrote `yes_no` function requiring user input to proceed, adding a `[d]` selection `Details of pkg` which displays pkg data including URL links and comments from the AUR webpage. 
+* Provide an optional script `pbs.lua` to scrape AUR data from webpage for `inspect files` selection.
+
+**README.md:**
+* Update to reflect changes.
+
+----
+
 **UPDATE For Feb 6, 2026**
 
 **aurch.sh**
@@ -136,7 +152,7 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 **etc-sudoers.d-aurch-example**
 
-* Added line for no sudo needed to remove `aurch-sudo` file created in the `-Cc` operation.  
+* Added line for no sudo pw needed to remove `aurch-sudo` file created in the `-Cc` operation.  
 
 **README.md:**
 * Update to reflect changes.
