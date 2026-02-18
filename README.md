@@ -134,7 +134,7 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 * Fixed screen width line length in `-Lv` operation.
 * Relocated `cleanup_chroot` function to directly proceed `-Cc` `build_clean_chroot` function.
 * Rewrote `yes_no` function requiring user input to proceed, adding a `[d]` selection `Details of pkg` which displays pkg data including URL links and comments from the AUR webpage. 
-* Provide an optional script `pbs.lua` to scrape AUR data from webpage for `inspect files` selection.
+* Provide an optional script `pbs.lua` to scrape AUR data from webpage for `Details of pkg` selection.
 
 **README.md:**
 * Update to reflect changes.
