@@ -1,5 +1,7 @@
 **UPDATE #2 For Feb 18, 2026**
-* Found a bug that would delete a dir inside aurch nspawn container running `aurch -Cc` without a package.
+
+**aurch.sh**
+* Found a bug that would delete dir inside aurch nspawn container running `aurch -Cc` without a package.
 * Provided a fix + fail safe.
 * Future plans include rewriting option parsing to implement checks further up towards the beginning of the processes.
 * Several small changes for text clarification and to allow alternative GUI AURFM options.
@@ -15,4 +17,3 @@
 * Rewrote `yes_no` function requiring user input to proceed, adding a `[d]` selection `Details of pkg` 
   which displays pkg data including URL links and comments from the AUR webpage. 
 * Provide an optional script to scrape AUR data from webpage for `Details of pkg` selection.
-

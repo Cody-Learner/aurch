@@ -136,6 +136,9 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 **README.md:**
 * Update to reflect changes.
 
+**Changelog:**
+* Update to reflect changes.
+
 ----
 
 **UPDATE For Feb 18, 2026**
