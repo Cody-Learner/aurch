@@ -125,6 +125,19 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE #2 For Feb 18, 2026**
+
+**aurch.sh**
+* Found a bug that would delete dir inside aurch nspawn container running `aurch -Cc` without a package.
+* Provided a fix + fail safe.
+* Future plans include rewriting option parsing to implement checks further up towards the beginning of the processes.
+* Several small changes for text clarification and to allow alternative GUI AURFM options.
+
+**README.md:**
+* Update to reflect changes.
+
+----
+
 **UPDATE For Feb 18, 2026**
 
 **aurch.sh**

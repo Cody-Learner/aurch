@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2026-02-18
+# aurch 2026-02-18_2
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
 # Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua-http lua-dkjson
@@ -9,14 +9,14 @@
 set -euo pipefail
 
 session=$(tty|awk -F"/" '{print $3}')
-AURFM=mc									#         File browser used for git cloned repos
+AURFM=mc									#         File browser used for git cloned/pulled repos
 	[[ -n "${2-}" ]]	&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
 	[[ ! -v BASEDIR ]]	&& BASEDIR=/usr/local/aurch/base		# HOST    Set BASEDIR to default if unset
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 	[[ ! -v CleanChroot ]]  && CleanChroot=/var/lib/aurbuild/x86_64/	#         Set CleanChroot path if unset
 #	[[ ! -v CleanChroot ]]  && CleanChroot=${HOME}/.cache/aurch-chroot	#         Set CleanChroot path optionally in HOME
-#	[[ ${session} == pts ]] && AURFM=pcmanfm				#         Set AURFM for GUI option
+#	[[ ${session} == pts ]] && AURFM='thunar &>/dev/null'			#         Set AURFM for GUI option
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination 1)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination 1)
@@ -43,6 +43,7 @@ print_vars(){
 	local width=$(( $(tput cols) - 6 ))
 
 	printf '%s\n\n'		"
+	session=${session}
 	package=${package-}
 	BASEDIR=${BASEDIR-}
 	AURREPO=${AURREPO-}
@@ -216,7 +217,7 @@ fi
 EOF
 
 if	[[ -s ${tmph}/cloned-pkgs.logfile ]]; then
-	printf '%s\n' "${acp} Git cloned ${package} and/or it's dependencies in container:"
+	printf '%s\n' "${acp} Git cloned/pulled ${package} and/or it's AUR dependencies in container:"
 	cut -d'/' -f3- "${tmph}"/cloned-pkgs.logfile | pr -To 13
 	printf '%s\n' "${acp} Build dir: ${homebuilduser}/${package}"
 fi
@@ -662,7 +663,7 @@ yes_no(){
 	local If="Inspect files"
 	local Bp="Build pkg"
 
-	printf '\n%s\n' "${acp} ${Dop} | ${If} | ${Bp} [Git cloned ${package}]"
+	printf '\n%s\n' "${acp} ${Dop} | ${If}* | ${Bp}*  (*)= Git cloned/pulled package/s listed above."
 
 if	command -v pbs.lua >/dev/null && pacman -Qi lua-http lua-dkjson >/dev/null; then
 	local dpdd=yes
@@ -672,7 +673,7 @@ if	[[ ${dpdd} == yes ]]; then
     else
 	local det='Not Available' sel='      Enter [i/b]:'
 fi
-	printf '%s\n' "${acp} ${det}  | Inspect [i]   | Build [b]"
+	printf '%s\n' "${acp} ${det}  | Inspect [i]    | Build [b]"
 	read -n1 -rp "       ${sel}
              " dib
 	tput ind
@@ -680,7 +681,7 @@ fi
 	[Dd]* ) printf '%s\n'   "${acp} ${Dop}:" ; [[ ${dpdd} == yes ]] && pbs.lua "${package}" ;;
 	[Ii]* ) printf '%s\n\n' "${acp} ${If}:"  ; inspect_files "${1-}"                        ;;
 	[Bb]* ) printf '%s\n\n' "${acp} ${Bp}:"  ; opt="${1-}" ; build_pkg ; break              ;;
-	    * ) printf '%s\n'   "${acp}${error}${det} only"                                     ;;
+	    * ) printf '%s\n'   "${acp}${error}${sel}  -or-  [Ctrl]+[c] to exit."               ;;
         esac
     done
 }
@@ -690,17 +691,23 @@ inspect_files(){
 
 if	[[ -s  ${tmph}/inspect_files.file ]]; then
 	while IFS= read -r pkg; do
-	"${AURFM}" "${homebuilduser}"/"${pkg}" 2>/dev/null
+	dbus-run-session -- "${AURFM}" "${homebuilduser}"/"${pkg}" 2>/dev/null
 	done < "${tmph}"/inspect_files.file
     else
-	"${AURFM}" "${homebuilduser}"/"${package}" 2>/dev/null
+	dbus-run-session -- "${AURFM}" "${homebuilduser}"/"${package}" 2>/dev/null
 fi
 }
 #===================================================================================#   # aurch -Cc*' Depends : aurutils paccat devtools
 				###  C L E A N   C H R O O T   B U I L D  ###		# aurutils scripts    : aur-build, aur-chroot use: -->
 											# devtools scripts    : checkpkg  mkarchroot arch-nspawn
 build_clean_chroot(){
-
+				### BUG FIX ###
+				### Prevent nspawn builduser dir deletion on "no pkg" entered. ###
+if	[[ -z $package ]]; then
+	printf '\n%s\n\n' "${acp}${error} Need to provide an AUR package name.
+		ie: aurch -Cc <pkg name>"
+	exit
+fi
 	is_it_available
 
 	printf '\n%s\n' "${acp}${warn} Informing as a courtesy:" ; cat <<-EOF | pr -to 5
@@ -792,6 +799,9 @@ fi
 	rm -f /var/tmp/aurch/*
 
 	cd "${homebuilduser}"
+				### BUG FIX FAILSAFE ###
+				### Prevents builduser dir deletion on "no pkg" entered. ###
+	: "${package:?}"
 
 	[[ -d  "${homebuilduser}/${package}" ]] && sudo rm -rd "${homebuilduser}/${package}"
 
@@ -807,7 +817,7 @@ if	[[ ! -d  ${HOME}/.gnupg/ ]]; then
 fi
 	while read -n1 -srp "${acp} Inspect git cloned files? [y/n]  "  reply
 	do
-		if [[ ${reply} == y ]]; then printf "yes" ; "${AURFM}" "${homebuilduser}"/"${package}" ; break ; fi
+		if [[ ${reply} == y ]]; then printf "yes" ; dbus-run-session -- "${AURFM}" "${homebuilduser}"/"${package}" ; break ; fi
 		if [[ ${reply} == n ]]; then printf "no"  ; echo && break ; fi
 		unset reply
 	done
@@ -966,6 +976,7 @@ fi
 #===================================================================================================#   # Trap and Logging
 	trp(){ printf '%s\n' "${dt} : Error trap was ran : $(basename "${0}") ${*}" ; }
 	trap '
+		echo
 		cleanup_host
 		cleanup_chroot
 		trp "${@} ${package}" >> "${logfile}"
