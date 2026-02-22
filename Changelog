@@ -1,3 +1,15 @@
+**UPDATE For Feb 21, 2026**
+
+**aurch.sh**
+* Added early script exit for essential unassigned or empty variables.
+* Implemented safety additions throughout script consisting of:  <br>
+  The `find` command addition of `-mindepth 1` <br>
+  Parameter Expansion Error Checking: `:?`     <br>
+  Path Normalization                : `./`     <br>
+* Rewrote 'list variables' option `-Lv`, function `print_vars`.
+
+----
+
 **UPDATE #2 For Feb 18, 2026**
 
 **aurch.sh**

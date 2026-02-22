@@ -1,28 +1,37 @@
 #!/bin/bash
-# aurch 2026-02-18_2
+# aurch 2026-02-21
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
 # Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua-http lua-dkjson
 # Optional: AURFM setup to detect an appropriate file browser in either tty console, or GUI terminal env.
+# To print all the variables expanded that are set below, run aurch -Lv.
+
+### Note: "### Safety additions" comments in script refer to additions consisting of:
+### 'find' command addition of '-mindepth 1'
+### Parameter Expansion Error Checking: :?
+### Path Normalization                : ./
+
 # shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
 
 set -euo pipefail
 
 session=$(tty|awk -F"/" '{print $3}')
 AURFM=mc									#         File browser used for git cloned/pulled repos
-	[[ -n "${2-}" ]]	&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
+	[[ -n ${2-} ]]		&& package="${2,,}" || package="" 		#         Convert <package> input to all lower case
 	[[ ! -v BASEDIR ]]	&& BASEDIR=/usr/local/aurch/base		# HOST    Set BASEDIR to default if unset
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 	[[ ! -v CleanChroot ]]  && CleanChroot=/var/lib/aurbuild/x86_64/	#         Set CleanChroot path if unset
-#	[[ ! -v CleanChroot ]]  && CleanChroot=${HOME}/.cache/aurch-chroot	#         Set CleanChroot path optionally in HOME
-#	[[ ${session} == pts ]] && AURFM='thunar &>/dev/null'			#         Set AURFM for GUI option
+#	[[ ${session} == pts ]] && AURFM='thunar &>/dev/null'			# Opt     Set AURFM for GUI file manager
+
+# CleanChroot=${HOME}/.cache/aurch-chroot					# Opt     Set CleanChroot path in HOME
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
 chrbuilduser="/home/builduser"							# CHROOT  builduser home directory (same destination 1)
 homebuilduser="${chroot}"/home/builduser					# HOST    builduser home directory (same destination 1)
 tmpc="/var/tmp/aurch"								# CHROOT  path to tmp dir (same destination 2)
 tmph="${chroot}${tmpc}"								# HOST    path to tmp dir (same destination 2)
 logfile=/var/log/aurch.log							#         Set logfile destination
+
 acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")					#         Aurch color pointer
 error=$(echo -e "\033[1;91m ERROR:\033[00m")					#         Red 'ERROR' text
 warn=$(echo -e "\033[1;33m WARNING:\033[00m")					#         Yellow 'WARNING' text
@@ -32,47 +41,67 @@ prep_line() { line2=$(printf %"$(tput cols)"s | tr " " "-"); }			#         Set l
 
 if	[[ ! -e ${logfile} ]]; then
 	printf '%s\n' "${acp} First aurch run, '${logfile}' is needed. Creating it now."
-	sudo touch ${logfile} ; sudo chown "${USER}":"${USER}" ${logfile}
+	sudo touch "${logfile:?}" ; sudo chown "${USER}":"${USER}" "${logfile:?}"
 fi
 if	[[ ! -d  /var/tmp/aurch ]]; then
 	mkdir /var/tmp/aurch
 fi
+
+#========================================================================================================================#
+: "${session:?}"								# Exit script early if any of these variables
+: "${AURFM:?}"									# are unset or empty. ### Safety additions
+: "${BASEDIR:?}"
+: "${AURREPO:?}"
+: "${REPONAME?}"
+: "${CleanChroot:?}"
+: "${chroot:?}"
+: "${chrbuilduser:?}"
+: "${homebuilduser:?}"
+: "${tmpc:?}"
+: "${tmph:?}"
+: "${logfile:?}"
+
 #========================================================================================================================#
 print_vars(){
 	prep_line
 	local width=$(( $(tput cols) - 6 ))
 
-	printf '%s\n\n'		"
-	session=${session}
-	package=${package-}
-	BASEDIR=${BASEDIR-}
-	AURREPO=${AURREPO-}
-	REPONAME=${REPONAME-}
-	chroot=${chroot-}
-	chrbuilduser=${chrbuilduser-}
-	homebuilduser=${homebuilduser-}
-	tmpc=${tmpc-}
-	tmph=${tmph-}
+	cat <<-EOF | sudo tee "${BASEDIR}/.#aurch-vars"
+	package=${package}
+	BASEDIR=${BASEDIR}
+	AURREPO=${AURREPO}
+	REPONAME=${REPONAME}
+	chroot=${chroot}
+	chrbuilduser=${chrbuilduser}
+	homebuilduser=${homebuilduser}
+	tmpc=${tmpc}
+	tmph=${tmph}
 	CleanChroot=${CleanChroot}
-	AURFM=${AURFM}
+	logfile=${logfile}
 	session=${session}
-	logfile=${logfile}	"				| awk '{$1=$1};1' | sudo tee "${BASEDIR}"/.#aurch-vars
-    {	echo 'acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")'
-	echo 'error=$(echo -e "\033[1;91m ERROR:\033[00m")'
-	echo 'warn=$(echo -e "\033[1;33m WARNING:\033[00m")'
-	echo 'note=$(echo -e "\033[1;92m Note:\033[00m")'
-	echo 'dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")'
-	echo 'line2=$(printf %"$(tput cols)"s |tr " " "-")'
-    } 								| sudo tee -a "${BASEDIR}"/.#aurch-vars
-	printf '%s\n\n' "
-	Last six lines expanded:
+	AURFM=${AURFM}
+EOF
+	printf '\n'  | sudo tee -a "${BASEDIR}/.#aurch-vars"
+	cat <<-'EOF' | sudo tee -a "${BASEDIR}/.#aurch-vars"
+	acp=$(echo -e "\033[1;96m:: aurch ==>\033[00m")
+	error=$(echo -e "\033[1;91m ERROR:\033[00m")
+	warn=$(echo -e "\033[1;33m WARNING:\033[00m")
+	note=$(echo -e "\033[1;92m Note:\033[00m")
+	dt=$(printf "%s" "[$(date "+%Y-%m-%d %r")]")
+	line2=$(printf %"$(tput cols)"s |tr " " "-")
+EOF
+
+	printf '\n%s\n' "Last six lines expanded:"
+	cat << EOF | awk '{$1=$1};1'
 	acp=${acp}
 	error=${error}
 	warn=${warn}
 	note=${note}
 	dt=${dt}
-	line2=$(printf %"${width}"s | tr " " "-")" 		| awk '{$1=$1};1' 
+	line2=$(printf %"${width}"s | tr " " "-")
+EOF
 }
+
 #========================================================================================================================#
 help(){
 prep_line
@@ -203,7 +232,7 @@ EOF
 fi
 														# Deleted bld dir if PKGBUILD NA
 if	[[ -d  "${homebuilduser}/${package}" ]] && [[ ! -s  "${homebuilduser}/${package}/PKGBUILD" ]]; then
-	sudo rm -rd "${homebuilduser}/${package}"
+	sudo rm -rd "${homebuilduser:?}/${package:?}"								### Safety additions
 fi
 if	cd "${homebuilduser}/${package}" 2>/dev/null ;then
 												# 'sudo printf' prevents printed msg before sudo prompt.
@@ -429,12 +458,13 @@ if	[[ -n ${pkg} ]]; then
 			repo-remove /build/aur.db.tar.gz "${pkg}"
 EOF
 			printf '%s\n' "${acp} Removing from container aur package cache:"
-			find "${chroot}"/build -name "${pkg}*.pkg.tar*" -delete -print
+		###	find "${chroot}"/build -name "${pkg}*.pkg.tar*" -delete -print					### Safety additions
+			find "${chroot:?}/build/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 
 			if	[[ -d  "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
-				sudo rm -rd "${homebuilduser}"/"${pkg}"
+				sudo rm -rd "${homebuilduser:?}/${pkg:?}"						### Safety additions
 			fi
 			sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 			printf '%s\n' "${acp} Syncing container aur database:"
@@ -445,11 +475,12 @@ EOF
 			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
-				sudo rm -rd "${homebuilduser}"/"${pkg}"
+				sudo rm -rd "${homebuilduser:?}/${pkg:?}"						### Safety additions
 				cd "${chroot}"/build/
-				if	find "${pkg}"*.pkg.tar* &>/dev/null; then
+				if	find "${pkg}*.pkg.tar*" &>/dev/null; then
 					printf '%s\n' "${acp} Removing from container aur package cache:"
-					find "${chroot}"/build/ -name "${pkg}*.pkg.tar*" -delete -print
+				###	find "${chroot}"/build/ -name "${pkg}*.pkg.tar*" -delete -print			### Safety additions
+					find "${chroot:?}/build/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 				    else
 					printf '%s\n' "${acp} Container ${pkg} not present in AUR package cache."
 				fi
@@ -463,7 +494,8 @@ EOF
 			sudo pacman -Rns "${pkg}"
 		fi
 	printf '%s\n' "${acp} Removing pkg from host ${REPONAME} package cache:"
-	sudo find "${AURREPO}" -name "${pkg}*.pkg.tar*" -delete -print
+###	sudo find "${AURREPO}" -name "${pkg}*.pkg.tar*" -delete -print							### Safety additions
+	sudo find "${AURREPO:?}/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
 			sudo pacsync "${REPONAME}"  >/dev/null
@@ -802,8 +834,8 @@ fi
 				### BUG FIX FAILSAFE ###
 				### Prevents builduser dir deletion on "no pkg" entered. ###
 	: "${package:?}"
-
-	[[ -d  "${homebuilduser}/${package}" ]] && sudo rm -rd "${homebuilduser}/${package}"
+													### Safety additions
+	[[ -d  "${homebuilduser}/${package}" ]] && sudo rm -rd "${homebuilduser:?}/${package:?}"
 
 	aur depends -r "${package}" | tsort |
 		tee /var/tmp/aurch/cloned-pkgs.log |
@@ -848,7 +880,8 @@ fi
 													# BUILD INDIVIDUAL CHROOT PACKAGES
 		aur build -cfnsr --results=aur-build.log --cargs="-c,-u,-r${CleanChroot}"
 													# Remove sudo config and restore permissions
-		sudo rm /etc/sudoers.d/aurch-sudo
+													### Safety additions
+		sudo rm /etc/sudoers.d/./aurch-sudo
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
@@ -880,7 +913,8 @@ cleanup_chroot(){		# REMINDER: Change both dates below if heredoc script is modi
 if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
 	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
 fi
-	sudo rm -f /etc/sudoers.d/aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
+	sudo rm -f /etc/sudoers.d/./aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
+											### Safety additions
 											# 'build_clean_chroot' function is interrupted.
 	printf '%s\n' "${acp} Cleaning aurch nspawn container."
 
@@ -905,7 +939,8 @@ acp=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 	printf '%s\n'	"${acp} Pacman output from container: "
 	comm -23 <(pacman -Qq) <(sort /var/tmp/aurch/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null
 
-	find /build  /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +
+###	find /build  /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +		### Safety additions
+	find /build/ /var/cache/pacman/pkg/ -mindepth 1 -maxdepth 1 -type d -name "download-*" -exec sudo rm -rf -- "{}" +
 
 	pkgcount=$(pacman -Qq | wc -l)
 
@@ -924,13 +959,14 @@ if	[[ -e ${tmph}/orig-pkgs.log ]]; then
 	sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
 	/usr/bin/aurch-cleanup
 fi
-	sudo rm "${tmph}"/orig-pkgs.log
+	sudo rm "${tmph:?}/orig-pkgs.log"									### Safety additions
 }
 #========================================================================================================================#
 cleanup_host(){
 
 	sudo true
-	sudo rm -f /etc/sudoers.d/aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
+	sudo rm -f /etc/sudoers.d/./aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
+											### Safety additions
 											# 'build_clean_chroot' function is interrupted.
 	printf '%s\n' "${acp} Cleaning official packages from local AUR cache: "
 
@@ -940,7 +976,8 @@ cleanup_host(){
 	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/ |& awk NF
 
 	printf '%s\n' "${acp} Cleaning leftover directories from local AUR cache:"
-	find "${AURREPO}" -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +
+###	find "${AURREPO}" -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +				### Safety additions
+	find "${AURREPO:?}/./" -mindepth 1 -maxdepth 1 -type d -name "download-*" -exec sudo rm -rf -- "{}" +
 
 	printf '%s\n' "==> no directories list indicate nothing to remove"
 }

@@ -125,6 +125,24 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For Feb 21, 2026**
+
+**aurch.sh**
+* Added early script exit for essential unassigned or empty variables.
+* Implemented safety additions throughout script consisting of:  <br>
+  * The `find` command additions of `-mindepth 1` <br>
+  * Parameter Expansion Error Checking: `:?`     <br>
+  * Path Normalization                : `./`     <br>
+* Rewrote `-Lv` operation, `print_vars` function to clean up code.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Update to reflect changes.
+
+----
+
 **UPDATE #2 For Feb 18, 2026**
 
 **aurch.sh**
