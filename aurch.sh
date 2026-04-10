@@ -1,19 +1,22 @@
 #!/bin/bash
-# aurch 2026-02-21
+# aurch 2026-04-10
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
-# Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua-http lua-dkjson
+# Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua
 # Optional: AURFM setup to detect an appropriate file browser in either tty console, or GUI terminal env.
 # To print all the variables expanded that are set below, run aurch -Lv.
 
-### Note: "### Safety additions" comments in script refer to additions consisting of:
-### 'find' command addition of '-mindepth 1'
-### Parameter Expansion Error Checking: :?
-### Path Normalization                : ./
-
-# shellcheck disable=SC2016 disable=SC2028  disable=SC1012 # Explicitly do not want expansion on 'echo' lines in 'print_vars'.
-
 set -euo pipefail
+
+#========================================================================================================================#
+										### Early 'trap' addition to later more thourough 'trap' command.
+										### Remove/kill temporary sudoers file and 'keep-alive'.
+early_cleanup() {
+    [[ -f /etc/sudoers.d/aurch-sudo ]] && sudo rm -f /etc/sudoers.d/aurch-sudo
+    [[ -v SUDO_KEEPALIVE ]] && kill "$SUDO_KEEPALIVE" 2>/dev/null || true
+}
+trap 'early_cleanup; exit 1' ERR SIGINT
+#========================================================================================================================#
 
 session=$(tty|awk -F"/" '{print $3}')
 AURFM=mc									#         File browser used for git cloned/pulled repos
@@ -63,6 +66,7 @@ fi
 
 #========================================================================================================================#
 print_vars(){
+
 	prep_line
 	local width=$(( $(tput cols) - 6 ))
 
@@ -218,6 +222,15 @@ EOF
 }
 #========================================================================================================================#
 fetch_pkg(){
+									### NEW 2026-03-02	# Filter potential package names to contain
+												# only valid characters and exit otherwise.
+    if [[ ! "${package}" =~ ^[a-z0-9@._+-]+$ ]]; then
+        printf '%s\n' "${acp}${error} Invalid package name: '${package}'"
+        printf '%s\n' "Names must only contain [a-z0-9@._+-]"
+        exit 1
+    fi
+
+
 		rm -f "${tmph}"/rebuilt-pkg.logfile
 		rm -f "${tmpc}"/cloned-pkgs.logfile
 	[[ -z ${package} ]] && { printf '%s\n\n' "${acp}${error} Need to specify a package."; exit ; }
@@ -524,7 +537,7 @@ max_jobs=2  # max_jobs=5										# limit parallel jobs
 running=0												# track running jobs
 tmpdir=$(mktemp -d)											# per-job temp directory
 progress_counter=0											# progress mark counter
-progress_wrap=50											# wrap progress line every N marks
+progress_wrap=125											# wrap progress line every N marks
 
 	trap 'rm -rf "$tmpdir"' EXIT
 
@@ -694,26 +707,29 @@ yes_no(){
 	local Dop="Details of pkg"
 	local If="Inspect files"
 	local Bp="Build pkg"
+	local Pro
+	      Pro=$(echo -e "\033[01m Press [b] to continue \033[00m")
 
 	printf '\n%s\n' "${acp} ${Dop} | ${If}* | ${Bp}*  (*)= Git cloned/pulled package/s listed above."
 
-if	command -v pbs.lua >/dev/null && pacman -Qi lua-http lua-dkjson >/dev/null; then
+if	command -v pbs.lua >/dev/null && command -v lua >/dev/null; then
 	local dpdd=yes
 fi
 if	[[ ${dpdd} == yes ]]; then
-	local det='Details [d]  ' sel='      Enter [d/i/b]:'
+	local det='Details [d]  ' sel='      Optionally Enter [d/i/b]:'
     else
-	local det='Not Available' sel='      Enter [i/b]:'
+	local det='Not Available' sel='      Optionally Enter [i/b]:'
 fi
 	printf '%s\n' "${acp} ${det}  | Inspect [i]    | Build [b]"
 	read -n1 -rp "       ${sel}
+	    ${Pro}
              " dib
 	tput ind
 	case $dib in
-	[Dd]* ) printf '%s\n'   "${acp} ${Dop}:" ; [[ ${dpdd} == yes ]] && pbs.lua "${package}" ;;
-	[Ii]* ) printf '%s\n\n' "${acp} ${If}:"  ; inspect_files "${1-}"                        ;;
-	[Bb]* ) printf '%s\n\n' "${acp} ${Bp}:"  ; opt="${1-}" ; build_pkg ; break              ;;
-	    * ) printf '%s\n'   "${acp}${error}${sel}  -or-  [Ctrl]+[c] to exit."               ;;
+	[Dd]* ) printf '%s\n'   "${acp} ${Dop}:" ; [[ ${dpdd} == yes ]] && pbs.lua "${package}"	;;
+	[Ii]* ) printf '%s\n\n' "${acp} ${If}:"  ; inspect_files "${1-}"			;;
+	[Bb]* ) printf '%s\n\n' "${acp} ${Bp}:"  ; opt="${1-}" ; build_pkg ; break		;;
+	    * ) printf '%s\n'   "${acp}${error}${sel}  -or-  [Ctrl]+[c] to exit."		;;
         esac
     done
 }
@@ -881,7 +897,7 @@ fi
 		aur build -cfnsr --results=aur-build.log --cargs="-c,-u,-r${CleanChroot}"
 													# Remove sudo config and restore permissions
 													### Safety additions
-		sudo rm /etc/sudoers.d/./aurch-sudo
+		sudo rm -f /etc/sudoers.d/./aurch-sudo
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log

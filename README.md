@@ -124,6 +124,26 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 ### NEWS, UPDATE, INFO:
 ----
+**UPDATE For April 10, 2026**
+
+**aurch.sh**
+* Changed 'Optional deps' in script header, replacing `lua-http` `lua-dkjson` with `lua`.
+* Added an early cleanup function and early trap command.
+* Function `fetch_pkg`, added pkg name filter.
+* Function `check_chroot_updates`, changed `progress_wrap` var.
+* Function `yes_no`, changed printed comments and code to facilitate new `pbs.lua` script.
+* Function `build_clean_chroot`, added `-f` option to `rm` to remove temp `aurch-sudo` script.
+
+**pbs.lua**
+* Rewrote to not rely on `lua-http` `lua-dkjson` deps due to problematic versioned updates.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Update to reflect changes.
+
+----
 
 **UPDATE For Feb 21, 2026**
 
