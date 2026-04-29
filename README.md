@@ -130,7 +130,7 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 **aurch.sh**
 * Added a redundant `sort` command via pipe, to facilitate easier troubleshooting.
 * Added/changed code to allow private AUR package creation, managed by aurch.
-* ie: Create <pkg-name> dir in nspawn, under /home/`builduser`/<pkg-name> containing custom PKGBUILD.
+* ie: Create <pkg-name> dir in nspawn, under /home/`builduser`/\<pkg-name\> containing custom PKGBUILD.
 * Use `aurch -C <pkg-name>` to build and register pkg in pacman `aur` db's.
 
 **README.md:**
