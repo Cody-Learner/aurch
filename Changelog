@@ -50,4 +50,31 @@
 **Changelog:**
 * Update to reflect changes.
  
+----
+
+**UPDATE For April 28, 2026**
+
+**aurch.sh**
+* Added a rredundant `sort` command via pipe, to facilitate easier troubleshooting.
+* Added/changed code to allow private AUR package creation managed by aurch.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Update to reflect changes.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

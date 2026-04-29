@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2026-04-10
+# aurch 2026-04-28
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
 # Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua
@@ -25,7 +25,7 @@ AURFM=mc									#         File browser used for git cloned/pulled repos
 	[[ ! -v AURREPO  ]]	&& AURREPO=/usr/local/aurch/repo		# HOST    Set AURREPO to default if unset
 	[[ ! -v REPONAME ]]	&& REPONAME=aur					# HOST    Set REPONAME to default if unset
 	[[ ! -v CleanChroot ]]  && CleanChroot=/var/lib/aurbuild/x86_64/	#         Set CleanChroot path if unset
-#	[[ ${session} == pts ]] && AURFM='thunar &>/dev/null'			# Opt     Set AURFM for GUI file manager
+#	[[ ${session} == pts ]] && AURFM=thunar					# Opt     Set AURFM for GUI file manager
 
 # CleanChroot=${HOME}/.cache/aurch-chroot					# Opt     Set CleanChroot path in HOME
 chroot="${BASEDIR}"/chroot-$(< "${BASEDIR}"/.#ID)				# HOST    path to chroot root
@@ -293,14 +293,17 @@ if	[[ ! -d "${homebuilduser}/${package}" ]]; then
 EOF
 	exit
 fi
-	find "${chroot}"/build/ -name '*pkg.tar*' 2>/dev/null >"${tmph}"/cont-aurrepo-before.file
+	find "${chroot}"/build/ -name '*pkg.tar*' 2>/dev/null | sort >"${tmph}"/cont-aurrepo-before.file
 	cd "${homebuilduser}"									|| { echo "[line ${LINENO}]" ; exit 1 ; }
 
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe bash << EOF
-	aur depends -r "${package}" | tsort >"${tmpc}"/buildorder.file
-	aur depends -n -r "${package}" | tsort | grep -v "^${package}$" >"${tmpc}"/dependencies.file \
+	aur depends -r "${package}" 2>/dev/null | tsort >"${tmpc}"/buildorder.file
+	aur depends -n -r "${package}" 2>/dev/null | tsort | grep -v "^${package}$" >"${tmpc}"/dependencies.file \
 	|| printf '%s\n' "None" >"${tmpc}"/dependencies.file
 EOF
+if	[[ ! -s ${tmpc}/buildorder.file ]]; then						# Added for aurch to build private packages.
+	 printf '%s\n' "${package}" > "${tmph}"/buildorder.file
+fi
 	printf '%s\n' "${acp} Buildorder list for ${package}:"
 	nl -w12 -s" " "${tmph}"/buildorder.file
 
