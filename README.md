@@ -133,10 +133,10 @@ A noteworthy change for this update has eliminated the need to manually update/c
 Previous to the changes, the log file wrote during running the `aurch-setup` script, `.#orig-pkgs.log` was used for the `aurch --clean` operation,
 including automated invocation during normal usage.
 
-Due to the nature of package evolution over time, this created the need for a dynamic package list following arch's package changes, in order to 
+Due to the nature of package evolution over time, this creates the need for a dynamic package list following arch's package changes, in order to 
 properly clean the nspawn container. 
 
-The changes made for this improvenemt are relatively minor in code, but will have a profound effect on the `cleanup_chroot`
+The changes made for this improvement are relatively minor in code, but will have a profound effect on the `cleanup_chroot`
 functions robustness over time. 
 
 The update eliminates the use of a file all together, being replaced with a dynamic process following Arch's package updates, created each time
