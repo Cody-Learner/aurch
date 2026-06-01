@@ -125,6 +125,45 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**News For June 1, 2026**
+
+A noteworthy change for this update has eliminated the need to manually update/calculate the minimal aurch nspawn container package list 
+`.#orig-pkgs.log`. 
+
+Previous to the changes, the log file wrote during running the `aurch-setup` script, `.#orig-pkgs.log` was used for the `aurch --clean` operation,
+including automated invocation during normal usage.
+
+Due to the nature of package evolution over time, this created the need for a dynamic package list following arch's package changes, in order to 
+properly clean the nspawn container. 
+
+The changes made for this improvenemt are relatively minor in code, but will have a profound effect on the `cleanup_chroot`
+functions robustness over time. 
+
+The update eliminates the use of a file all together, being replaced with a dynamic process following Arch's package updates, created each time
+the nspawn containers cleaning process is ran.
+
+As a result, `.#orig-pkgs.log` is simply a record of pkgs installed in the container upon setup.
+
+----
+
+**UPDATE For June 1, 2026**
+
+**aurch.sh**
+* Edited script header for improved clarity.
+* Removed all comments regarding safety additions.
+* Cleaned up code in `remove` function.
+* Removed bug fix comment.
+* Rewrote `cleanup_chroot` function heredoc script `aurch-cleanup` sent to container.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog**
+* Changed date order to newest at top.
+* Update to reflect changes.
+
+---
+
 **UPDATE For April 28, 2026**
 
 **aurch.sh**

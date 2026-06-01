@@ -1,34 +1,41 @@
-**UPDATE For Feb 21, 2026**
+**UPDATE For June 1, 2026**
 
 **aurch.sh**
-* Added early script exit for essential unassigned or empty variables.
-* Implemented safety additions throughout script consisting of:  <br>
-  The `find` command addition of `-mindepth 1` <br>
-  Parameter Expansion Error Checking: `:?`     <br>
-  Path Normalization                : `./`     <br>
-* Rewrote 'list variables' option `-Lv`, function `print_vars`.
+* Edited script header for improved clarity.
+* Removed all comments regarding safety additions.
+* Cleaned up code in `remove` function.
+* Removed bug fix comment.
+* Rewrote `cleanup_chroot` function heredoc script `aurch-cleanup` sent to container.
+  The `aurch-cleanup` script handles maintaining a min base pkg set seamlessly. All pkg calculations ran upon each invocation.  
+  The new method is dynamic due to Arch's pkgs evolving depends, etc over time.  
+  This also eliminates the need to manualy maintain the list formerly used, `.#orig-pkgs.log`.  
+  As a result, `.#orig-pkgs.log` is simply a record of pkgs installed in container upon setup now.  
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog**
+* Changed date order to newest at top.
+* Update to reflect changes.
+
 
 ----
 
-**UPDATE #2 For Feb 18, 2026**
+
+**UPDATE For April 28, 2026**
 
 **aurch.sh**
-* Found a bug that would delete dir inside aurch nspawn container running `aurch -Cc` without a package.
-* Provided a fix + fail safe.
-* Future plans include rewriting option parsing to implement checks further up towards the beginning of the processes.
-* Several small changes for text clarification and to allow alternative GUI AURFM options.
+* Added a rredundant `sort` command via pipe, to facilitate easier troubleshooting.
+* Added/changed code to allow private AUR package creation managed by aurch.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Update to reflect changes.
 
 
-**UPDATE For Feb 18, 2026**
-
-* Added comments in header section for optional features and their dependencies.
-* Setup `AURFM` var to detect an appropriate file browser in either tty console, or GUI terminal env.
-* Fixed `inspect files` selection to sequentially display all git cloned/pulled dir's including AUR dependencies in AURFM.
-* Fixed screen width line length in `-Lv` operation.
-* Relocated `cleanup_chroot` function to directly proceed `-Cc` `build_clean_chroot` function
-* Rewrote `yes_no` function requiring user input to proceed, adding a `[d]` selection `Details of pkg` 
-  which displays pkg data including URL links and comments from the AUR webpage. 
-* Provide an optional script to scrape AUR data from webpage for `Details of pkg` selection.
+----
 
 
 **UPDATE For April 10, 2026**
@@ -49,25 +56,44 @@
 
 **Changelog:**
 * Update to reflect changes.
- 
-----
 
-**UPDATE For April 28, 2026**
+
+---
+
+
+**UPDATE For Feb 21, 2026**
 
 **aurch.sh**
-* Added a rredundant `sort` command via pipe, to facilitate easier troubleshooting.
-* Added/changed code to allow private AUR package creation managed by aurch.
-
-**README.md:**
-* Update to reflect changes.
-
-**Changelog:**
-* Update to reflect changes.
+* Added early script exit for essential unassigned or empty variables.
+* Implemented safety additions throughout script consisting of:  <br>
+  The `find` command addition of `-mindepth 1` <br>
+  Parameter Expansion Error Checking: `:?`     <br>
+  Path Normalization                : `./`     <br>
+* Rewrote 'list variables' option `-Lv`, function `print_vars`.
 
 
+----
 
 
+**UPDATE #2 For Feb 18, 2026**
 
+**aurch.sh**
+* Found a bug that would delete dir inside aurch nspawn container running `aurch -Cc` without a package.
+* Provided a fix + fail safe.
+* Future plans include rewriting option parsing to implement checks further up towards the beginning of the processes.
+* Several small changes for text clarification and to allow alternative GUI AURFM options.
+
+
+**UPDATE For Feb 18, 2026**
+
+* Added comments in header section for optional features and their dependencies.
+* Setup `AURFM` var to detect an appropriate file browser in either tty console, or GUI terminal env.
+* Fixed `inspect files` selection to sequentially display all git cloned/pulled dir's including AUR dependencies in AURFM.
+* Fixed screen width line length in `-Lv` operation.
+* Relocated `cleanup_chroot` function to directly proceed `-Cc` `build_clean_chroot` function
+* Rewrote `yes_no` function requiring user input to proceed, adding a `[d]` selection `Details of pkg` 
+  which displays pkg data including URL links and comments from the AUR webpage. 
+* Provide an optional script to scrape AUR data from webpage for `Details of pkg` selection.
 
 
 

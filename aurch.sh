@@ -1,10 +1,10 @@
 #!/bin/bash
-# aurch 2026-04-28
+# aurch 2026-06-01
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
-# Optional deps: aurch '-Cc' operation, aurutils to build in clean chroot. Automated install offered upon running '-Cc'
-# Optional deps: aurch '-B' operation, optional 'Details of pkg' selection enabled after installing: lua
-# Optional: AURFM setup to detect an appropriate file browser in either tty console, or GUI terminal env.
-# To print all the variables expanded that are set below, run aurch -Lv.
+# Optional deps: 'aurutils' (aurch '-Cc' operation, to build in clean chroot. Automated install offered upon running '-Cc')
+# Optional deps: 'lua'      (aurch '-B' operation, optional 'Details of pkg' selection enabled after installing lua.)
+# Optional var : AURFM      (setup to detect an appropriate file browser in either tty console, or GUI terminal env.)
+# To print all the variables expanded that are set below, run 'aurch -Lv'.
 
 set -euo pipefail
 
@@ -222,15 +222,12 @@ EOF
 }
 #========================================================================================================================#
 fetch_pkg(){
-									### NEW 2026-03-02	# Filter potential package names to contain
-												# only valid characters and exit otherwise.
+
     if [[ ! "${package}" =~ ^[a-z0-9@._+-]+$ ]]; then
         printf '%s\n' "${acp}${error} Invalid package name: '${package}'"
         printf '%s\n' "Names must only contain [a-z0-9@._+-]"
         exit 1
     fi
-
-
 		rm -f "${tmph}"/rebuilt-pkg.logfile
 		rm -f "${tmpc}"/cloned-pkgs.logfile
 	[[ -z ${package} ]] && { printf '%s\n\n' "${acp}${error} Need to specify a package."; exit ; }
@@ -474,13 +471,11 @@ if	[[ -n ${pkg} ]]; then
 			repo-remove /build/aur.db.tar.gz "${pkg}"
 EOF
 			printf '%s\n' "${acp} Removing from container aur package cache:"
-		###	find "${chroot}"/build -name "${pkg}*.pkg.tar*" -delete -print					### Safety additions
 			find "${chroot:?}/build/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 
 			if	[[ -d  "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
-				sudo rm -rd "${homebuilduser:?}/${pkg:?}"						### Safety additions
 			fi
 			sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 			printf '%s\n' "${acp} Syncing container aur database:"
@@ -491,11 +486,9 @@ EOF
 			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
-				sudo rm -rd "${homebuilduser:?}/${pkg:?}"						### Safety additions
 				cd "${chroot}"/build/
 				if	find "${pkg}*.pkg.tar*" &>/dev/null; then
 					printf '%s\n' "${acp} Removing from container aur package cache:"
-				###	find "${chroot}"/build/ -name "${pkg}*.pkg.tar*" -delete -print			### Safety additions
 					find "${chroot:?}/build/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 				    else
 					printf '%s\n' "${acp} Container ${pkg} not present in AUR package cache."
@@ -510,7 +503,6 @@ EOF
 			sudo pacman -Rns "${pkg}"
 		fi
 	printf '%s\n' "${acp} Removing pkg from host ${REPONAME} package cache:"
-###	sudo find "${AURREPO}" -name "${pkg}*.pkg.tar*" -delete -print							### Safety additions
 	sudo find "${AURREPO:?}/./" -mindepth 1 -name "${pkg:?}*.pkg.tar*" -delete -print
 		if	pacman -Slq "${REPONAME}" | grep -q "${pkg}"; then
 			repo-remove "${AURREPO}"/"${REPONAME}".db.tar.gz "${pkg}"
@@ -752,8 +744,7 @@ fi
 				###  C L E A N   C H R O O T   B U I L D  ###		# aurutils scripts    : aur-build, aur-chroot use: -->
 											# devtools scripts    : checkpkg  mkarchroot arch-nspawn
 build_clean_chroot(){
-				### BUG FIX ###
-				### Prevent nspawn builduser dir deletion on "no pkg" entered. ###
+
 if	[[ -z $package ]]; then
 	printf '\n%s\n\n' "${acp}${error} Need to provide an AUR package name.
 		ie: aurch -Cc <pkg name>"
@@ -850,10 +841,9 @@ fi
 	rm -f /var/tmp/aurch/*
 
 	cd "${homebuilduser}"
-				### BUG FIX FAILSAFE ###
-				### Prevents builduser dir deletion on "no pkg" entered. ###
+
 	: "${package:?}"
-													### Safety additions
+
 	[[ -d  "${homebuilduser}/${package}" ]] && sudo rm -rd "${homebuilduser:?}/${package:?}"
 
 	aur depends -r "${package}" | tsort |
@@ -899,14 +889,13 @@ fi
 													# BUILD INDIVIDUAL CHROOT PACKAGES
 		aur build -cfnsr --results=aur-build.log --cargs="-c,-u,-r${CleanChroot}"
 													# Remove sudo config and restore permissions
-													### Safety additions
 		sudo rm -f /etc/sudoers.d/./aurch-sudo
 		awk -F'/' '{print $NF}' aur-build.log >> /var/tmp/aurch/aurch-build.log
 
 	done   < /var/tmp/aurch/cloned-pkgs.log
 
 	cleanup_host
-													# If 'b' option, copy/register pkgs to cont.
+													# If 'Ccb' option, copy/register pkgs to cont.
 if	[[ ${1} == -Ccb ]]; then
 	while read -r transfer
 	do
@@ -929,22 +918,18 @@ fi
 #========================================================================================================================#
 cleanup_chroot(){		# REMINDER: Change both dates below if heredoc script is modified.
 
-if	[[ ! -e ${tmph}/orig-pkgs.log ]]; then
-	awk '{print $2}'  "${BASEDIR}"/.#orig-pkgs.log | sort  >"${tmph}"/orig-pkgs.log
-fi
 	sudo rm -f /etc/sudoers.d/./aurch-sudo						# Added so 'trap' will remove 'aurch-sudo' file if
-											### Safety additions
 											# 'build_clean_chroot' function is interrupted.
 	printf '%s\n' "${acp} Cleaning aurch nspawn container."
 
-if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2025-07-25' ]]; then
+if	[[ $(grep '^#202*'  2>/dev/null "${chroot}"/bin/aurch-cleanup) !=  '#2026-06-01' ]]; then
 	printf '%s\n' "${acp}${note} Updating container 'aurch-cleanup' script."
 												# Install cleanup script in container if needed
 #---------------------------------------------- START Heredoc Script -----------------------------------------#
 
 	cat << "EOF" | sudo tee "${chroot}"/usr/bin/aurch-cleanup &>/dev/null
 #!/bin/bash
-#2025-07-25
+#2026-06-01
 
 acp=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 
@@ -956,29 +941,37 @@ acp=$(echo -e '\033[1;96m'":: aurch ==>"'\033[00m')
 	printf '%s\n' "Note: 'pacman-contrib' was '--clean' requirement."
 
 	printf '%s\n'	"${acp} Pacman output from container: "
-	comm -23 <(pacman -Qq) <(sort /var/tmp/aurch/orig-pkgs.log) | xargs  pacman -Rns --noconfirm 2>/dev/null
 
-###	find /build  /var/cache/pacman/pkg -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +		### Safety additions
+###------------ NEW CLEANING PKGS TEST ----------------
+
+	pacman -D --asdeps $(pacman -Qq) &>/dev/null				# Change all pkgs to 'deps', covering for manual container work.
+	pacman -D --asexplicit aurutils base base-devel git &>/dev/null		# Redefine base pkg list as 'explicit'.
+
+	printf '%s\n' "${acp} Cleaning nspawn container pkgs while maintaining minimal set..."
+
+	while [[ -n $(pacman -Qdtq) ]]; do
+		pacman -Qdtq | xargs pacman -Rns --noconfirm || break
+	done
+
+###-------- END NEW CLEANING PKGS TEST ----------------
+
 	find /build/ /var/cache/pacman/pkg/ -mindepth 1 -maxdepth 1 -type d -name "download-*" -exec sudo rm -rf -- "{}" +
 
 	pkgcount=$(pacman -Qq | wc -l)
-
 	aurcache=$(find /build -maxdepth 1 -type f -name "*pkg.tar*" | wc -l)
 
-	printf '%s\n'   "${acp} Container clean report   :"
-	printf '%s\n'   "             Official pkg cache count : $(ls -1 /var/cache/pacman/pkg | wc -l)"
-	printf '%s\n'   "             AUR pkg cache count      : ${aurcache}"
-	printf '%s\n\n' "             Installed package count  : ${pkgcount}"
+	printf '%s\n'   "${acp} Container pkg clean report:"
+	printf '%s\n'   "               Official pkg cache count: $(ls -1 /var/cache/pacman/pkg | wc -l)"
+	printf '%s\n'   "               AUR pkg cache count     : ${aurcache}"
+	printf '%s\n\n' "               Installed package count : ${pkgcount}"
 
 EOF
 #----------------------------------------------  END  Heredoc Script --------------------------------------#   # Run cleanup script in container
+
 	sudo chmod +x "${chroot}"/usr/bin/aurch-cleanup
 fi
-if	[[ -e ${tmph}/orig-pkgs.log ]]; then
 	sudo systemd-nspawn -a -q -D "${chroot}" --pipe \
 	/usr/bin/aurch-cleanup
-fi
-	sudo rm "${tmph:?}/orig-pkgs.log"									### Safety additions
 }
 #========================================================================================================================#
 cleanup_host(){
@@ -995,7 +988,7 @@ cleanup_host(){
 	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/ |& awk NF
 
 	printf '%s\n' "${acp} Cleaning leftover directories from local AUR cache:"
-###	find "${AURREPO}" -maxdepth 1 -type d -name "download-*" -exec sudo rm -rd "{}" +				### Safety additions
+
 	find "${AURREPO:?}/./" -mindepth 1 -maxdepth 1 -type d -name "download-*" -exec sudo rm -rf -- "{}" +
 
 	printf '%s\n' "==> no directories list indicate nothing to remove"
