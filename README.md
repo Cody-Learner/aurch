@@ -130,7 +130,7 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 **aurch.sh**
 * Added missing colon `:` to line 58
 * Function: `remove()` Replaced two `rm -rd ...` command lines back that were inadvertently deleted in last commit.
-* Function: `list_pkgs_chroot()` Changed redirect to `2>/dev/null` from `systemd-nspawn` command to `*>/dev/null` in `pacsync` command.
+* Function: `list_pkgs_chroot()` Changed redirect `2>/dev/null` on `systemd-nspawn` command to `*>/dev/null` on `pacsync` command.
 * Function: `cleanup_host()` Changed hard coded path to use variable `AURREPO`
 
 **README.md**
