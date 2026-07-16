@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2026-06-01
+# aurch 2026-06-15
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: 'aurutils' (aurch '-Cc' operation, to build in clean chroot. Automated install offered upon running '-Cc')
 # Optional deps: 'lua'      (aurch '-B' operation, optional 'Details of pkg' selection enabled after installing lua.)
@@ -55,7 +55,7 @@ fi
 : "${AURFM:?}"									# are unset or empty. ### Safety additions
 : "${BASEDIR:?}"
 : "${AURREPO:?}"
-: "${REPONAME?}"
+: "${REPONAME:?}"
 : "${CleanChroot:?}"
 : "${chroot:?}"
 : "${chrbuilduser:?}"
@@ -476,6 +476,9 @@ EOF
 			if	[[ -d  "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
+												# 2026-07-15 Added rm -rd below back as it was
+												# inadvertently deleted when removing comments.
+				sudo rm -rd "${homebuilduser:?}/${pkg:?}"
 			fi
 			sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe bash << EOF
 			printf '%s\n' "${acp} Syncing container aur database:"
@@ -486,6 +489,9 @@ EOF
 			if	[[ -d "${homebuilduser}"/"${pkg}" ]]; then
 				printf '%s\n' "${acp} Removing container build directory:"
 				printf '%s\n' "${chrbuilduser}/${pkg}"
+												# 2026-07-15 Added rm -rd below back as it was
+												# inadvertently deleted when removing comments.
+				sudo rm -rd "${homebuilduser:?}/${pkg:?}"
 				cd "${chroot}"/build/
 				if	find "${pkg}*.pkg.tar*" &>/dev/null; then
 					printf '%s\n' "${acp} Removing from container aur package cache:"
@@ -668,8 +674,8 @@ fi
 #========================================================================================================================#
 list_pkgs_chroot(){
 
-	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe sudo 2>/dev/null pacsync aur
-#       sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe sudo             pacsync aur
+#	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe sudo 2>/dev/null pacsync aur
+        sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --pipe sudo             pacsync aur &>/dev/null
 
 if	[[ ${1} == -Lacq ]]; then
 	pacman --color=always -b "${chroot}/var/lib/pacman/" --config "${chroot}/etc/pacman.conf" --noconfirm -Slq aur
@@ -684,7 +690,7 @@ update_chroot(){
 }
 #========================================================================================================================#
 login_chroot(){
-	sudo systemd-nspawn --background=0 -a -q -D "${chroot}"  su root
+	sudo systemd-nspawn --background=0 -a -q -D "${chroot}" su root
 }
 #========================================================================================================================#
 manual_pgp_key(){
@@ -985,7 +991,7 @@ cleanup_host(){
 	aurch -Lahq  >  /var/tmp/aurch/aurch-keeppkgs
 	aurch -Lacq >>  /var/tmp/aurch/aurch-keeppkgs
 	keeppkgs=$(sort -u /var/tmp/aurch/aurch-keeppkgs | grep -v 'aur.db' | xargs | sed 's/ /,/g')
-	sudo paccache -v -rk0 -i "${keeppkgs}" -c /usr/local/aurch/repo/ |& awk NF
+	sudo paccache -v -rk0 -i "${keeppkgs}" -c "${AURREPO:?}" |& awk NF
 
 	printf '%s\n' "${acp} Cleaning leftover directories from local AUR cache:"
 

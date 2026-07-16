@@ -1,3 +1,12 @@
+**UPDATE For June 15, 2026**
+
+* Added missing colon `:` to line 58
+* Function: `remove()` Replaced two `rm -rd ...` command lines back that were inadvertently deleted in last commit.
+* Function: `list_pkgs_chroot()` Changed redirect to `2>/dev/null` from `systemd-nspawn` command to `*>/dev/null` in `pacsync` command.
+* Function: `cleanup_host()` Changed hard coded path to use variable `AURREPO`
+
+----
+
 **UPDATE For June 1, 2026**
 
 **aurch.sh**
