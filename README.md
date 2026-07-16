@@ -125,6 +125,22 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**UPDATE For June 15, 2026**
+
+**aurch.sh**
+* Added missing colon `:` to line 58
+* Function: `remove()` Replaced two `rm -rd ...` command lines back that were inadvertently deleted in last commit.
+* Function: `list_pkgs_chroot()` Changed redirect to `2>/dev/null` from `systemd-nspawn` command to `*>/dev/null` in `pacsync` command.
+* Function: `cleanup_host()` Changed hard coded path to use variable `AURREPO`
+
+**README.md**
+* Update to reflect changes.
+
+**Changelog**
+* Update to reflect changes.
+
+----
+
 **News For June 1, 2026**
 
 A noteworthy change for this update has eliminated the need to manually update/calculate the minimal aurch nspawn container package list 
@@ -143,22 +159,6 @@ The update eliminates the use of a file all together, being replaced with a dyna
 the nspawn containers cleaning process is ran.
 
 As a result, `.#orig-pkgs.log` is simply a record of pkgs installed in the container upon setup.
-
-----
-
-**UPDATE For June 15, 2026**
-
-**aurch.sh**
-* Added missing colon `:` to line 58
-* Function: `remove()` Replaced two `rm -rd ...` command lines back that were inadvertently deleted in last commit.
-* Function: `list_pkgs_chroot()` Changed redirect to `2>/dev/null` from `systemd-nspawn` command to `*>/dev/null` in `pacsync` command.
-* Function: `cleanup_host()` Changed hard coded path to use variable `AURREPO`
-
-**README.md**
-* Update to reflect changes.
-
-**Changelog**
-* Update to reflect changes.
 
 ----
 
