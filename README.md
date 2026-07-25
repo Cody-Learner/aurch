@@ -125,6 +125,16 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ----
 
+**News For July 24, 2026**
+
+**README.md**
+* Added info on opening opening a github '[Discussions](https://github.com/Cody-Learner/aurch/discussions)' tab for aurch. 
+  I'd like to hear from any users out there, drop a comment to inspire me or offer some feedback to motivate me, etc.
+
+
+
+----
+
 **UPDATE For June 15, 2026**
 
 **aurch.sh**
