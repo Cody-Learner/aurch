@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2026-07-15
+# aurch 2026-06-15
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: 'aurutils' (aurch '-Cc' operation, to build in clean chroot. Automated install offered upon running '-Cc')
 # Optional deps: 'lua'      (aurch '-B' operation, optional 'Details of pkg' selection enabled after installing lua.)
