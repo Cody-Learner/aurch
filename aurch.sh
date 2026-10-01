@@ -1,5 +1,5 @@
 #!/bin/bash
-# aurch 2026-06-15
+# aurch 2026-10-01
 # Dependencies: base-devel pacman-contrib pacutils git jshon mc less
 # Optional deps: 'aurutils' (aurch '-Cc' operation, to build in clean chroot. Automated install offered upon running '-Cc')
 # Optional deps: 'lua'      (aurch '-B' operation, optional 'Details of pkg' selection enabled after installing lua.)
@@ -228,7 +228,7 @@ fetch_pkg(){
         printf '%s\n' "Names must only contain [a-z0-9@._+-]"
         exit 1
     fi
-		rm -f "${tmph}"/rebuilt-pkg.logfile
+###		rm -f "${tmph}"/rebuilt-pkg.logfile
 		rm -f "${tmpc}"/cloned-pkgs.logfile
 	[[ -z ${package} ]] && { printf '%s\n\n' "${acp}${error} Need to specify a package."; exit ; }
 
@@ -248,7 +248,7 @@ if	cd "${homebuilduser}/${package}" 2>/dev/null ;then
 												# 'sudo printf' prevents printed msg before sudo prompt.
 	if	git pull | grep -q 'up to date'; then
 		sudo printf '%s\n' "${acp} Git repo current, rebuilding...."
-		printf '%s\n' "Git repo current, rebuilding ${package}." >> "${tmph}"/rebuilt-pkg.logfile
+		printf '%s\n' "Git repo current, rebuilding ${package}." ### >> "${tmph}"/rebuilt-pkg.logfile
 	fi
 fi
 	sudo systemd-nspawn -a -q -D "${chroot}" -u builduser --chdir="${chrbuilduser}" --pipe << EOF
@@ -369,7 +369,8 @@ if	[[ -s  ${tmph}/moved-tohost.file ]] ; then
 
 	readarray -t movepkgs < "${tmph}"/total.file
 
-	if	[[ -s "${tmph}"/rebuilt-pkg.logfile ]] && [[ -v movepkgs ]]; then
+###	if	[[ -s "${tmph}"/rebuilt-pkg.logfile ]] && [[ -v movepkgs ]]; then
+	if	[[ ! -s "${tmph}"/moved-tohost.file ]] && (( ${#movepkgs[@]} > 0 )); then
 
 			for package in "${movepkgs[@]}"
 			do
@@ -447,7 +448,9 @@ fi
 if	[[ ${udb-} == alldone ]]; then
 	return
     else
-	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/rebuilt-pkg.logfile ]]; then
+###	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/rebuilt-pkg.logfile ]]; then
+	if	find "${AURREPO}"/*.db.tar.gz &>/dev/null && [[ -s "${tmph}"/total.file ]]; then
+
 		printf '%s\n' "${acp} Adding package/s to host 'AURREPO' database"
 		while IFS= read -r pkg; do
 		repo-add --nocolor "${AURREPO}"/"${REPONAME}".db.tar.gz "${AURREPO}"/"${pkg}" \
@@ -669,6 +672,11 @@ if	[[ ${1} == -Lahq ]]; then
  	pacman --color=always -Slq "${REPONAME}"
     else
 	pacman --color=always -Sl "${REPONAME}" | awk '{$1="" ; print}' | nl | column -t
+													# Display chaotic-aur repo if setup
+	if	pacman -Qq chaotic-keyring  chaotic-mirrorlist &>/dev/null ; then
+		printf '\n%s\n\n' "${acp} List of chaotic-aur repo pkgs below:"
+		pacman --color=always -Sl chaotic-aur | awk '/installed/{$1="" ; print}' | nl | column -t
+	fi
 fi
 }
 #========================================================================================================================#

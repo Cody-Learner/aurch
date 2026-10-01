@@ -1,3 +1,17 @@
+**UPDATE For Oct 01, 2026**
+
+**aurch.sh:**
+* Made changes to how existing version rebuilt pkgs background tasks are handled.
+* Added code to function `list_pkgs_host` to include `chaotic-aur` repo pkgs if repo has been added.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Update to reflect changes.
+
+----
+
 **UPDATE For June 15, 2026**
 
 * Added missing colon `:` to line 58

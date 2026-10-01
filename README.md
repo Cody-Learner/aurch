@@ -123,7 +123,22 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 
 
 ### NEWS, UPDATE, INFO:
-----
+---
+
+**UPDATE For Oct 01, 2026**
+
+**aurch.sh:**
+* Made changes to how existing version rebuilt pkgs background tasks are handled.
+* Added code to function `list_pkgs_host` to include `chaotic-aur` repo pkgs if repo has been added.
+
+**README.md:**
+* Update to reflect changes.
+
+**Changelog:**
+* Corrected date from `UPDATE For June 15, 2026` to `UPDATE For July 15, 2026`
+* Update to reflect changes.
+
+---
 
 **News For July 24, 2026**
 
@@ -131,11 +146,9 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 * Added info on opening opening a github '[Discussions](https://github.com/Cody-Learner/aurch/discussions)' tab for aurch. 
   I'd like to hear from any users out there, drop a comment to inspire me or offer some feedback to motivate me, etc.
 
-
-
 ----
 
-**UPDATE For June 15, 2026**
+**UPDATE For July 15, 2026**
 
 **aurch.sh**
 * Added missing colon `:` to line 58
