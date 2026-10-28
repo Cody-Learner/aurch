@@ -125,6 +125,13 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ---
 
+**UPDATE For Oct 28, 2026**
+
+**fix-nspawn-warning:**
+* Added `fix-nspawn-warning` script to create config file for aurch's nspawn container to silence systemd-nspawn 'address families' warning.
+
+---
+
 **UPDATE For Oct 01, 2026**
 
 **aurch.sh:**

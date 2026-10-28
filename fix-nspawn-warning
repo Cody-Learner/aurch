@@ -1,0 +1,28 @@
+#!/bin/bash
+# 2026-10-28
+# Fix the following nspawn warning message:
+
+# Note: in a future version of systemd-nspawn the default set of permitted socket address families
+# will be restricted to AF_INET, AF_INET6 and AF_UNIX. Use --restrict-address-families= to configure
+# the set of permitted socket address families, or set RestrictAddressFamilies= in a .nspawn file.
+
+
+name=$(basename "$(aurch -Lv | awk '/chroot=/ {print $0}')")
+
+if	[[ -s  /etc/systemd/nspawn/${name}.nspawn ]]; then
+	printf '%s\n' "File: /etc/systemd/nspawn/${name}.nspawn already exists."
+	printf '%s\n' "Manually add the following line under [Exec]. ie:
+
+[Exec]
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX"
+
+    else
+	printf '%s\n\n' "Wrote configuration file  /etc/systemd/nspawn/${name}.nspawn  containing:"
+
+	cat <<-EOF | sudo tee -a /etc/systemd/nspawn/"${name}".nspawn
+	[Exec]
+	RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+EOF
+
+fi
+	printf '\n%s\n' "For additional info see man pages: systemd.nspawn(5) and systemd-nspawn(1)"
