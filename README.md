@@ -125,6 +125,14 @@ Screenshot: `aurch -B bauerbill`	 https://cody-learner.github.io/aurch-building-
 ### NEWS, UPDATE, INFO:
 ---
 
+**UPDATE For Nov 10, 2026**
+
+**fix-nspawn-warning**
+* Added if statement to create /etc/systemd/nspawn/ dir if not present.
+* Added `set -euo pipefail` so script will exit on errors.
+
+---
+
 **UPDATE For Oct 28, 2026**
 
 **fix-nspawn-warning:**
